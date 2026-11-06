@@ -76,6 +76,10 @@ struct Page: Identifiable, Codable, Equatable {
     var id = UUID()
     /// İçe aktarılmış PDF'teki sayfa numarası (0'dan); boş sayfada nil
     var pdfPage: Int?
+    /// Sayfadaki yapışkan notlar (eski kayıtlarda alan yok)
+    var notes: [StickyNote]?
+
+    var stickyNotes: [StickyNote] { notes ?? [] }
 }
 
 struct Notebook: Identifiable, Codable, Equatable {
@@ -293,6 +297,14 @@ final class Library {
         drawingCache[key(id, page)] = data
         store.writeDrawing(id, page, data)
         update(id) { $0.modified = Date() }
+        scheduleThumbnail(id)
+    }
+
+    func setNotes(_ id: UUID, _ page: UUID, _ notes: [StickyNote]) {
+        update(id) { nb in
+            if let i = nb.pages.firstIndex(where: { $0.id == page }) { nb.pages[i].notes = notes.isEmpty ? nil : notes }
+            nb.modified = Date()
+        }
         scheduleThumbnail(id)
     }
 

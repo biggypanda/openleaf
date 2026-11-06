@@ -91,7 +91,7 @@ struct DocumentView: View {
     @State private var lastInkTool: ToolKind = .pen
     @AppStorage("kalem.renk") private var color: PenColor = .ink
     @AppStorage("kalem.tur") private var penType: PenType = .tukenmez
-    @AppStorage("kalem.kalinlik") private var widthIndex = 1
+    @AppStorage("kalem.kalinlik.pt") private var penWidth: Double = 3
     @AppStorage("silgi.tur") private var eraserMode: EraserMode = .kismi
     @AppStorage("silgi.boyut") private var eraserSize: Double = 22
     private var eraser: EraserSettings { EraserSettings(mode: eraserMode, size: eraserSize) }
@@ -105,12 +105,11 @@ struct DocumentView: View {
     @State private var controller = CanvasController()
     @State private var tapRipple = false
     @State private var confirmDelete = false
-    @State private var flip: CGFloat = 0
     @State private var showMore = false
     @State private var pdfDoc: PDFDocument?
 
-    static let widths: [CGFloat] = [1.6, 3, 5, 8]
-    static let widthLabels = ["0,2", "0,4", "0,7", "1,0"]
+    /// Kalem kalınlığı aralığı (nokta); çubukla serbestçe ayarlanır
+    static let penWidthRange: ClosedRange<Double> = 0.8...14
 
     var body: some View {
         if let nb = library.notebooks.first(where: { $0.id == id }) {
@@ -141,6 +140,8 @@ struct DocumentView: View {
                     CanvasRepresentable(
                         pageID: pageID,
                         data: library.drawing(id, pageID),
+                        notes: nb.pages[p].stickyNotes,
+                        turnForward: forward,
                         pdfPage: nb.pages[p].pdfPage.flatMap { pdfDoc?.page(at: $0) },
                         paper: nb.paper,
                         canonical: nb.canonicalSize,
@@ -155,13 +156,9 @@ struct DocumentView: View {
                             library.saveDrawing(id, pid, data)
                         },
                         onPencilTap: pencilDoubleTap,
-                        onPageSwipe: nb.isPaged ? { step in go(p + step, nb) } : nil
+                        onPageSwipe: nb.isPaged ? { step in go(p + step, nb) } : nil,
+                        onNotesChange: { pid, list in library.setNotes(id, pid, list) }
                     )
-                    // Sayfa çevirme: tuvalin üstünde kısa bir solma. Tuvali kaydırmak PencilKit'in
-                    // ekran dışına çıkan kısmı yeniden çizmemesine (sayfanın yarısının boş görünmesine) yol açıyordu.
-                    .overlay {
-                        Y.bg.opacity(min(abs(flip) / 40, 1)).allowsHitTesting(false)
-                    }
                 }
                 .clipped()
                 .ignoresSafeArea(edges: .bottom)
@@ -169,9 +166,10 @@ struct DocumentView: View {
 
             if !focus {
                 ToolbarCapsule(tool: $tool, color: $color, showToolMenu: $showToolMenu,
-                               penType: $penType, widthIndex: $widthIndex, eraser: eraserBinding,
+                               penType: $penType, penWidth: $penWidth, eraser: eraserBinding,
                                canUndo: controller.canUndo, canRedo: controller.canRedo,
                                undo: controller.undo, redo: controller.redo,
+                               addNote: controller.addNote,
                                select: select)
                     .padding(.bottom, 18)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -299,7 +297,7 @@ struct DocumentView: View {
     private var pkTool: PKTool {
         switch tool {
         case .pen:
-            return PKInkingTool(penType.ink, color: color.ui, width: Self.widths[widthIndex] * penType.widthScale)
+            return PKInkingTool(penType.ink, color: color.ui, width: CGFloat(penWidth) * penType.widthScale)
         case .highlighter:
             return PKInkingTool(.marker, color: UIColor(hex: 0xF3D77A).withAlphaComponent(0.9), width: 22)
         case .eraser:
@@ -339,14 +337,9 @@ struct DocumentView: View {
         turn(to: p + 1)
     }
 
-    /// Sayfa çevirme: eski sayfa kayarak solar, yeni sayfa karşı yandan gelir.
+    /// Sayfa değiştir; kitap sayfası animasyonunu tuval yapar (yönü `forward`)
     private func turn(to target: Int) {
-        let d: CGFloat = forward ? -40 : 40
-        withAnimation(.easeIn(duration: 0.14)) { flip = d } completion: {
-            page = target
-            flip = -d
-            withAnimation(.timingCurve(0.16, 1, 0.3, 1, duration: 0.32)) { flip = 0 }
-        }
+        page = target
     }
 
     private func deletePage(_ p: Int) {
@@ -382,17 +375,48 @@ struct ToolbarCapsule: View {
     @Binding var color: PenColor
     @Binding var showToolMenu: Bool
     @Binding var penType: PenType
-    @Binding var widthIndex: Int
+    @Binding var penWidth: Double
     @Binding var eraser: EraserSettings
     var canUndo: Bool
     var canRedo: Bool
     var undo: () -> Void
     var redo: () -> Void
+    var addNote: () -> Void
     var select: (ToolKind) -> Void
 
     var body: some View {
         HStack(spacing: 2) {
-            ForEach(ToolKind.allCases, id: \.self) { t in
+            ForEach([ToolKind.pen, .highlighter, .eraser], id: \.self) { toolButton($0) }
+
+            // Silginin sağında: yapışkan not ekle
+            Button(action: addNote) {
+                Image(systemName: "note.text.badge.plus")
+                    .font(.system(size: 19, weight: .regular))
+                    .frame(width: 46, height: 46)
+                    .foregroundStyle(Y.ink2)
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Yapışkan not ekle")
+
+            toolButton(.lasso)
+
+            sep
+
+            colorButtons
+
+            sep
+
+            undoRedo
+        }
+        .font(.system(size: 17))
+        .padding(.horizontal, 8).padding(.vertical, 5)
+        .glass(Capsule())
+        .animation(Y.quick, value: tool)
+        .animation(Y.quick, value: color)
+    }
+
+    private func toolButton(_ t: ToolKind) -> some View {
                 Button { select(t) } label: {
                     Image(systemName: t.icon)
                         .font(.system(size: 19, weight: .regular))
@@ -405,13 +429,12 @@ struct ToolbarCapsule: View {
                 .accessibilityAddTraits(tool == t ? .isSelected : [])
                 .popover(isPresented: Binding(get: { showToolMenu && tool == t }, set: { if !$0 { showToolMenu = false } }),
                          arrowEdge: .bottom) {
-                    ToolMenu(tool: t, penType: $penType, widthIndex: $widthIndex, color: $color, eraser: $eraser)
+                    ToolMenu(tool: t, penType: $penType, penWidth: $penWidth, color: $color, eraser: $eraser)
                         .presentationCompactAdaptation(.popover)
                 }
-            }
+    }
 
-            sep
-
+    private var colorButtons: some View {
             ForEach(PenColor.allCases, id: \.self) { c in
                 Button {
                     color = c
@@ -428,9 +451,10 @@ struct ToolbarCapsule: View {
                 .accessibilityLabel(c.name)
                 .accessibilityAddTraits(color == c ? .isSelected : [])
             }
+    }
 
-            sep
-
+    @ViewBuilder
+    private var undoRedo: some View {
             Button(action: undo) { Image(systemName: "arrow.uturn.backward").frame(width: 42, height: 46).contentShape(Rectangle()) }
                 .buttonStyle(.plain)
                 .foregroundStyle(canUndo ? Y.ink2 : Y.ink3.opacity(0.45))
@@ -441,12 +465,6 @@ struct ToolbarCapsule: View {
                 .foregroundStyle(canRedo ? Y.ink2 : Y.ink3.opacity(0.45))
                 .disabled(!canRedo)
                 .accessibilityLabel("Yinele")
-        }
-        .font(.system(size: 17))
-        .padding(.horizontal, 8).padding(.vertical, 5)
-        .glass(Capsule())
-        .animation(Y.quick, value: tool)
-        .animation(Y.quick, value: color)
     }
 
     private var sep: some View {
@@ -458,7 +476,7 @@ struct ToolbarCapsule: View {
 struct ToolMenu: View {
     var tool: ToolKind
     @Binding var penType: PenType
-    @Binding var widthIndex: Int
+    @Binding var penWidth: Double
     @Binding var color: PenColor
     @Binding var eraser: EraserSettings
 
@@ -470,27 +488,35 @@ struct ToolMenu: View {
                 }
                 .pickerStyle(.segmented)
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("KALINLIK").font(Y.eyebrow).tracking(0.8).foregroundStyle(Y.ink3)
-                    HStack(spacing: 10) {
-                        ForEach(DocumentView.widths.indices, id: \.self) { i in
-                            Button { widthIndex = i } label: {
-                                VStack(spacing: 4) {
-                                    Circle().fill(color.swatch)
-                                        .frame(width: 4 + DocumentView.widths[i] * 2, height: 4 + DocumentView.widths[i] * 2)
-                                        .frame(width: 44, height: 44)
-                                        .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                            .fill(i == widthIndex ? Y.accentSoft : Y.surface3.opacity(0.6)))
-                                        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                            .strokeBorder(i == widthIndex ? Y.accent : .clear, lineWidth: 2))
-                                    Text(DocumentView.widthLabels[i]).font(.caption2).foregroundStyle(Y.ink3)
-                                }
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("\(DocumentView.widthLabels[i]) milimetre")
-                            .accessibilityAddTraits(i == widthIndex ? .isSelected : [])
-                        }
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text("KALINLIK").font(Y.eyebrow).tracking(0.8).foregroundStyle(Y.ink3)
+                        Spacer()
+                        Text(String(format: "%.1f", penWidth).replacingOccurrences(of: ".", with: ","))
+                            .font(.caption.monospacedDigit()).foregroundStyle(Y.ink2)
                     }
+                    HStack(spacing: 12) {
+                        Circle().fill(color.swatch).frame(width: 4, height: 4).frame(width: 14)
+                        Slider(value: $penWidth, in: DocumentView.penWidthRange)
+                            .tint(Y.accent)
+                            .accessibilityLabel("Kalem kalınlığı")
+                            .accessibilityValue(String(format: "%.1f", penWidth))
+                        Circle().fill(color.swatch).frame(width: 14, height: 14)
+                    }
+                    // Seçilen kalınlıkta canlı çizgi önizlemesi
+                    Canvas { ctx, size in
+                        var path = Path()
+                        path.move(to: CGPoint(x: 18, y: size.height / 2 + 6))
+                        path.addCurve(to: CGPoint(x: size.width - 18, y: size.height / 2 - 6),
+                                      control1: CGPoint(x: size.width * 0.35, y: -6),
+                                      control2: CGPoint(x: size.width * 0.65, y: size.height + 6))
+                        ctx.stroke(path, with: .color(color.swatch),
+                                   style: StrokeStyle(lineWidth: penWidth * penType.widthScale * 0.9, lineCap: .round))
+                    }
+                    .frame(height: 50)
+                    .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Y.surface3.opacity(0.6)))
+                    .animation(.easeOut(duration: 0.12), value: penWidth)
+                    .accessibilityHidden(true)
                 }
 
                 VStack(alignment: .leading, spacing: 8) {

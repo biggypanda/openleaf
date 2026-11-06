@@ -136,11 +136,12 @@ enum PageRenderer {
                     }
                 }
             }
+            UIGraphicsPushContext(cg)
             if let d = try? PKDrawing(data: drawing), !d.strokes.isEmpty {
-                UIGraphicsPushContext(cg)
                 d.image(from: bounds, scale: 2).draw(in: bounds)
-                UIGraphicsPopContext()
             }
+            StickyRenderer.draw(page.stickyNotes, in: cg)
+            UIGraphicsPopContext()
         }
     }
 
