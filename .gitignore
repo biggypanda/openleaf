@@ -1,0 +1,15 @@
+# Xcode derleme çıktıları
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+
+# macOS
+.DS_Store
+
+# Düzenleyici ve gizli dosyalar
+.vscode/
+.idea/
+.env
