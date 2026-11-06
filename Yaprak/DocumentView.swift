@@ -70,11 +70,17 @@ struct EraserSettings: Equatable {
     var mode: EraserMode = .kismi
     /// Silgi çapı (ekran noktası); kaydırma çubuğuyla serbestçe ayarlanır
     var size: Double = 22
-    static let range: ClosedRange<Double> = 6...64
+    /// Boyutu ayarlanabilen kısmi silgi. Düz `.bitmap` genişlik kabul etmiyor (geçerli aralığı 0…0),
+    /// verilen değer en küçük boyuta düşüyordu.
+    static let eraserType = PKEraserTool.EraserType.fixedWidthBitmap
+    /// Kaydırma çubuğu aralığı: PencilKit'in izin verdiği aralık (yaklaşık 16…80)
+    static let range: ClosedRange<Double> = {
+        let v = eraserType.validWidthRange
+        let lo = Double(v.lowerBound.rounded(.up)), hi = Double(v.upperBound.rounded(.down))
+        return lo < hi ? lo...hi : 16...80
+    }()
     var width: CGFloat {
-        // PencilKit'in izin verdiği aralığın dışına çıkma
-        let valid = PKEraserTool.EraserType.bitmap.validWidthRange
-        return min(max(CGFloat(size), valid.lowerBound), valid.upperBound)
+        CGFloat(min(max(size, Self.range.lowerBound), Self.range.upperBound))
     }
 }
 
@@ -301,7 +307,7 @@ struct DocumentView: View {
         case .highlighter:
             return PKInkingTool(.marker, color: UIColor(hex: 0xF3D77A).withAlphaComponent(0.9), width: 22)
         case .eraser:
-            return eraser.mode == .kismi ? PKEraserTool(.bitmap, width: eraser.width) : PKEraserTool(.vector)
+            return eraser.mode == .kismi ? PKEraserTool(EraserSettings.eraserType, width: eraser.width) : PKEraserTool(.vector)
         case .lasso:
             return PKLassoTool()
         }
@@ -544,7 +550,7 @@ struct ToolMenu: View {
                         HStack {
                             Text("BOYUT").font(Y.eyebrow).tracking(0.8).foregroundStyle(Y.ink3)
                             Spacer()
-                            Text("\(Int(eraser.size.rounded())) pt")
+                            Text("\(Int(eraser.width.rounded())) pt")
                                 .font(.caption.monospacedDigit()).foregroundStyle(Y.ink2)
                         }
                         HStack(spacing: 12) {
@@ -552,15 +558,15 @@ struct ToolMenu: View {
                             Slider(value: $eraser.size, in: EraserSettings.range)
                                 .tint(Y.accent)
                                 .accessibilityLabel("Silgi boyutu")
-                                .accessibilityValue("\(Int(eraser.size.rounded())) nokta")
+                                .accessibilityValue("\(Int(eraser.width.rounded())) nokta")
                             Circle().strokeBorder(Y.ink3, lineWidth: 1.5).frame(width: 22, height: 22)
                         }
                         // Silginin gerçek boyutta önizlemesi
                         Circle()
                             .fill(Y.surface)
                             .overlay(Circle().strokeBorder(Y.ink2, lineWidth: 1.5))
-                            .frame(width: eraser.size, height: eraser.size)
-                            .frame(maxWidth: .infinity, minHeight: 72)
+                            .frame(width: eraser.width, height: eraser.width)
+                            .frame(maxWidth: .infinity, minHeight: 92)
                             .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Y.surface3.opacity(0.6)))
                             .animation(.easeOut(duration: 0.12), value: eraser.size)
                             .accessibilityHidden(true)
