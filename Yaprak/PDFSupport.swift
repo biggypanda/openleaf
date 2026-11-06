@@ -3,72 +3,74 @@ import PDFKit
 import PencilKit
 import UniformTypeIdentifiers
 
-// MARK: - PDF dosyaları
+// MARK: - PDF içe aktarma
 
 extension Library {
-    /// İçe aktarılan PDF'ler uygulamanın Belgeler/PDF klasöründe tutulur.
-    static var pdfDirectory: URL {
-        let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("PDF", isDirectory: true)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir
-    }
-
-    static func pdfURL(_ file: String) -> URL { pdfDirectory.appendingPathComponent(file) }
-
     enum ImportError: LocalizedError {
         case unreadable
         var errorDescription: String? { "Bu dosya açılamadı. Bozuk ya da parola korumalı bir PDF olabilir." }
     }
 
-    /// PDF'i uygulama klasörüne kopyalar ve her sayfası için bir not sayfası açar.
+    /// PDF'i yeni defterin klasörüne kopyalar, her sayfası için bir not sayfası açar
+    /// ve metnini aranabilir olsun diye `text.txt` olarak saklar.
     func importPDF(from source: URL) throws -> UUID {
         let scoped = source.startAccessingSecurityScopedResource()
         defer { if scoped { source.stopAccessingSecurityScopedResource() } }
 
-        let file = UUID().uuidString + ".pdf"
-        let dest = Library.pdfURL(file)
-        try FileManager.default.copyItem(at: source, to: dest)
-
+        let id = UUID()
+        store.createDir(id)
+        let dest = store.pdfURL(id)
+        do {
+            try FileManager.default.copyItem(at: source, to: dest)
+        } catch {
+            store.deleteDir(id)
+            throw error
+        }
         guard let doc = PDFDocument(url: dest), !doc.isLocked, doc.pageCount > 0, let first = doc.page(at: 0) else {
-            try? FileManager.default.removeItem(at: dest)
+            store.deleteDir(id)
             throw ImportError.unreadable
         }
+
+        let text = PDFRender.text(of: doc)
+        if !text.isEmpty, let data = text.data(using: .utf8) { store.writeFile(data, to: store.textURL(id)) }
+
         let size = PDFRender.displaySize(of: first)
-        let nb = Notebook(
+        var nb = Notebook(
             title: source.deletingPathExtension().lastPathComponent,
             subtitle: "PDF",
             kind: .pdf,
             cover: .kagit,
             paper: .bos,
             pages: (0..<doc.pageCount).map { Page(pdfPage: $0) },
-            pdfFile: file,
+            pdfFile: "source.pdf",
             pdfAspect: Double(size.height / size.width)
         )
-        return create(nb)
+        nb.id = id
+        create(nb)
+        scheduleThumbnail(id, delay: 0.3)
+        return id
     }
 
-    /// Defteri çoğaltır; PDF'li belgelerde PDF dosyası da kopyalanır (silinince diğeri bozulmasın).
-    func duplicate(_ nb: Notebook) {
-        var copy = nb
-        copy.id = UUID()
-        copy.title += " (kopya)"
-        copy.favorite = false
-        copy.modified = Date()
-        copy.pages = nb.pages.map { Page(data: $0.data, pdfPage: $0.pdfPage) }
-        if let file = nb.pdfFile {
-            let newFile = UUID().uuidString + ".pdf"
-            if (try? FileManager.default.copyItem(at: Library.pdfURL(file), to: Library.pdfURL(newFile))) != nil {
-                copy.pdfFile = newFile
-            }
-        }
-        create(copy)
-    }
+    func pdfURL(_ nb: Notebook) -> URL? { nb.pdfFile != nil ? store.pdfURL(nb.id) : nil }
 }
 
 // MARK: - Çizim yardımcıları
 
 enum PDFRender {
+    /// Aranabilir metin (çok büyük kitaplarda ilk ~400 bin karakter)
+    static func text(of doc: PDFDocument) -> String {
+        var text = ""
+        for i in 0..<doc.pageCount where text.count < 400_000 {
+            if let s = doc.page(at: i)?.string { text += s + "\n" }
+        }
+        return text
+    }
+
+    static func text(of url: URL) -> String {
+        guard let doc = PDFDocument(url: url) else { return "" }
+        return text(of: doc)
+    }
+
     /// Sayfanın döndürme hesaba katılmış görünen boyutu
     static func displaySize(of page: PDFPage) -> CGSize {
         let b = page.bounds(for: .mediaBox)
@@ -107,49 +109,120 @@ enum PDFRender {
     }
 }
 
-// MARK: - Kütüphane küçük resmi
+// MARK: - Sayfa çizimi (küçük resim ve dışa aktarma aynı kodu kullanır)
 
-final class PDFThumbCache {
+enum PageRenderer {
+    /// Bir sayfayı (PDF sayfası veya kâğıt deseni + mürekkep) kanonik boyutta `cg` bağlamına çizer.
+    @MainActor
+    static func draw(_ nb: Notebook, page: Page, drawing: Data, source: PDFDocument?, in cg: CGContext) {
+        let bounds = CGRect(origin: .zero, size: nb.canonicalSize)
+        let light = UITraitCollection(userInterfaceStyle: .light)
+        light.performAsCurrent {
+            if let i = page.pdfPage, let pdfPage = source?.page(at: i) {
+                UIColor.white.setFill(); cg.fill(bounds)
+                PDFRender.draw(pdfPage, in: bounds, context: cg)
+            } else {
+                Y.paperUI.resolvedColor(with: light).setFill(); cg.fill(bounds)
+                if nb.kind == .defter {
+                    PaperPattern.draw(nb.paper, in: bounds, scale: 1) { path, color, width in
+                        cg.addPath(path.cgPath)
+                        cg.setStrokeColor(color.resolvedColor(with: light).cgColor)
+                        cg.setLineWidth(width)
+                        cg.strokePath()
+                    } fill: { path, color in
+                        cg.addPath(path.cgPath)
+                        cg.setFillColor(color.resolvedColor(with: light).cgColor)
+                        cg.fillPath()
+                    }
+                }
+            }
+            if let d = try? PKDrawing(data: drawing), !d.strokes.isEmpty {
+                UIGraphicsPushContext(cg)
+                d.image(from: bounds, scale: 2).draw(in: bounds)
+                UIGraphicsPopContext()
+            }
+        }
+    }
+
+    /// Kütüphane için küçük resim (genişlik 360 piksel). Whiteboard'da çizimin bulunduğu bölge gösterilir.
+    @MainActor
+    static func thumbnail(_ nb: Notebook, page: Page, drawing: Data, pdfURL: URL?) -> UIImage? {
+        let source = pdfURL.flatMap { PDFDocument(url: $0) }
+        let canonical = nb.canonicalSize
+        var focus = CGRect(origin: .zero, size: canonical)
+        if nb.kind == .whiteboard {
+            // Whiteboard: mürekkebin olduğu bölgeyi 3:4 oranında göster
+            if let d = try? PKDrawing(data: drawing), !d.strokes.isEmpty {
+                let b = d.bounds.insetBy(dx: -40, dy: -40)
+                let h = max(b.height, b.width * 4 / 3)
+                focus = CGRect(x: b.midX - h * 3 / 8, y: b.midY - h / 2, width: h * 3 / 4, height: h)
+            } else {
+                return nil
+            }
+        }
+        let width: CGFloat = 360
+        let size = CGSize(width: width, height: width * focus.height / focus.width)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = true
+        let image = UIGraphicsImageRenderer(size: size, format: format).image { ctx in
+            let s = width / focus.width
+            ctx.cgContext.scaleBy(x: s, y: s)
+            ctx.cgContext.translateBy(x: -focus.minX, y: -focus.minY)
+            draw(nb, page: page, drawing: drawing, source: source, in: ctx.cgContext)
+        }
+        return withExtendedLifetime(source) { image }
+    }
+}
+
+final class ThumbCache {
     static let shared = NSCache<NSString, UIImage>()
 }
 
-struct PDFThumb: View {
-    var file: String
+/// Kütüphanedeki PDF ve whiteboard küçük resmi (mürekkepli). Dosya henüz yoksa yer tutucu gösterir.
+struct NotebookThumb: View {
+    var nb: Notebook
+    @Environment(Library.self) private var library
     @State private var image: UIImage?
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 6, style: .continuous)
-            .fill(Color.white)
+        let version = library.thumbVersion[nb.id, default: 0]
+        RoundedRectangle(cornerRadius: nb.kind == .pdf ? 6 : 12, style: .continuous)
+            .fill(nb.kind == .pdf ? Color.white : Y.surface)
             .overlay {
                 if let image {
                     Image(uiImage: image).resizable().scaledToFit()
+                } else if nb.kind == .whiteboard {
+                    WhiteboardThumb(title: nb.title)
                 } else {
                     Image(systemName: "doc.richtext").font(.largeTitle).foregroundStyle(Y.ink3)
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: nb.kind == .pdf ? 6 : 12, style: .continuous))
             .overlay(alignment: .bottomTrailing) {
-                Text("PDF")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(Y.accentInk)
-                    .padding(.horizontal, 6).padding(.vertical, 3)
-                    .background(Y.accent, in: Capsule())
-                    .padding(8)
+                if nb.kind == .pdf {
+                    Text("PDF")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(Y.accentInk)
+                        .padding(.horizontal, 6).padding(.vertical, 3)
+                        .background(Y.accent, in: Capsule())
+                        .padding(8)
+                }
             }
-            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(Y.line, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: nb.kind == .pdf ? 6 : 12, style: .continuous).strokeBorder(Y.line, lineWidth: 1))
             .aspectRatio(3 / 4, contentMode: .fit)
             .shadow(color: .black.opacity(0.08), radius: 6, y: 3)
-            .task(id: file) { image = await Self.load(file) }
+            .task(id: "\(nb.id)-\(version)") { image = await Self.load(library.thumbnailURL(nb.id), version: version) }
     }
 
-    static func load(_ file: String) async -> UIImage? {
-        if let cached = PDFThumbCache.shared.object(forKey: file as NSString) { return cached }
+    static func load(_ url: URL, version: Int) async -> UIImage? {
+        let key = "\(url.path)#\(version)" as NSString
+        if let cached = ThumbCache.shared.object(forKey: key) { return cached }
         let img: UIImage? = await Task.detached(priority: .utility) {
-            // Belge, sayfa çizilene kadar bellekte kalmalı; yoksa küçük resim boş çıkar
-            guard let doc = PDFDocument(url: Library.pdfURL(file)), let page = doc.page(at: 0) else { return nil }
-            return withExtendedLifetime(doc) { page.thumbnail(of: CGSize(width: 360, height: 480), for: .mediaBox) }
+            guard let data = try? Data(contentsOf: url) else { return nil }
+            return UIImage(data: data)
         }.value
-        if let img { PDFThumbCache.shared.setObject(img, forKey: file as NSString) }
+        if let img { ThumbCache.shared.setObject(img, forKey: key) }
         return img
     }
 }
@@ -159,61 +232,35 @@ struct PDFThumb: View {
 enum PDFExporter {
     /// Defteri (kâğıt deseni veya PDF sayfası + mürekkep) tek bir PDF dosyasına yazar.
     @MainActor
-    static func render(_ nb: Notebook) -> URL {
-        let size = nb.canonicalSize
-        let bounds = CGRect(origin: .zero, size: size)
-        let source = nb.pdfFile.flatMap { PDFDocument(url: Library.pdfURL($0)) }
+    static func render(_ nb: Notebook, library: Library) -> URL {
+        let bounds = CGRect(origin: .zero, size: nb.canonicalSize)
+        let source = library.pdfURL(nb).flatMap { PDFDocument(url: $0) }
         let safe = nb.title.components(separatedBy: CharacterSet(charactersIn: "/\\:?%*|\"<>")).joined(separator: "-")
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let url = dir.appendingPathComponent((safe.isEmpty ? "Yaprak" : safe) + ".pdf")
 
-        let meta = [kCGPDFContextCreator as String: "Yaprak", kCGPDFContextTitle as String: nb.title]
         let format = UIGraphicsPDFRendererFormat()
-        format.documentInfo = meta
+        format.documentInfo = [kCGPDFContextCreator as String: "Yaprak", kCGPDFContextTitle as String: nb.title]
         let renderer = UIGraphicsPDFRenderer(bounds: bounds, format: format)
-        let light = UITraitCollection(userInterfaceStyle: .light)
-
         try? renderer.writePDF(to: url) { ctx in
-            light.performAsCurrent {
-                for page in nb.pages {
-                    ctx.beginPage()
-                    let cg = ctx.cgContext
-                    if let i = page.pdfPage, let pdfPage = source?.page(at: i) {
-                        UIColor.white.setFill(); cg.fill(bounds)
-                        PDFRender.draw(pdfPage, in: bounds, context: cg)
-                    } else {
-                        Y.paperUI.resolvedColor(with: light).setFill(); cg.fill(bounds)
-                        if nb.kind == .defter {
-                            PaperPattern.draw(nb.paper, in: bounds, scale: 1) { path, color, width in
-                                cg.addPath(path.cgPath)
-                                cg.setStrokeColor(color.resolvedColor(with: light).cgColor)
-                                cg.setLineWidth(width)
-                                cg.strokePath()
-                            } fill: { path, color in
-                                cg.addPath(path.cgPath)
-                                cg.setFillColor(color.resolvedColor(with: light).cgColor)
-                                cg.fillPath()
-                            }
-                        }
-                    }
-                    if let drawing = try? PKDrawing(data: page.data), !drawing.strokes.isEmpty {
-                        drawing.image(from: bounds, scale: 2).draw(in: bounds)
-                    }
-                }
+            for page in nb.pages {
+                ctx.beginPage()
+                PageRenderer.draw(nb, page: page, drawing: library.drawing(nb.id, page.id), source: source, in: ctx.cgContext)
             }
         }
-        return url
+        return withExtendedLifetime(source) { url }
     }
 }
 
 /// Paylaş menüsüne verilen öğe: PDF, paylaşım seçildiği anda üretilir.
 struct NotebookPDF: Transferable {
     let notebook: Notebook
+    let library: Library
 
     static var transferRepresentation: some TransferRepresentation {
         FileRepresentation(exportedContentType: .pdf) { item in
-            let url = await MainActor.run { PDFExporter.render(item.notebook) }
+            let url = await MainActor.run { PDFExporter.render(item.notebook, library: item.library) }
             return SentTransferredFile(url)
         }
     }

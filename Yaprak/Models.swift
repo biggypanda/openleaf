@@ -71,10 +71,9 @@ enum PaperSize: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-/// Her sayfanın kalıcı kimliği var; kayıt, sayfa sırası değişse de doğru sayfaya yazılır.
+/// Her sayfanın kalıcı kimliği var; mürekkebi defter klasöründe `<id>.drawing` dosyasında durur.
 struct Page: Identifiable, Codable, Equatable {
     var id = UUID()
-    var data = Data()
     /// İçe aktarılmış PDF'teki sayfa numarası (0'dan); boş sayfada nil
     var pdfPage: Int?
 }
@@ -126,7 +125,8 @@ extension Notebook {
         if let p = try? c.decode([Page].self, forKey: .pages) {
             pages = p
         } else {
-            pages = try c.decode([Data].self, forKey: .pages).map { Page(data: $0) }
+            // Çok eski biçim: sayfalar düz veri dizisiydi (çizimler taşıma sırasında ayrıca okunur)
+            pages = try c.decode([Data].self, forKey: .pages).map { _ in Page() }
         }
         if pages.isEmpty { pages = [Page()] }
         favorite = try c.decodeIfPresent(Bool.self, forKey: .favorite) ?? false
@@ -165,24 +165,34 @@ enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
     }
 }
 
+@MainActor
 @Observable
 final class Library {
     var notebooks: [Notebook] = []
+    /// Küçük resim yenilenince artar; görünümler bunu izleyip resmi yeniden yükler
+    var thumbVersion: [UUID: Int] = [:]
 
-    private let url: URL = {
-        let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        return dir.appendingPathComponent("yaprak-kutuphane.json")
-    }()
+    @ObservationIgnored let store: NotebookStore
+    @ObservationIgnored private var drawingCache: [String: Data] = [:]
+    @ObservationIgnored private var textCache: [UUID: String] = [:]
+    @ObservationIgnored private var thumbWork: [UUID: DispatchWorkItem] = [:]
 
-    init() {
-        if let data = try? Data(contentsOf: url),
-           let list = try? JSONDecoder().decode([Notebook].self, from: data) {
+    init(store: NotebookStore = NotebookStore()) {
+        self.store = store
+        if let list = store.loadIndex() {
             notebooks = list
+        } else if let migrated = LegacyMigration.migrate(into: store) {
+            notebooks = migrated
+            save()
+            notebooks.forEach { scheduleThumbnail($0.id, delay: 0.5) }
         } else {
             notebooks = Library.seed
+            notebooks.forEach { store.createDir($0.id) }
             save()
         }
     }
+
+    // MARK: Liste
 
     func items(for section: SidebarSection, sort: SortOrder = .modified) -> [Notebook] {
         let list: [Notebook]
@@ -207,8 +217,30 @@ final class Library {
 
     func index(of id: UUID) -> Int? { notebooks.firstIndex { $0.id == id } }
 
+    /// Başlık, alt başlık ve (PDF'lerde) belge metninde arar.
+    func matches(_ nb: Notebook, _ query: String) -> Bool {
+        if query.isEmpty { return true }
+        if nb.title.localizedStandardContains(query) || nb.subtitle.localizedStandardContains(query) { return true }
+        return nb.kind == .pdf && searchText(nb.id).localizedStandardContains(query)
+    }
+
+    func searchText(_ id: UUID) -> String {
+        if let t = textCache[id] { return t }
+        var t = store.readText(id)
+        // Eski sürümden taşınan PDF'lerde metin dosyası yok: bir kez çıkarıp sakla
+        if t.isEmpty, let nb = notebooks.first(where: { $0.id == id }), let url = pdfURL(nb) {
+            t = PDFRender.text(of: url)
+            if !t.isEmpty, let data = t.data(using: .utf8) { store.writeFile(data, to: store.textURL(id)) }
+        }
+        textCache[id] = t
+        return t
+    }
+
+    // MARK: Defter işlemleri
+
     @discardableResult
     func create(_ nb: Notebook) -> UUID {
+        store.createDir(nb.id)
         notebooks.append(nb)
         save()
         return nb.id
@@ -221,22 +253,100 @@ final class Library {
     }
 
     func deleteForever(_ id: UUID) {
-        if let file = notebooks.first(where: { $0.id == id })?.pdfFile {
-            try? FileManager.default.removeItem(at: Library.pdfURL(file))
-        }
         notebooks.removeAll { $0.id == id }
+        drawingCache = drawingCache.filter { !$0.key.hasPrefix(id.uuidString) }
+        textCache[id] = nil
+        store.deleteDir(id)
         save()
     }
 
-    /// Kayıtlar tek sıralı kuyrukta yazılır; eski bir kayıt yenisinin üstüne yazılamaz.
-    private let saveQueue = DispatchQueue(label: "yaprak.kayit", qos: .utility)
+    /// Defteri tüm sayfaları, PDF'i ve metniyle çoğaltır.
+    func duplicate(_ nb: Notebook) {
+        var copy = nb
+        copy.id = UUID()
+        copy.title += " (kopya)"
+        copy.favorite = false
+        copy.created = Date()
+        copy.modified = Date()
+        store.copyDir(nb.id, to: copy.id)
+        notebooks.append(copy)
+        save()
+        bumpThumb(copy.id)
+    }
 
-    func save() {
-        let list = notebooks
-        let target = url
-        saveQueue.async {
-            if let data = try? JSONEncoder().encode(list) { try? data.write(to: target, options: .atomic) }
+    // MARK: Sayfalar
+
+    private func key(_ id: UUID, _ page: UUID) -> String { id.uuidString + "/" + page.uuidString }
+
+    func drawing(_ id: UUID, _ page: UUID) -> Data {
+        let k = key(id, page)
+        if let d = drawingCache[k] { return d }
+        let d = store.readDrawing(id, page)
+        drawingCache[k] = d
+        return d
+    }
+
+    /// Yalnızca o sayfanın dosyasını yazar; kütüphane dizini sadece tarih için güncellenir.
+    func saveDrawing(_ id: UUID, _ page: UUID, _ data: Data) {
+        // Silinmiş bir sayfanın gecikmeli kaydı dosyayı geri yaratmasın
+        guard let nb = notebooks.first(where: { $0.id == id }), nb.pages.contains(where: { $0.id == page }) else { return }
+        drawingCache[key(id, page)] = data
+        store.writeDrawing(id, page, data)
+        update(id) { $0.modified = Date() }
+        scheduleThumbnail(id)
+    }
+
+    func insertPage(_ id: UUID, at index: Int) {
+        update(id) { nb in
+            nb.pages.insert(Page(), at: min(max(index, 0), nb.pages.count))
+            nb.modified = Date()
         }
+    }
+
+    func deletePage(_ id: UUID, _ page: UUID) {
+        update(id) { nb in
+            nb.pages.removeAll { $0.id == page }
+            if nb.pages.isEmpty { nb.pages = [Page()] }
+            nb.modified = Date()
+        }
+        drawingCache[key(id, page)] = nil
+        store.deleteDrawing(id, page)
+        scheduleThumbnail(id)
+    }
+
+    // MARK: Küçük resim
+
+    func thumbnailURL(_ id: UUID) -> URL { store.thumbURL(id) }
+
+    private func bumpThumb(_ id: UUID) { thumbVersion[id, default: 0] += 1 }
+
+    /// Son değişiklikten kısa süre sonra ilk sayfanın mürekkepli küçük resmini üretir.
+    func scheduleThumbnail(_ id: UUID, delay: TimeInterval = 1.2) {
+        thumbWork[id]?.cancel()
+        let work = DispatchWorkItem { [weak self] in MainActor.assumeIsolated { self?.renderThumbnail(id) } }
+        thumbWork[id] = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+    }
+
+    private func renderThumbnail(_ id: UUID) {
+        guard let nb = notebooks.first(where: { $0.id == id }), let first = nb.pages.first else { return }
+        let image = PageRenderer.thumbnail(nb, page: first, drawing: drawing(id, first.id),
+                                           pdfURL: nb.pdfFile != nil ? store.pdfURL(id) : nil)
+        if let png = image?.pngData() {
+            store.writeFile(png, to: store.thumbURL(id))
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in MainActor.assumeIsolated { self?.bumpThumb(id) } }
+        }
+    }
+
+    // MARK: Kayıt
+
+    func save() { store.writeIndex(notebooks) }
+
+    /// Uygulama arka plana geçerken bekleyen tüm yazmaları bitirir.
+    func flush() {
+        thumbWork.values.forEach { $0.perform() }
+        thumbWork.removeAll()
+        store.flush()
     }
 
     static var seed: [Notebook] {

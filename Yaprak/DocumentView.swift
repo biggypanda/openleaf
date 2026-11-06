@@ -79,7 +79,7 @@ struct DocumentView: View {
             if nb.kind == .pdf && pdfDoc == nil {
                 // PDF açılmadan tuvali kurma; yoksa ilk sayfa boş görünür
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity).background(Y.bg)
-                    .task { pdfDoc = nb.pdfFile.flatMap { PDFDocument(url: Library.pdfURL($0)) } ?? PDFDocument() }
+                    .task { pdfDoc = library.pdfURL(nb).flatMap { PDFDocument(url: $0) } ?? PDFDocument() }
             } else {
                 content(nb)
             }
@@ -102,7 +102,7 @@ struct DocumentView: View {
                 ZStack {
                     CanvasRepresentable(
                         pageID: pageID,
-                        data: nb.pages[p].data,
+                        data: library.drawing(id, pageID),
                         pdfPage: nb.pages[p].pdfPage.flatMap { pdfDoc?.page(at: $0) },
                         paper: nb.paper,
                         canonical: nb.canonicalSize,
@@ -112,11 +112,8 @@ struct DocumentView: View {
                         pencilOnly: pencilOnly,
                         controller: controller,
                         onChange: { pid, data in
-                            library.update(id) { n in
-                                // Sayfa kimliğiyle yaz: araya sayfa eklenip silinse de doğru sayfaya gider
-                                if let i = n.pages.firstIndex(where: { $0.id == pid }) { n.pages[i].data = data }
-                                n.modified = Date()
-                            }
+                            // Sayfa kimliğiyle yaz: araya sayfa eklenip silinse de doğru dosyaya gider
+                            library.saveDrawing(id, pid, data)
                         },
                         onPencilTap: pencilDoubleTap
                     )
@@ -193,7 +190,7 @@ struct DocumentView: View {
                     iconButton("chevron.down", "Sonraki sayfa") { go(p + 1, nb) }.disabled(p >= nb.pages.count - 1)
                     iconButton("doc.badge.plus", "Sayfa ekle") { addPage(after: p) }
                 }
-                ShareLink(item: NotebookPDF(notebook: nb),
+                ShareLink(item: NotebookPDF(notebook: nb, library: library),
                           preview: SharePreview("\(nb.title).pdf", image: Image(systemName: "doc.richtext"))) {
                     Image(systemName: "square.and.arrow.up").font(.system(size: 17)).frame(width: 40, height: 40)
                 }
@@ -294,7 +291,7 @@ struct DocumentView: View {
     }
 
     private func addPage(after p: Int) {
-        library.update(id) { $0.pages.insert(Page(), at: p + 1); $0.modified = Date() }
+        library.insertPage(id, at: p + 1)
         forward = true
         turn(to: p + 1)
     }
@@ -310,9 +307,10 @@ struct DocumentView: View {
     }
 
     private func deletePage(_ p: Int) {
+        guard let nb = library.notebooks.first(where: { $0.id == id }), p < nb.pages.count else { return }
         forward = false
         withAnimation(Y.quick) {
-            library.update(id) { $0.pages.remove(at: p) }
+            library.deletePage(id, nb.pages[p].id)
             page = max(0, p - 1)
         }
     }

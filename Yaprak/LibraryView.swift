@@ -101,9 +101,7 @@ struct LibraryView: View {
     @ViewBuilder
     private var detail: some View {
         let s = section ?? .belgeler
-        let items = library.items(for: s, sort: sort).filter {
-            search.isEmpty || $0.title.localizedStandardContains(search) || $0.subtitle.localizedStandardContains(search)
-        }
+        let items = library.items(for: s, sort: sort).filter { library.matches($0, search) }
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 if s == .belgeler && search.isEmpty && !items.isEmpty {
@@ -181,7 +179,7 @@ struct LibraryView: View {
                 library.update(nb.id) { $0.favorite.toggle() }
             }
             Button("Çoğalt", systemImage: "plus.square.on.square") { library.duplicate(nb) }
-            ShareLink(item: NotebookPDF(notebook: nb),
+            ShareLink(item: NotebookPDF(notebook: nb, library: library),
                       preview: SharePreview("\(nb.title).pdf", image: Image(systemName: "doc.richtext"))) {
                 Label("PDF olarak paylaş", systemImage: "square.and.arrow.up")
             }
@@ -227,8 +225,7 @@ struct DocCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Group {
-                if nb.kind == .whiteboard { WhiteboardThumb(title: nb.title) }
-                else if nb.kind == .pdf, let file = nb.pdfFile { PDFThumb(file: file) }
+                if nb.kind == .whiteboard || nb.kind == .pdf { NotebookThumb(nb: nb) }
                 else { CoverView(style: nb.cover, title: nb.title, subtitle: nb.subtitle) }
             }
             .overlay(alignment: .topTrailing) {

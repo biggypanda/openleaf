@@ -36,14 +36,33 @@ xcodebuild -project Yaprak.xcodeproj -scheme Yaprak -destination 'platform=iOS S
 | --- | --- |
 | `Yaprak/YaprakApp.swift` | Uygulama girişi |
 | `Yaprak/Theme.swift` | Tasarım tokenları (renk, köşe, hareket, cam) |
-| `Yaprak/Models.swift` | Defter, sayfa ve kütüphane verisi; kayıt |
+| `Yaprak/Models.swift` | Defter ve sayfa modeli, kütüphane (arayüz durumu) |
+| `Yaprak/Storage.swift` | Yerel dosya deposu ve eski kayıtların taşınması |
 | `Yaprak/LibraryView.swift` | Kütüphane ekranı |
 | `Yaprak/NewNotebookSheet.swift` | Yeni defter penceresi |
 | `Yaprak/DocumentView.swift` | Not alma ekranı ve araç çubuğu |
 | `Yaprak/Canvas.swift` | PencilKit tuvali ve kâğıt desenleri |
 | `Yaprak/CoverView.swift` | Kapaklar ve logo |
-| `Yaprak/PDFSupport.swift` | PDF içe aktarma, küçük resim, dışa aktarma |
+| `Yaprak/PDFSupport.swift` | PDF içe aktarma, sayfa çizimi, küçük resim, dışa aktarma |
 | `Yaprak-Info.plist` | PDF belge türü kaydı |
+
+## Veri nasıl saklanır
+
+Her şey cihazda, uygulamanın Belgeler klasöründe durur; sunucu yoktur.
+
+```
+Yaprak/
+  index.json                kütüphane dizini (defter bilgileri, sayfa listeleri)
+  Defterler/<defter-id>/
+    <sayfa-id>.drawing      her sayfanın mürekkebi (PencilKit)
+    source.pdf              içe aktarılan PDF
+    text.txt                PDF'in aranabilir metni
+    thumb.png               mürekkepli küçük resim
+```
+
+Bir çizgi çizildiğinde yalnızca o sayfanın dosyası yazılır. Yazmalar tek sıralı kuyrukta ve atomik
+yapılır; uygulama arka plana geçerken bekleyen kayıtlar tamamlanır. İlk sürümün tek dosyalık kaydı
+(`yaprak-kutuphane.json`) ilk açılışta otomatik taşınır ve `yaprak-kutuphane.eski.json` olarak saklanır.
 
 ## Lisans
 
