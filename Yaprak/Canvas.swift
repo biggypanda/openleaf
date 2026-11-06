@@ -233,6 +233,8 @@ struct CanvasRepresentable: UIViewRepresentable {
     var controller: CanvasController
     var onChange: (UUID, Data) -> Void
     var onPencilTap: () -> Void
+    /// İki parmakla yatay kaydırma: +1 sonraki sayfa (sola kaydırma), -1 önceki sayfa (sağa kaydırma)
+    var onPageSwipe: ((Int) -> Void)? = nil
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -279,6 +281,16 @@ struct CanvasRepresentable: UIViewRepresentable {
         hover.delegate = context.coordinator
         c.addGestureRecognizer(hover)
         c.cursorDiameter = eraserCursor
+
+        // İki parmakla sola/sağa kaydırınca sayfa değişir. Tek parmak ve kalem çizmeye,
+        // iki parmakla dikey kaydırma sayfayı kaydırmaya devam eder.
+        for direction in [UISwipeGestureRecognizer.Direction.left, .right] {
+            let swipe = UISwipeGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.pageSwipe(_:)))
+            swipe.direction = direction
+            swipe.numberOfTouchesRequired = 2
+            swipe.delegate = context.coordinator
+            c.addGestureRecognizer(swipe)
+        }
         controller.canvas = c
         return c
     }
@@ -347,6 +359,11 @@ struct CanvasRepresentable: UIViewRepresentable {
             }
         }
 
+        @objc func pageSwipe(_ g: UISwipeGestureRecognizer) {
+            guard g.state == .ended else { return }
+            parent.onPageSwipe?(g.direction == .left ? 1 : -1)
+        }
+
         @objc func hover(_ g: UIHoverGestureRecognizer) {
             guard let c = g.view as? YaprakCanvas else { return }
             switch g.state {
@@ -359,6 +376,7 @@ struct CanvasRepresentable: UIViewRepresentable {
 
         /// "Yalnızca Pencil ile çiz" açıkken parmakla kaydırırken imleç çıkmasın
         func gestureRecognizer(_ g: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+            if g is UISwipeGestureRecognizer { return touch.type == .direct }
             guard let c = g.view as? PKCanvasView else { return true }
             return !(c.drawingPolicy == .pencilOnly && touch.type == .direct)
         }

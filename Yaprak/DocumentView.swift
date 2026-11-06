@@ -68,16 +68,22 @@ enum EraserMode: String, CaseIterable, Identifiable {
 
 struct EraserSettings: Equatable {
     var mode: EraserMode = .kismi
-    var sizeIndex = 1
-    static let sizes: [CGFloat] = [10, 22, 40]
-    static let labels = ["Küçük", "Orta", "Büyük"]
-    var width: CGFloat { Self.sizes[sizeIndex] }
+    /// Silgi çapı (ekran noktası); kaydırma çubuğuyla serbestçe ayarlanır
+    var size: Double = 22
+    static let range: ClosedRange<Double> = 6...64
+    var width: CGFloat {
+        // PencilKit'in izin verdiği aralığın dışına çıkma
+        let valid = PKEraserTool.EraserType.bitmap.validWidthRange
+        return min(max(CGFloat(size), valid.lowerBound), valid.upperBound)
+    }
 }
 
 struct DocumentView: View {
     let id: UUID
     @Environment(Library.self) private var library
-    @Environment(\.dismiss) private var dismiss
+    /// Belgeyi kapatıp kütüphaneye döner
+    var onClose: () -> Void = {}
+    private func dismiss() { onClose() }
 
     @State private var page = 0
     @State private var forward = true
@@ -86,7 +92,13 @@ struct DocumentView: View {
     @AppStorage("kalem.renk") private var color: PenColor = .ink
     @AppStorage("kalem.tur") private var penType: PenType = .tukenmez
     @AppStorage("kalem.kalinlik") private var widthIndex = 1
-    @State private var eraser = EraserSettings()
+    @AppStorage("silgi.tur") private var eraserMode: EraserMode = .kismi
+    @AppStorage("silgi.boyut") private var eraserSize: Double = 22
+    private var eraser: EraserSettings { EraserSettings(mode: eraserMode, size: eraserSize) }
+    private var eraserBinding: Binding<EraserSettings> {
+        Binding(get: { EraserSettings(mode: eraserMode, size: eraserSize) },
+                set: { eraserMode = $0.mode; eraserSize = $0.size })
+    }
     @State private var showToolMenu = false
     @State private var focus = false
     @State private var pencilOnly = false
@@ -142,11 +154,14 @@ struct DocumentView: View {
                             // Sayfa kimliğiyle yaz: araya sayfa eklenip silinse de doğru dosyaya gider
                             library.saveDrawing(id, pid, data)
                         },
-                        onPencilTap: pencilDoubleTap
+                        onPencilTap: pencilDoubleTap,
+                        onPageSwipe: nb.isPaged ? { step in go(p + step, nb) } : nil
                     )
-                    // Sayfa çevirme: içerik değişirken kısa bir kayma ve solma
-                    .offset(x: flip)
-                    .opacity(1 - min(abs(flip) / 40, 1))
+                    // Sayfa çevirme: tuvalin üstünde kısa bir solma. Tuvali kaydırmak PencilKit'in
+                    // ekran dışına çıkan kısmı yeniden çizmemesine (sayfanın yarısının boş görünmesine) yol açıyordu.
+                    .overlay {
+                        Y.bg.opacity(min(abs(flip) / 40, 1)).allowsHitTesting(false)
+                    }
                 }
                 .clipped()
                 .ignoresSafeArea(edges: .bottom)
@@ -154,7 +169,7 @@ struct DocumentView: View {
 
             if !focus {
                 ToolbarCapsule(tool: $tool, color: $color, showToolMenu: $showToolMenu,
-                               penType: $penType, widthIndex: $widthIndex, eraser: $eraser,
+                               penType: $penType, widthIndex: $widthIndex, eraser: eraserBinding,
                                canUndo: controller.canUndo, canRedo: controller.canRedo,
                                undo: controller.undo, redo: controller.redo,
                                select: select)
@@ -499,28 +514,30 @@ struct ToolMenu: View {
                 .pickerStyle(.segmented)
 
                 if eraser.mode == .kismi {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("BOYUT").font(Y.eyebrow).tracking(0.8).foregroundStyle(Y.ink3)
-                        HStack(spacing: 10) {
-                            ForEach(EraserSettings.sizes.indices, id: \.self) { i in
-                                Button { eraser.sizeIndex = i } label: {
-                                    VStack(spacing: 4) {
-                                        Circle()
-                                            .strokeBorder(Y.ink2, lineWidth: 1.5)
-                                            .frame(width: EraserSettings.sizes[i] * 0.9, height: EraserSettings.sizes[i] * 0.9)
-                                            .frame(width: 56, height: 50)
-                                            .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                                .fill(i == eraser.sizeIndex ? Y.accentSoft : Y.surface3.opacity(0.6)))
-                                            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                                .strokeBorder(i == eraser.sizeIndex ? Y.accent : .clear, lineWidth: 2))
-                                        Text(EraserSettings.labels[i]).font(.caption2).foregroundStyle(Y.ink3)
-                                    }
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel("\(EraserSettings.labels[i]) silgi")
-                                .accessibilityAddTraits(i == eraser.sizeIndex ? .isSelected : [])
-                            }
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("BOYUT").font(Y.eyebrow).tracking(0.8).foregroundStyle(Y.ink3)
+                            Spacer()
+                            Text("\(Int(eraser.size.rounded())) pt")
+                                .font(.caption.monospacedDigit()).foregroundStyle(Y.ink2)
                         }
+                        HStack(spacing: 12) {
+                            Circle().strokeBorder(Y.ink3, lineWidth: 1.5).frame(width: 8, height: 8)
+                            Slider(value: $eraser.size, in: EraserSettings.range)
+                                .tint(Y.accent)
+                                .accessibilityLabel("Silgi boyutu")
+                                .accessibilityValue("\(Int(eraser.size.rounded())) nokta")
+                            Circle().strokeBorder(Y.ink3, lineWidth: 1.5).frame(width: 22, height: 22)
+                        }
+                        // Silginin gerçek boyutta önizlemesi
+                        Circle()
+                            .fill(Y.surface)
+                            .overlay(Circle().strokeBorder(Y.ink2, lineWidth: 1.5))
+                            .frame(width: eraser.size, height: eraser.size)
+                            .frame(maxWidth: .infinity, minHeight: 72)
+                            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Y.surface3.opacity(0.6)))
+                            .animation(.easeOut(duration: 0.12), value: eraser.size)
+                            .accessibilityHidden(true)
                     }
                     Text("Sadece dairenin değdiği yer silinir.")
                         .font(.footnote).foregroundStyle(Y.ink2)

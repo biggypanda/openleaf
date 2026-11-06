@@ -13,20 +13,29 @@ struct LibraryView: View {
     @State private var importError: String?
     @AppStorage("siralama") private var sort: SortOrder = .modified
     @State private var columns = NavigationSplitViewVisibility.all
-    @Namespace private var zoom
 
     var body: some View {
-        NavigationSplitView(columnVisibility: $columns) {
-            sidebar
-        } detail: {
-            NavigationStack {
-                detail
+        ZStack {
+            NavigationSplitView(columnVisibility: $columns) {
+                sidebar
+            } detail: {
+                NavigationStack {
+                    detail
+                }
+            }
+
+            // Belge kütüphanenin üstünde açılır. Sistem geçişleri (yakınlaştırma, tam ekran) iki parmak
+            // hareketlerini "kapat" sayıp yazarken belgeyi kapatabiliyordu; burada çıkış yalnızca düğmeyle.
+            if let doc = openDoc {
+                DocumentView(id: doc.id, onClose: { openDoc = nil })
+                    .id(doc.id)
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.92).combined(with: .opacity),
+                        removal: .scale(scale: 0.96).combined(with: .opacity)))
+                    .zIndex(1)
             }
         }
-        .fullScreenCover(item: $openDoc) { doc in
-            DocumentView(id: doc.id)
-                .navigationTransition(.zoom(sourceID: doc.id, in: zoom))
-        }
+        .animation(Y.springSoft, value: openDoc)
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.pdf]) { result in
             switch result {
             case .success(let url):
@@ -115,7 +124,6 @@ struct LibraryView: View {
                               alignment: .leading, spacing: 30) {
                         ForEach(items) { nb in
                             DocCard(nb: nb)
-                                .matchedTransitionSource(id: nb.id, in: zoom)
                                 .onTapGesture { if !nb.trashed { openDoc = OpenDoc(id: nb.id) } }
                                 .contextMenu { menu(for: nb) }
                         }
