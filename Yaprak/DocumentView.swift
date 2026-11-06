@@ -49,6 +49,21 @@ enum PenType: String, CaseIterable, Identifiable {
     }
 }
 
+/// Silgi: kısmi (gerçek silgi gibi, dairenin değdiği yer) ya da bütün çizgi.
+enum EraserMode: String, CaseIterable, Identifiable {
+    case kismi, butun
+    var id: String { rawValue }
+    var name: String { self == .kismi ? "Kısmi" : "Bütün çizgi" }
+}
+
+struct EraserSettings: Equatable {
+    var mode: EraserMode = .kismi
+    var sizeIndex = 1
+    static let sizes: [CGFloat] = [10, 22, 40]
+    static let labels = ["Küçük", "Orta", "Büyük"]
+    var width: CGFloat { Self.sizes[sizeIndex] }
+}
+
 struct DocumentView: View {
     let id: UUID
     @Environment(Library.self) private var library
@@ -61,6 +76,7 @@ struct DocumentView: View {
     @State private var color: PenColor = .ink
     @State private var penType: PenType = .dolma
     @State private var widthIndex = 1
+    @State private var eraser = EraserSettings()
     @State private var showToolMenu = false
     @State private var focus = false
     @State private var pencilOnly = false
@@ -109,6 +125,7 @@ struct DocumentView: View {
                         isWhiteboard: nb.kind == .whiteboard,
                         isPDF: nb.kind == .pdf,
                         tool: pkTool,
+                        eraserCursor: tool == .eraser && eraser.mode == .kismi ? eraser.width : nil,
                         pencilOnly: pencilOnly,
                         controller: controller,
                         onChange: { pid, data in
@@ -127,7 +144,7 @@ struct DocumentView: View {
 
             if !focus {
                 ToolbarCapsule(tool: $tool, color: $color, showToolMenu: $showToolMenu,
-                               penType: $penType, widthIndex: $widthIndex,
+                               penType: $penType, widthIndex: $widthIndex, eraser: $eraser,
                                undo: controller.undo, redo: controller.redo,
                                select: select)
                     .padding(.bottom, 18)
@@ -260,14 +277,14 @@ struct DocumentView: View {
         case .highlighter:
             return PKInkingTool(.marker, color: UIColor(hex: 0xF3D77A).withAlphaComponent(0.9), width: 22)
         case .eraser:
-            return PKEraserTool(.vector)
+            return eraser.mode == .kismi ? PKEraserTool(.bitmap, width: eraser.width) : PKEraserTool(.vector)
         case .lasso:
             return PKLassoTool()
         }
     }
 
     private func select(_ t: ToolKind) {
-        if t == tool, t == .pen || t == .highlighter {
+        if t == tool, t != .lasso {
             showToolMenu.toggle()
         } else {
             withAnimation(Y.quick) { tool = t }
@@ -340,6 +357,7 @@ struct ToolbarCapsule: View {
     @Binding var showToolMenu: Bool
     @Binding var penType: PenType
     @Binding var widthIndex: Int
+    @Binding var eraser: EraserSettings
     var undo: () -> Void
     var redo: () -> Void
     var select: (ToolKind) -> Void
@@ -359,7 +377,7 @@ struct ToolbarCapsule: View {
                 .accessibilityAddTraits(tool == t ? .isSelected : [])
                 .popover(isPresented: Binding(get: { showToolMenu && tool == t }, set: { if !$0 { showToolMenu = false } }),
                          arrowEdge: .bottom) {
-                    ToolMenu(tool: t, penType: $penType, widthIndex: $widthIndex, color: $color)
+                    ToolMenu(tool: t, penType: $penType, widthIndex: $widthIndex, color: $color, eraser: $eraser)
                         .presentationCompactAdaptation(.popover)
                 }
             }
@@ -408,6 +426,7 @@ struct ToolMenu: View {
     @Binding var penType: PenType
     @Binding var widthIndex: Int
     @Binding var color: PenColor
+    @Binding var eraser: EraserSettings
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -453,6 +472,42 @@ struct ToolMenu: View {
                             .accessibilityLabel(c.name)
                         }
                     }
+                }
+            } else if tool == .eraser {
+                Picker("Silgi türü", selection: $eraser.mode) {
+                    ForEach(EraserMode.allCases) { Text($0.name).tag($0) }
+                }
+                .pickerStyle(.segmented)
+
+                if eraser.mode == .kismi {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("BOYUT").font(Y.eyebrow).tracking(0.8).foregroundStyle(Y.ink3)
+                        HStack(spacing: 10) {
+                            ForEach(EraserSettings.sizes.indices, id: \.self) { i in
+                                Button { eraser.sizeIndex = i } label: {
+                                    VStack(spacing: 4) {
+                                        Circle()
+                                            .strokeBorder(Y.ink2, lineWidth: 1.5)
+                                            .frame(width: EraserSettings.sizes[i] * 0.9, height: EraserSettings.sizes[i] * 0.9)
+                                            .frame(width: 56, height: 50)
+                                            .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                .fill(i == eraser.sizeIndex ? Y.accentSoft : Y.surface3.opacity(0.6)))
+                                            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                .strokeBorder(i == eraser.sizeIndex ? Y.accent : .clear, lineWidth: 2))
+                                        Text(EraserSettings.labels[i]).font(.caption2).foregroundStyle(Y.ink3)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("\(EraserSettings.labels[i]) silgi")
+                                .accessibilityAddTraits(i == eraser.sizeIndex ? .isSelected : [])
+                            }
+                        }
+                    }
+                    Text("Sadece dairenin değdiği yer silinir.")
+                        .font(.footnote).foregroundStyle(Y.ink2)
+                } else {
+                    Text("Dokunulan çizginin tamamı silinir.")
+                        .font(.footnote).foregroundStyle(Y.ink2)
                 }
             } else {
                 Label("Vurgulayıcı", systemImage: "highlighter").font(.headline)

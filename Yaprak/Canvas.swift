@@ -115,6 +115,36 @@ final class YaprakCanvas: PKCanvasView {
     private(set) var mapping = CGAffineTransform.identity
     var onLayoutChange: (() -> Void)?
 
+    // MARK: Silgi imleci
+
+    /// Kısmi silgi seçiliyken dairenin çapı (ekran noktası); nil ise imleç gösterilmez
+    var cursorDiameter: CGFloat? {
+        didSet { if cursorDiameter == nil { hideCursor() } else if !cursor.isHidden { showCursor(at: cursor.center) } }
+    }
+
+    private let cursor: UIView = {
+        let v = UIView()
+        v.isUserInteractionEnabled = false
+        v.isHidden = true
+        v.layer.borderWidth = 1.5
+        v.layer.zPosition = 1000
+        return v
+    }()
+
+    func showCursor(at point: CGPoint) {
+        guard let d = cursorDiameter else { hideCursor(); return }
+        if cursor.superview == nil { addSubview(cursor) }
+        bringSubviewToFront(cursor)
+        cursor.bounds = CGRect(x: 0, y: 0, width: d, height: d)
+        cursor.layer.cornerRadius = d / 2
+        cursor.layer.borderColor = UIColor.dyn(0x5A5F58, 0xB1AC9F).resolvedColor(with: traitCollection).cgColor
+        cursor.backgroundColor = UIColor.dyn(0xFFFFFF, 0x26241F, 0.45, 0.45).resolvedColor(with: traitCollection)
+        cursor.center = point
+        cursor.isHidden = false
+    }
+
+    func hideCursor() { cursor.isHidden = true }
+
     func pageRect(forWidth w: CGFloat) -> CGRect {
         if isWhiteboard { return CGRect(origin: .zero, size: canonical) }
         let pw = min(w - 48, 880)
@@ -174,6 +204,7 @@ struct CanvasRepresentable: UIViewRepresentable {
     var isWhiteboard: Bool
     var isPDF = false
     var tool: PKTool
+    var eraserCursor: CGFloat? = nil
     var pencilOnly: Bool
     var controller: CanvasController
     var onChange: (UUID, Data) -> Void
@@ -209,6 +240,21 @@ struct CanvasRepresentable: UIViewRepresentable {
         }
         let pencil = UIPencilInteraction(delegate: context.coordinator)
         c.addInteraction(pencil)
+
+        // Silgi imleci: dokunurken ve Pencil ekrana yaklaşınca kalemin ucunu takip eder.
+        // Dokunuşları yutmaz, PencilKit'in çizimiyle aynı anda çalışır.
+        let track = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.track(_:)))
+        track.minimumPressDuration = 0
+        track.allowableMovement = .greatestFiniteMagnitude
+        track.cancelsTouchesInView = false
+        track.delaysTouchesBegan = false
+        track.delaysTouchesEnded = false
+        track.delegate = context.coordinator
+        c.addGestureRecognizer(track)
+        let hover = UIHoverGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.hover(_:)))
+        hover.delegate = context.coordinator
+        c.addGestureRecognizer(hover)
+        c.cursorDiameter = eraserCursor
         controller.canvas = c
         return c
     }
@@ -228,6 +274,7 @@ struct CanvasRepresentable: UIViewRepresentable {
             c.setContentOffset(CGPoint(x: -c.adjustedContentInset.left, y: -c.adjustedContentInset.top), animated: false)
         }
         c.tool = tool
+        c.cursorDiameter = eraserCursor
         c.drawingPolicy = pencilOnly ? .pencilOnly : .anyInput
         controller.canvas = c
     }
@@ -238,7 +285,7 @@ struct CanvasRepresentable: UIViewRepresentable {
         c.undoManager?.removeAllActions()
     }
 
-    final class Coordinator: NSObject, PKCanvasViewDelegate, UIPencilInteractionDelegate {
+    final class Coordinator: NSObject, PKCanvasViewDelegate, UIPencilInteractionDelegate, UIGestureRecognizerDelegate {
         var parent: CanvasRepresentable
         var loaded = false
         var suppress = false
@@ -263,6 +310,30 @@ struct CanvasRepresentable: UIViewRepresentable {
             guard work != nil, loaded, let pid = pageID else { return }
             work?.cancel(); work = nil
             parent.onChange(pid, c.canonicalData)
+        }
+
+        @objc func track(_ g: UILongPressGestureRecognizer) {
+            guard let c = g.view as? YaprakCanvas else { return }
+            switch g.state {
+            case .began, .changed: c.showCursor(at: g.location(in: c))
+            default: c.hideCursor()
+            }
+        }
+
+        @objc func hover(_ g: UIHoverGestureRecognizer) {
+            guard let c = g.view as? YaprakCanvas else { return }
+            switch g.state {
+            case .began, .changed: c.showCursor(at: g.location(in: c))
+            default: c.hideCursor()
+            }
+        }
+
+        func gestureRecognizer(_ g: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool { true }
+
+        /// "Yalnızca Pencil ile çiz" açıkken parmakla kaydırırken imleç çıkmasın
+        func gestureRecognizer(_ g: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+            guard let c = g.view as? PKCanvasView else { return true }
+            return !(c.drawingPolicy == .pencilOnly && touch.type == .direct)
         }
 
         func pencilInteraction(_ interaction: UIPencilInteraction, didReceiveTap tap: UIPencilInteraction.Tap) {
