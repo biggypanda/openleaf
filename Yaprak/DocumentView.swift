@@ -31,20 +31,30 @@ enum ToolKind: String, CaseIterable {
 }
 
 enum PenType: String, CaseIterable, Identifiable {
-    case dolma, tukenmez, firca
+    case tukenmez, dolma, kursun, firca
     var id: String { rawValue }
     var name: String {
         switch self {
-        case .dolma: "Dolma"
         case .tukenmez: "Tükenmez"
+        case .dolma: "Dolma"
+        case .kursun: "Kurşun"
         case .firca: "Fırça"
         }
     }
     var ink: PKInk.InkType {
         switch self {
-        case .dolma: .fountainPen
         case .tukenmez: .pen
+        case .dolma: .fountainPen
+        case .kursun: .pencil
         case .firca: .watercolor
+        }
+    }
+    /// Aynı "0,4" seçimi her kalemde benzer kalınlıkta görünsün: kurşun ve fırça doğal olarak daha ince çizer
+    var widthScale: CGFloat {
+        switch self {
+        case .tukenmez, .dolma: 1
+        case .kursun: 2.4
+        case .firca: 2
         }
     }
 }
@@ -73,9 +83,9 @@ struct DocumentView: View {
     @State private var forward = true
     @State private var tool: ToolKind = .pen
     @State private var lastInkTool: ToolKind = .pen
-    @State private var color: PenColor = .ink
-    @State private var penType: PenType = .dolma
-    @State private var widthIndex = 1
+    @AppStorage("kalem.renk") private var color: PenColor = .ink
+    @AppStorage("kalem.tur") private var penType: PenType = .tukenmez
+    @AppStorage("kalem.kalinlik") private var widthIndex = 1
     @State private var eraser = EraserSettings()
     @State private var showToolMenu = false
     @State private var focus = false
@@ -145,6 +155,7 @@ struct DocumentView: View {
             if !focus {
                 ToolbarCapsule(tool: $tool, color: $color, showToolMenu: $showToolMenu,
                                penType: $penType, widthIndex: $widthIndex, eraser: $eraser,
+                               canUndo: controller.canUndo, canRedo: controller.canRedo,
                                undo: controller.undo, redo: controller.redo,
                                select: select)
                     .padding(.bottom, 18)
@@ -273,7 +284,7 @@ struct DocumentView: View {
     private var pkTool: PKTool {
         switch tool {
         case .pen:
-            return PKInkingTool(penType.ink, color: color.ui, width: Self.widths[widthIndex])
+            return PKInkingTool(penType.ink, color: color.ui, width: Self.widths[widthIndex] * penType.widthScale)
         case .highlighter:
             return PKInkingTool(.marker, color: UIColor(hex: 0xF3D77A).withAlphaComponent(0.9), width: 22)
         case .eraser:
@@ -358,6 +369,8 @@ struct ToolbarCapsule: View {
     @Binding var penType: PenType
     @Binding var widthIndex: Int
     @Binding var eraser: EraserSettings
+    var canUndo: Bool
+    var canRedo: Bool
     var undo: () -> Void
     var redo: () -> Void
     var select: (ToolKind) -> Void
@@ -403,10 +416,16 @@ struct ToolbarCapsule: View {
 
             sep
 
-            Button(action: undo) { Image(systemName: "arrow.uturn.backward").frame(width: 42, height: 46) }
-                .buttonStyle(.plain).foregroundStyle(Y.ink2).accessibilityLabel("Geri al")
-            Button(action: redo) { Image(systemName: "arrow.uturn.forward").frame(width: 42, height: 46) }
-                .buttonStyle(.plain).foregroundStyle(Y.ink2).accessibilityLabel("Yinele")
+            Button(action: undo) { Image(systemName: "arrow.uturn.backward").frame(width: 42, height: 46).contentShape(Rectangle()) }
+                .buttonStyle(.plain)
+                .foregroundStyle(canUndo ? Y.ink2 : Y.ink3.opacity(0.45))
+                .disabled(!canUndo)
+                .accessibilityLabel("Geri al")
+            Button(action: redo) { Image(systemName: "arrow.uturn.forward").frame(width: 42, height: 46).contentShape(Rectangle()) }
+                .buttonStyle(.plain)
+                .foregroundStyle(canRedo ? Y.ink2 : Y.ink3.opacity(0.45))
+                .disabled(!canRedo)
+                .accessibilityLabel("Yinele")
         }
         .font(.system(size: 17))
         .padding(.horizontal, 8).padding(.vertical, 5)
@@ -516,7 +535,7 @@ struct ToolMenu: View {
             }
         }
         .padding(18)
-        .frame(width: 290)
+        .frame(width: 350)
     }
 }
 

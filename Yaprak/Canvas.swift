@@ -115,6 +115,11 @@ final class YaprakCanvas: PKCanvasView {
     private(set) var mapping = CGAffineTransform.identity
     var onLayoutChange: (() -> Void)?
 
+    /// Tuvalin kendi geri alma yöneticisi: PencilKit adımları, araç çubuğu düğmeleri ve ⌘Z
+    /// aynı yere bakar (pencerenin genel yöneticisine güvenmek düğmeleri boşa çıkarıyordu).
+    private let ownUndo = UndoManager()
+    override var undoManager: UndoManager? { ownUndo }
+
     // MARK: Silgi imleci
 
     /// Kısmi silgi seçiliyken dairenin çapı (ekran noktası); nil ise imleç gösterilmez
@@ -190,8 +195,27 @@ final class YaprakCanvas: PKCanvasView {
 @Observable
 final class CanvasController {
     weak var canvas: YaprakCanvas?
-    func undo() { canvas?.undoManager?.undo() }
-    func redo() { canvas?.undoManager?.redo() }
+    var canUndo = false
+    var canRedo = false
+
+    func undo() {
+        guard let u = canvas?.undoManager, u.canUndo else { return }
+        u.undo()
+        refresh()
+    }
+
+    func redo() {
+        guard let u = canvas?.undoManager, u.canRedo else { return }
+        u.redo()
+        refresh()
+    }
+
+    /// Düğmelerin etkin/pasif durumunu günceller
+    func refresh() {
+        let u = canvas?.undoManager
+        if canUndo != (u?.canUndo ?? false) { canUndo = u?.canUndo ?? false }
+        if canRedo != (u?.canRedo ?? false) { canRedo = u?.canRedo ?? false }
+    }
 }
 
 /// Tek bir tuval; sayfa değişince içerik değiştirilir (eski sayfanın tuvali dokunmaları çalmasın diye).
@@ -271,6 +295,7 @@ struct CanvasRepresentable: UIViewRepresentable {
             c.load(data)
             c.undoManager?.removeAllActions()
             coord.suppress = false
+            DispatchQueue.main.async { [weak controller] in controller?.refresh() }
             c.setContentOffset(CGPoint(x: -c.adjustedContentInset.left, y: -c.adjustedContentInset.top), animated: false)
         }
         c.tool = tool
@@ -295,6 +320,8 @@ struct CanvasRepresentable: UIViewRepresentable {
         init(_ p: CanvasRepresentable) { parent = p }
 
         func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
+            // Geri al adımı çizgi bitince kaydedilir; durumu bir tur sonra oku
+            DispatchQueue.main.async { [weak self] in self?.parent.controller.refresh() }
             guard loaded, !suppress, let c = canvasView as? YaprakCanvas, let pid = pageID else { return }
             work?.cancel()
             let item = DispatchWorkItem { [weak self, weak c] in
