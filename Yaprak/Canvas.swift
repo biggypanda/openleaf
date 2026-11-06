@@ -188,6 +188,8 @@ final class YaprakCanvas: PKCanvasView {
         let v = StickyNoteView(note: note)
         v.onChange = { [weak self] _ in self?.notesChanged() }
         v.onMoveEnded = { [weak self] v in self?.finishMove(v) }
+        v.setTool(tool)
+        v.ink.undoProvider = { [weak self] in self?.undoManager }
         v.onDelete = { [weak self] v in
             guard let self else { return }
             UIView.animate(withDuration: 0.18, animations: {
@@ -214,6 +216,8 @@ final class YaprakCanvas: PKCanvasView {
     /// Sürüklenen notun yeni yerini kanonik koordinata çevirir ve sayfanın içinde tutar
     private func finishMove(_ v: StickyNoteView) {
         var f = v.frame.applying(mapping.inverted())
+        f.size.width = min(max(f.width, StickyNote.minSize.width), canonical.width)
+        f.size.height = min(max(f.height, StickyNote.minSize.height), canonical.height)
         f.origin.x = min(max(f.minX, 0), canonical.width - f.width)
         f.origin.y = min(max(f.minY, 0), canonical.height - f.height)
         v.note.frame = f
@@ -222,6 +226,12 @@ final class YaprakCanvas: PKCanvasView {
     }
 
     private func notesChanged() { onNotesChange?(noteViews.map(\.note)) }
+
+    /// Seçili aracı hem sayfaya hem notların kalem katmanına uygular
+    func applyTool(_ t: PKTool) {
+        tool = t
+        noteViews.forEach { $0.setTool(t) }
+    }
 
     /// Notun üstünde çizim başlamasın; basılı tutma ve sürükleme nota gitsin
     override func gestureRecognizerShouldBegin(_ g: UIGestureRecognizer) -> Bool {
@@ -411,7 +421,7 @@ struct CanvasRepresentable: UIViewRepresentable {
         c.showsVerticalScrollIndicator = true
         c.minimumZoomScale = 1
         c.maximumZoomScale = 1
-        c.tool = tool
+        c.applyTool(tool)
         c.drawingPolicy = pencilOnly ? .pencilOnly : .anyInput
         c.delegate = context.coordinator
         context.coordinator.pageID = pageID
@@ -420,6 +430,8 @@ struct CanvasRepresentable: UIViewRepresentable {
         c.onNotesChange = { [weak coord = context.coordinator] list in
             guard let coord, let pid = coord.pageID else { return }
             coord.parent.onNotesChange?(pid, list)
+            // Not mürekkebi geri alınabilir: düğmelerin durumunu güncelle
+            DispatchQueue.main.async { [weak coord] in coord?.parent.controller.refresh() }
         }
         c.onLayoutChange = { [weak c, weak coord = context.coordinator] in
             guard let c, let coord, !coord.loaded else { return }
@@ -480,7 +492,7 @@ struct CanvasRepresentable: UIViewRepresentable {
             DispatchQueue.main.async { [weak controller] in controller?.refresh() }
             c.setContentOffset(CGPoint(x: -c.adjustedContentInset.left, y: -c.adjustedContentInset.top), animated: false)
         }
-        c.tool = tool
+        c.applyTool(tool)
         c.cursorDiameter = eraserCursor
         c.drawingPolicy = pencilOnly ? .pencilOnly : .anyInput
         controller.canvas = c

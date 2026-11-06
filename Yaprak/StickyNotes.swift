@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import PencilKit
 
 // MARK: - Model
 
@@ -34,6 +35,8 @@ struct StickyNote: Identifiable, Codable, Equatable {
     var h: Double = 170
     var text: String = ""
     var color: StickyColor = .sari
+    /// Notun üstüne kalemle yazılan mürekkep (PencilKit verisi, not gövdesinin sol üstüne göre kanonik koordinatlarda)
+    var ink: Data? = nil
 
     var frame: CGRect {
         get { CGRect(x: x, y: y, width: w, height: h) }
@@ -43,11 +46,20 @@ struct StickyNote: Identifiable, Codable, Equatable {
     static let textColor = UIColor(hex: 0x2A2824)
     static let fontSize: CGFloat = 16
     static let handleHeight: CGFloat = 22
+    /// Köşeden boyutlandırırken en küçük boyut (kanonik)
+    static let minSize = CGSize(width: 140, height: 110)
+}
+
+/// Notun mürekkep katmanı; geri alma adımları sayfanın geri alma yöneticisine yazılır
+/// (araç çubuğundaki geri al düğmesi not mürekkebini de geri alsın diye).
+final class NoteInkView: PKCanvasView {
+    var undoProvider: (() -> UndoManager?)?
+    override var undoManager: UndoManager? { undoProvider?() ?? super.undoManager }
 }
 
 // MARK: - Not görünümü (tuvalin içinde, sayfayla birlikte kayar)
 
-final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteractionDelegate {
+final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteractionDelegate, PKCanvasViewDelegate {
     var note: StickyNote
     var onChange: ((StickyNoteView) -> Void)?
     var onMoveEnded: ((StickyNoteView) -> Void)?
@@ -61,6 +73,13 @@ final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteraction
     private let textView = UITextView()
     private let menuButton = UIButton(type: .system)
     private var dragStart: CGPoint = .zero
+    /// Kalemle yazılan katman (yazının üstünde; parmakla dokununca klavyeyle yazma açılır)
+    let ink = NoteInkView()
+    private var loadingInk = false
+    private var inkNeedsLoad = true
+    /// Sol üst köşedeki boyutlandırma tutamacı
+    private let resizeKnob = UIImageView()
+    private var resizeStart: CGRect = .zero
 
     init(note: StickyNote) {
         self.note = note
@@ -86,6 +105,32 @@ final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteraction
         textView.overrideUserInterfaceStyle = .light
         addSubview(textView)
 
+        // Kalem katmanı: yalnızca Apple Pencil çizer, parmak dokunuşu yazı düzenlemeyi açar
+        ink.backgroundColor = .clear
+        ink.isOpaque = false
+        ink.drawingPolicy = .pencilOnly
+        ink.isScrollEnabled = false
+        ink.showsVerticalScrollIndicator = false
+        ink.showsHorizontalScrollIndicator = false
+        ink.contentInsetAdjustmentBehavior = .never
+        ink.overrideUserInterfaceStyle = .light
+        ink.delegate = self
+        ink.accessibilityLabel = "Not üstüne kalemle yazma alanı"
+        addSubview(ink)
+        let tap = UITapGestureRecognizer(target: self, action: #selector(tapToType(_:)))
+        tap.allowedTouchTypes = [NSNumber(value: UITouch.TouchType.direct.rawValue)]
+        ink.addGestureRecognizer(tap)
+
+        // Sol üst köşeden sürükleyerek büyütme/küçültme
+        resizeKnob.image = UIImage(systemName: "arrow.up.left.and.arrow.down.right",
+                                   withConfiguration: UIImage.SymbolConfiguration(pointSize: 11, weight: .semibold))
+        resizeKnob.tintColor = UIColor.black.withAlphaComponent(0.45)
+        resizeKnob.contentMode = .center
+        resizeKnob.isUserInteractionEnabled = true
+        resizeKnob.accessibilityLabel = "Notu boyutlandır"
+        resizeKnob.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(resize(_:))))
+        addSubview(resizeKnob)
+
         let pan = UIPanGestureRecognizer(target: self, action: #selector(drag(_:)))
         handle.addGestureRecognizer(pan)
         // Notun her yerine basılı tutunca menü açılsın
@@ -103,6 +148,9 @@ final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteraction
         applyScale()
     }
 
+    /// Araç çubuğunda seçili kalem/silgi notun üstünde de kullanılır
+    func setTool(_ tool: PKTool) { ink.tool = tool }
+
     required init?(coder: NSCoder) { fatalError() }
 
     override func layoutSubviews() {
@@ -112,6 +160,13 @@ final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteraction
         grip.frame = CGRect(x: bounds.midX - 14, y: hh / 2 - 1.5, width: 28, height: 3)
         menuButton.frame = CGRect(x: bounds.width - max(hh, 30) - 2, y: 0, width: max(hh, 30), height: hh)
         textView.frame = CGRect(x: 0, y: hh, width: bounds.width, height: max(0, bounds.height - hh))
+        ink.frame = textView.frame
+        // PencilKit yalnızca içerik alanının içini çizer; alan sıfır kalırsa mürekkep görünmez
+        if ink.contentSize != ink.bounds.size { ink.contentSize = ink.bounds.size }
+        // Mürekkep, katmanın boyutu belli olduktan sonra yüklenir (boyutsuzken verilen çizim ekrana çıkmıyor)
+        if inkNeedsLoad, !ink.bounds.isEmpty { loadInk() }
+        let k = max(hh, 30)
+        resizeKnob.frame = CGRect(x: 0, y: 0, width: k, height: max(hh, 26))
         layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: 4).cgPath
     }
 
@@ -122,7 +177,82 @@ final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteraction
 
     private func applyScale() {
         textView.font = .systemFont(ofSize: StickyNote.fontSize * scale)
+        inkNeedsLoad = true
         setNeedsLayout()
+    }
+
+    /// Kayıtlı mürekkebi ekran ölçeğine çevirip katmana koyar
+    private func loadInk() {
+        guard !ink.bounds.isEmpty else { inkNeedsLoad = true; return }
+        inkNeedsLoad = false
+        let d = note.ink.flatMap { try? PKDrawing(data: $0) } ?? PKDrawing()
+        loadingInk = true
+        ink.drawing = d.transformed(using: CGAffineTransform(scaleX: scale, y: scale))
+        loadingInk = false
+    }
+
+    func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
+        guard !loadingInk, scale > 0 else { return }
+        let d = ink.drawing.transformed(using: CGAffineTransform(scaleX: 1 / scale, y: 1 / scale))
+        note.ink = d.strokes.isEmpty ? nil : d.dataRepresentation()
+        onChange?(self)
+        if !usingTool { redrawInk() }
+    }
+
+    /// Kalem/silgi o an değiyor mu (canlı çizim kendini zaten ekrana çizer)
+    private var usingTool = false
+    func canvasViewDidBeginUsingTool(_ canvasView: PKCanvasView) { usingTool = true }
+    func canvasViewDidEndUsingTool(_ canvasView: PKCanvasView) { usingTool = false }
+
+    /// Notun içindeki tuval, geri al/yinele gibi koddan gelen değişiklikleri ekrana yansıtmıyor;
+    /// çizimi bir an boşaltıp geri vererek yeniden çizdir.
+    private func redrawInk() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !self.usingTool else { return }
+            let d = self.ink.drawing
+            self.loadingInk = true
+            self.ink.drawing = PKDrawing()
+            self.ink.drawing = d
+            self.loadingInk = false
+        }
+    }
+
+    // Parmakla dokununca dokunulan yerden yazmaya başla
+    @objc private func tapToType(_ g: UITapGestureRecognizer) {
+        textView.becomeFirstResponder()
+        let p = g.location(in: textView)
+        if let pos = textView.closestPosition(to: p) {
+            textView.selectedTextRange = textView.textRange(from: pos, to: pos)
+        }
+    }
+
+    // Yazarken metin üstte (seçim ve imleç için), bitince kalem katmanı yeniden üstte
+    func textViewDidBeginEditing(_ textView: UITextView) {
+        bringSubviewToFront(textView)
+        bringSubviewToFront(resizeKnob)
+    }
+
+    func textViewDidEndEditing(_ textView: UITextView) {
+        bringSubviewToFront(ink)
+        bringSubviewToFront(resizeKnob)
+    }
+
+    // Sol üst köşeden boyutlandırma: sağ alt köşe sabit kalır
+    @objc private func resize(_ g: UIPanGestureRecognizer) {
+        guard let sv = superview else { return }
+        switch g.state {
+        case .began:
+            resizeStart = frame
+            sv.bringSubviewToFront(self)
+        case .changed:
+            let t = g.translation(in: sv)
+            let minW = StickyNote.minSize.width * scale, minH = StickyNote.minSize.height * scale
+            let x = min(resizeStart.minX + t.x, resizeStart.maxX - minW)
+            let y = min(resizeStart.minY + t.y, resizeStart.maxY - minH)
+            frame = CGRect(x: x, y: y, width: resizeStart.maxX - x, height: resizeStart.maxY - y)
+        default:
+            onMoveEnded?(self)
+        }
     }
 
     // Yazı
@@ -174,6 +304,11 @@ final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteraction
                                 configurationForMenuAtLocation location: CGPoint) -> UIContextMenuConfiguration? {
         // Yazarken metin seçimine karışmasın
         if textView.isFirstResponder, textView.frame.contains(location) { return nil }
+        // Kalemle yazarken menü açılmasın
+        switch ink.drawingGestureRecognizer.state {
+        case .began, .changed: return nil
+        default: break
+        }
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in self?.makeMenu() }
     }
 }
@@ -201,6 +336,11 @@ enum StickyRenderer {
                                   width: r.width - 22, height: r.height - StickyNote.handleHeight - 12)
             (n.text as NSString).draw(with: textRect, options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine],
                                       attributes: attrs, context: nil)
+            if let data = n.ink, let d = try? PKDrawing(data: data), !d.strokes.isEmpty {
+                let body = CGRect(x: r.minX, y: r.minY + StickyNote.handleHeight,
+                                  width: r.width, height: r.height - StickyNote.handleHeight)
+                d.image(from: CGRect(origin: .zero, size: body.size), scale: 2).draw(in: body)
+            }
         }
     }
 }
