@@ -223,6 +223,15 @@ final class YaprakCanvas: PKCanvasView {
 
     private func notesChanged() { onNotesChange?(noteViews.map(\.note)) }
 
+    /// Notun üstünde çizim başlamasın; basılı tutma ve sürükleme nota gitsin
+    override func gestureRecognizerShouldBegin(_ g: UIGestureRecognizer) -> Bool {
+        if g === drawingGestureRecognizer {
+            let p = g.location(in: self)
+            if noteViews.contains(where: { $0.frame.contains(p) }) { return false }
+        }
+        return super.gestureRecognizerShouldBegin(g)
+    }
+
     /// Notun dışında bir yere dokunulunca not yazmayı bitir (klavyeyi kapat)
     func endNoteEditingIfOutside(_ point: CGPoint) {
         guard noteViews.contains(where: { $0.isFirstResponderInside }) else { return }
@@ -251,50 +260,44 @@ final class YaprakCanvas: PKCanvasView {
 
     // MARK: Sayfa çevirme animasyonu
 
-    /// Eski sayfanın görüntüsünü alıp kitap sayfası gibi sırttan döndürür; altında yeni sayfa belirir.
-    /// Tuvalin kendisi hareket etmez (PencilKit ekran dışına kayan kısmı yeniden çizmiyordu).
-    func animatePageTurn(forward: Bool, swapContent: () -> Void) {
-        guard let host = superview, let snap = snapshotView(afterScreenUpdates: false) else { swapContent(); return }
-        let pageFrame = paper.frame.offsetBy(dx: -bounds.minX, dy: -bounds.minY).intersection(CGRect(origin: .zero, size: bounds.size))
-        snap.frame = frame
-        // Yalnızca kâğıt kısmı dönsün
-        let clip = CAShapeLayer()
-        clip.path = UIBezierPath(roundedRect: pageFrame, cornerRadius: 6).cgPath
-        snap.layer.mask = clip
-        host.addSubview(snap)
-        swapContent()
+    /// Animasyon sürerken tutulan sayfa çevirici (bitince bırakılır)
+    private var curl: PageCurl?
+
+    /// Sayfayı kitap gibi köşesinden kıvırarak çevirir (Kitaplar uygulamasındaki efekt).
+    /// İleri: eski sayfa kalkıp sola kıvrılır, altından yeni sayfa çıkar.
+    /// Geri: önceki sayfa soldan kıvrılarak eski sayfanın üstüne iner.
+    /// Tuvalin kendisi hareket etmez; animasyon sayfanın görüntüleri üzerinde yapılır.
+    func animatePageTurn(forward: Bool, swapContent: @escaping () -> Void) {
+        curl?.finish()
+        let rect = paper.frame.intersection(bounds)
+        guard let host = superview, !rect.isEmpty,
+              let oldSnap = resizableSnapshotView(from: rect, afterScreenUpdates: false, withCapInsets: .zero)
+        else { swapContent(); return }
+        let frameInHost = convert(rect, to: host)
 
         if UIAccessibility.isReduceMotionEnabled {
-            UIView.animate(withDuration: 0.25, animations: { snap.alpha = 0 }, completion: { _ in snap.removeFromSuperview() })
+            oldSnap.frame = frameInHost
+            host.addSubview(oldSnap)
+            swapContent()
+            UIView.animate(withDuration: 0.25, animations: { oldSnap.alpha = 0 }, completion: { _ in oldSnap.removeFromSuperview() })
             return
         }
 
-        // Dönen sayfanın altında yeni sayfaya düşen gölge
-        let shade = UIView(frame: pageFrame.offsetBy(dx: frame.minX, dy: frame.minY))
-        shade.backgroundColor = UIColor.black.withAlphaComponent(0.18)
-        shade.layer.cornerRadius = 6
-        shade.isUserInteractionEnabled = false
-        host.insertSubview(shade, belowSubview: snap)
+        let c = PageCurl(frame: frameInHost, oldPage: oldSnap, in: host)
+        curl = c
+        swapContent()
+        c.onDone = { [weak self, weak c] in if self?.curl === c { self?.curl = nil } }
 
-        // Dönme ekseni: ileri giderken sol kenar (sırt), geri giderken sağ kenar
-        let spineX = forward ? frame.minX + pageFrame.minX : frame.minX + pageFrame.maxX
-        let anchorX = (spineX - snap.frame.minX) / snap.frame.width
-        snap.layer.anchorPoint = CGPoint(x: anchorX, y: 0.5)
-        snap.layer.position = CGPoint(x: spineX, y: snap.frame.midY)
-        snap.layer.shadowColor = UIColor.black.cgColor
-        snap.layer.shadowOpacity = 0.25
-        snap.layer.shadowRadius = 18
-
-        var t = CATransform3DIdentity
-        t.m34 = -1 / 1600
-        let end = CATransform3DRotate(t, forward ? -.pi / 2 : .pi / 2, 0, 1, 0)
-        UIView.animate(withDuration: 0.55, delay: 0, options: [.curveEaseIn]) {
-            snap.layer.transform = end
-            snap.alpha = 0.55
-            shade.alpha = 0
-        } completion: { _ in
-            snap.removeFromSuperview()
-            shade.removeFromSuperview()
+        if forward {
+            // Altta canlı tuval görünsün diye yeni sayfa saydam
+            c.turn(to: nil, forward: true)
+        } else {
+            // Geri dönerken yeni sayfa üstten iner; PencilKit'in çizmesi için bir an bekleyip görüntüsünü al
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) { [weak self, weak c] in
+                guard let self, let c, !c.isFinished else { return }
+                let r = self.paper.frame.intersection(self.bounds)
+                c.turn(to: self.resizableSnapshotView(from: r, afterScreenUpdates: true, withCapInsets: .zero), forward: false)
+            }
         }
     }
 
@@ -552,5 +555,57 @@ struct CanvasRepresentable: UIViewRepresentable {
         func pencilInteraction(_ interaction: UIPencilInteraction, didReceiveTap tap: UIPencilInteraction.Tap) {
             parent.onPencilTap()
         }
+    }
+}
+
+// MARK: - Sayfa kıvırma
+
+/// UIPageViewController'ın gerçek sayfa kıvırma efektini sayfa görüntüleri üzerinde bir kez oynatır.
+@MainActor
+final class PageCurl {
+    private let pvc: UIPageViewController
+    private(set) var isFinished = false
+    var onDone: (() -> Void)?
+
+    init(frame: CGRect, oldPage: UIView, in host: UIView) {
+        pvc = UIPageViewController(transitionStyle: .pageCurl, navigationOrientation: .horizontal,
+                                   options: [.spineLocation: NSNumber(value: UIPageViewController.SpineLocation.min.rawValue)])
+        pvc.isDoubleSided = false
+        pvc.view.frame = frame
+        pvc.view.backgroundColor = .clear
+        pvc.view.isUserInteractionEnabled = false
+        pvc.view.clipsToBounds = false
+        pvc.setViewControllers([Self.page(oldPage, size: frame.size)], direction: .forward, animated: false)
+        host.addSubview(pvc.view)
+        // Herhangi bir sebeple tamamlanma gelmezse takılı kalmasın
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in self?.finish() }
+    }
+
+    /// `newPage` nil ise yeni sayfa saydam olur (altındaki canlı tuval görünür).
+    func turn(to newPage: UIView?, forward: Bool) {
+        guard !isFinished else { return }
+        let next = Self.page(newPage, size: pvc.view.bounds.size)
+        pvc.setViewControllers([next], direction: forward ? .forward : .reverse, animated: true) { [weak self] _ in
+            self?.finish()
+        }
+    }
+
+    func finish() {
+        guard !isFinished else { return }
+        isFinished = true
+        pvc.view.removeFromSuperview()
+        onDone?()
+    }
+
+    private static func page(_ content: UIView?, size: CGSize) -> UIViewController {
+        let vc = UIViewController()
+        vc.view.frame = CGRect(origin: .zero, size: size)
+        vc.view.backgroundColor = .clear
+        if let content {
+            content.frame = vc.view.bounds
+            content.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            vc.view.addSubview(content)
+        }
+        return vc
     }
 }

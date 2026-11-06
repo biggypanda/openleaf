@@ -59,6 +59,7 @@ final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteraction
     private let handle = UIView()
     private let grip = UIView()
     private let textView = UITextView()
+    private let menuButton = UIButton(type: .system)
     private var dragStart: CGPoint = .zero
 
     init(note: StickyNote) {
@@ -87,7 +88,15 @@ final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteraction
 
         let pan = UIPanGestureRecognizer(target: self, action: #selector(drag(_:)))
         handle.addGestureRecognizer(pan)
-        handle.addInteraction(UIContextMenuInteraction(delegate: self))
+        // Notun her yerine basılı tutunca menü açılsın
+        addInteraction(UIContextMenuInteraction(delegate: self))
+
+        // Üst şeritte görünür menü butonu (dokununca renk ve sil seçenekleri)
+        menuButton.setImage(UIImage(systemName: "ellipsis", withConfiguration: UIImage.SymbolConfiguration(pointSize: 13, weight: .bold)), for: .normal)
+        menuButton.tintColor = UIColor.black.withAlphaComponent(0.45)
+        menuButton.showsMenuAsPrimaryAction = true
+        menuButton.accessibilityLabel = "Not seçenekleri"
+        handle.addSubview(menuButton)
         isAccessibilityElement = false
         textView.accessibilityLabel = "Yapışkan not"
         applyColor()
@@ -101,6 +110,7 @@ final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteraction
         let hh = StickyNote.handleHeight * scale
         handle.frame = CGRect(x: 0, y: 0, width: bounds.width, height: hh)
         grip.frame = CGRect(x: bounds.midX - 14, y: hh / 2 - 1.5, width: 28, height: 3)
+        menuButton.frame = CGRect(x: bounds.width - max(hh, 30) - 2, y: 0, width: max(hh, 30), height: hh)
         textView.frame = CGRect(x: 0, y: hh, width: bounds.width, height: max(0, bounds.height - hh))
         layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: 4).cgPath
     }
@@ -108,7 +118,7 @@ final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteraction
     func beginEditing() { textView.becomeFirstResponder() }
     var isFirstResponderInside: Bool { textView.isFirstResponder }
 
-    private func applyColor() { backgroundColor = note.color.ui }
+    private func applyColor() { backgroundColor = note.color.ui; refreshMenu() }
 
     private func applyScale() {
         textView.font = .systemFont(ofSize: StickyNote.fontSize * scale)
@@ -138,27 +148,33 @@ final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteraction
         }
     }
 
-    // Uzun basma menüsü: renk ve silme
+    // Renk ve silme menüsü (uzun basma ve ••• butonu aynı menüyü kullanır)
+    private func makeMenu() -> UIMenu {
+        let colors = StickyColor.allCases.map { c in
+            UIAction(title: c.name, image: UIImage(systemName: "circle.fill")?.withTintColor(c.ui, renderingMode: .alwaysOriginal),
+                     state: c == note.color ? .on : .off) { [weak self] _ in
+                guard let self else { return }
+                self.note.color = c
+                self.applyColor()
+                self.onChange?(self)
+            }
+        }
+        let renk = UIMenu(title: "Renk", image: UIImage(systemName: "paintpalette"), children: colors)
+        let sil = UIAction(title: "Notu sil", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+            guard let self else { return }
+            self.endEditing(true)
+            self.onDelete?(self)
+        }
+        return UIMenu(children: [renk, sil])
+    }
+
+    private func refreshMenu() { menuButton.menu = makeMenu() }
+
     func contextMenuInteraction(_ interaction: UIContextMenuInteraction,
                                 configurationForMenuAtLocation location: CGPoint) -> UIContextMenuConfiguration? {
-        UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
-            guard let self else { return nil }
-            let colors = StickyColor.allCases.map { c in
-                UIAction(title: c.name, image: UIImage(systemName: "circle.fill")?.withTintColor(c.ui, renderingMode: .alwaysOriginal),
-                         state: c == self.note.color ? .on : .off) { [weak self] _ in
-                    guard let self else { return }
-                    self.note.color = c
-                    self.applyColor()
-                    self.onChange?(self)
-                }
-            }
-            let renk = UIMenu(title: "Renk", image: UIImage(systemName: "paintpalette"), children: colors)
-            let sil = UIAction(title: "Notu sil", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
-                guard let self else { return }
-                self.onDelete?(self)
-            }
-            return UIMenu(children: [renk, sil])
-        }
+        // Yazarken metin seçimine karışmasın
+        if textView.isFirstResponder, textView.frame.contains(location) { return nil }
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in self?.makeMenu() }
     }
 }
 
