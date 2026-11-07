@@ -5,7 +5,30 @@ struct OpenDoc: Identifiable, Hashable { let id: UUID }
 
 struct LibraryView: View {
     @Environment(Library.self) private var library
-    @State private var section: SidebarSection? = .belgeler
+    @State private var selection: SidebarItem? = .section(.belgeler)
+    /// Klasör adı penceresi: yeni klasör, yeniden adlandır ya da defteri yeni klasöre taşı
+    @State private var folderPrompt: FolderPrompt?
+    @State private var folderName = ""
+    @State private var deletingFolder: Folder?
+
+    enum FolderPrompt: Identifiable {
+        case create
+        case rename(Folder)
+        case createAndMove(UUID)
+        var id: String {
+            switch self {
+            case .create: "create"
+            case .rename(let f): "rename-\(f.id)"
+            case .createAndMove(let n): "move-\(n)"
+            }
+        }
+    }
+
+    /// Seçili klasör (bölüm seçiliyse nil)
+    private var currentFolder: UUID? {
+        if case .folder(let id) = selection { return id }
+        return nil
+    }
     @State private var search = ""
     @State private var openDoc: OpenDoc?
     @State private var showNew = false
@@ -44,7 +67,11 @@ struct LibraryView: View {
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.pdf]) { result in
             switch result {
             case .success(let url):
-                do { openDoc = OpenDoc(id: try library.importPDF(from: url)) }
+                do {
+                    let id = try library.importPDF(from: url)
+                    if let f = currentFolder { library.move(id, toFolder: f) }
+                    openDoc = OpenDoc(id: id)
+                }
                 catch { importError = error.localizedDescription }
             case .failure(let error):
                 importError = error.localizedDescription
@@ -57,8 +84,29 @@ struct LibraryView: View {
         } message: {
             Text(importError ?? "")
         }
+        .alert(folderPromptTitle, isPresented: Binding(get: { folderPrompt != nil }, set: { if !$0 { folderPrompt = nil } })) {
+            TextField("Klasör adı", text: $folderName)
+            Button(folderPromptAction) { commitFolderName() }
+            Button("Vazgeç", role: .cancel) { folderPrompt = nil }
+        }
+        .confirmationDialog("“\(deletingFolder?.name ?? "")” klasörü silinsin mi?",
+                            isPresented: Binding(get: { deletingFolder != nil }, set: { if !$0 { deletingFolder = nil } }),
+                            titleVisibility: .visible) {
+            Button("Klasörü sil", role: .destructive) {
+                if let f = deletingFolder {
+                    if currentFolder == f.id { selection = .section(.belgeler) }
+                    library.deleteFolder(f.id)
+                }
+                deletingFolder = nil
+            }
+            Button("Vazgeç", role: .cancel) { deletingFolder = nil }
+        } message: {
+            Text("İçindeki defterler silinmez, Belgeler'de kalır.")
+        }
         .sheet(isPresented: $showNew) {
             NewNotebookSheet { nb in
+                var nb = nb
+                nb.folder = currentFolder
                 let id = library.create(nb)
                 showNew = false
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { openDoc = OpenDoc(id: id) }
@@ -66,10 +114,42 @@ struct LibraryView: View {
         }
     }
 
+    private var folderPromptTitle: String {
+        if case .rename = folderPrompt { return "Klasörü yeniden adlandır" }
+        return "Yeni klasör"
+    }
+    private var folderPromptAction: String {
+        switch folderPrompt {
+        case .rename: "Kaydet"
+        case .createAndMove: "Oluştur ve taşı"
+        default: "Oluştur"
+        }
+    }
+
+    private func askFolderName(_ p: FolderPrompt) {
+        if case .rename(let f) = p { folderName = f.name } else { folderName = "" }
+        folderPrompt = p
+    }
+
+    private func commitFolderName() {
+        guard let p = folderPrompt else { return }
+        switch p {
+        case .create:
+            let id = library.createFolder(folderName)
+            selection = .folder(id)
+        case .rename(let f):
+            library.renameFolder(f.id, folderName)
+        case .createAndMove(let nb):
+            let id = library.createFolder(folderName)
+            library.move(nb, toFolder: id)
+        }
+        folderPrompt = nil
+    }
+
     // MARK: Kenar çubuğu
 
     private var sidebar: some View {
-        List(selection: $section) {
+        List(selection: $selection) {
             HStack(spacing: 10) {
                 LogoMark(size: 30)
                 Text("Yaprak").font(.system(size: 24, weight: .semibold, design: .serif))
@@ -80,7 +160,7 @@ struct LibraryView: View {
 
             Section {
                 ForEach(SidebarSection.allCases) { s in
-                    NavigationLink(value: s) {
+                    NavigationLink(value: SidebarItem.section(s)) {
                         HStack {
                             Label(s.title, systemImage: s.icon)
                             Spacer()
@@ -90,6 +170,30 @@ struct LibraryView: View {
                         }
                     }
                 }
+            }
+
+            Section("Klasörler") {
+                ForEach(library.folders) { f in
+                    NavigationLink(value: SidebarItem.folder(f.id)) {
+                        HStack {
+                            Label(f.name, systemImage: "folder")
+                            Spacer()
+                            let n = library.items(inFolder: f.id).count
+                            if n > 0 {
+                                Text("\(n)").font(.subheadline).foregroundStyle(Y.ink3).monospacedDigit()
+                            }
+                        }
+                    }
+                    .contextMenu {
+                        Button("Yeniden adlandır", systemImage: "pencil") { askFolderName(.rename(f)) }
+                        Button("Klasörü sil", systemImage: "trash", role: .destructive) { deletingFolder = f }
+                    }
+                }
+                Button { askFolderName(.create) } label: {
+                    Label("Yeni klasör", systemImage: "folder.badge.plus").foregroundStyle(Y.accent)
+                }
+                .buttonStyle(.plain)
+                .selectionDisabled()
             }
         }
         .scrollContentBackground(.hidden)
@@ -161,16 +265,24 @@ struct LibraryView: View {
 
     @ViewBuilder
     private var detail: some View {
-        let s = section ?? .belgeler
-        let items = library.items(for: s, sort: sort).filter { library.matches($0, search) }
+        let folder = currentFolder.flatMap { id in library.folders.first { $0.id == id } }
+        let s: SidebarSection = if case .section(let sec) = selection { sec } else { .belgeler }
+        let base = folder.map { library.items(inFolder: $0.id, sort: sort) } ?? library.items(for: s, sort: sort)
+        let items = base.filter { library.matches($0, search) }
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                if s == .belgeler && search.isEmpty && !items.isEmpty {
+                if folder == nil && s == .belgeler && search.isEmpty && !items.isEmpty {
                     Text(sort == .modified ? "SON DÜZENLENENLER" : "ADA GÖRE").font(Y.eyebrow).tracking(0.8).foregroundStyle(Y.ink3)
                         .padding(.top, 4)
                 }
                 if items.isEmpty {
-                    empty(s)
+                    if folder != nil {
+                        ContentUnavailableView(search.isEmpty ? "Klasör boş" : "Sonuç yok", systemImage: "folder",
+                                               description: Text(search.isEmpty ? "Bir belgeye basılı tutup “Klasöre taşı”yı seçin ya da Yeni ile burada oluşturun." : "“\(search)” için eşleşme bulunamadı."))
+                            .frame(maxWidth: .infinity, minHeight: 420)
+                    } else {
+                        empty(s)
+                    }
                 } else {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 150, maximum: 190), spacing: 28, alignment: .top)],
                               alignment: .leading, spacing: 30) {
@@ -186,7 +298,7 @@ struct LibraryView: View {
             .padding(.bottom, 40)
         }
         .background(Y.bg)
-        .navigationTitle(s.title)
+        .navigationTitle(folder?.name ?? s.title)
         .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: "Notlarda ara")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
@@ -202,7 +314,7 @@ struct LibraryView: View {
                     Button("Hızlı not", systemImage: "bolt") { quick(kind: .defter) }
                     Button("Whiteboard", systemImage: "rectangle.on.rectangle.angled") { quick(kind: .whiteboard) }
                     Divider()
-                    Button("Klasör", systemImage: "folder.badge.plus") {}.disabled(true)
+                    Button("Klasör", systemImage: "folder.badge.plus") { askFolderName(.create) }
                     Button("Belge tara", systemImage: "doc.viewfinder") {}.disabled(true)
                     Button("PDF içe aktar", systemImage: "square.and.arrow.down") { showImporter = true }
                 } label: {
@@ -239,6 +351,20 @@ struct LibraryView: View {
                 library.update(nb.id) { $0.favorite.toggle() }
             }
             Button("Çoğalt", systemImage: "plus.square.on.square") { library.duplicate(nb) }
+            Menu("Klasöre taşı", systemImage: "folder") {
+                ForEach(library.folders) { f in
+                    Button(f.name, systemImage: nb.folder == f.id ? "checkmark" : "folder") {
+                        withAnimation(Y.spring) { library.move(nb.id, toFolder: f.id) }
+                    }
+                }
+                if nb.folder != nil {
+                    Button("Klasörden çıkar", systemImage: "folder.badge.minus") {
+                        withAnimation(Y.spring) { library.move(nb.id, toFolder: nil) }
+                    }
+                }
+                Divider()
+                Button("Yeni klasör…", systemImage: "folder.badge.plus") { askFolderName(.createAndMove(nb.id)) }
+            }
             ShareLink(item: NotebookPDF(notebook: nb, library: library),
                       preview: SharePreview("\(nb.title).pdf", image: Image(systemName: "doc.richtext"))) {
                 Label("PDF olarak paylaş", systemImage: "square.and.arrow.up")
@@ -258,7 +384,7 @@ struct LibraryView: View {
         }
         do {
             let id = try library.importPDF(from: url)
-            section = .belgeler
+            selection = .section(.belgeler)
             if openDoc != nil {
                 // Açık bir belge varsa önce kapat, sonra yenisini aç
                 openDoc = nil
@@ -276,7 +402,9 @@ struct LibraryView: View {
             ? Notebook(title: "Adsız Whiteboard", kind: .whiteboard, cover: .kagit, paper: .bos)
             : Notebook(title: "Hızlı not", subtitle: Date().formatted(.dateTime.day().month(.wide).locale(Locale(identifier: "tr_TR"))),
                        cover: .tas, paper: .cizgili)
-        openDoc = OpenDoc(id: library.create(nb))
+        var placed = nb
+        placed.folder = currentFolder
+        openDoc = OpenDoc(id: library.create(placed))
     }
 }
 

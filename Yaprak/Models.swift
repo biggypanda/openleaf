@@ -101,9 +101,11 @@ struct Notebook: Identifiable, Codable, Equatable {
     /// PDF belgelerinde: uygulama klasöründeki PDF dosyasının adı ve ilk sayfanın yükseklik/genişlik oranı
     var pdfFile: String?
     var pdfAspect: Double?
+    /// Bulunduğu klasör (yoksa klasörsüz)
+    var folder: UUID? = nil
 
     enum CodingKeys: String, CodingKey {
-        case id, title, subtitle, kind, cover, paper, size, pages, favorite, trashed, created, modified, pdfFile, pdfAspect
+        case id, title, subtitle, kind, cover, paper, size, pages, favorite, trashed, created, modified, pdfFile, pdfAspect, folder
     }
 
     /// Kanonik sayfa boyutu (genişlik 768 pt)
@@ -142,12 +144,26 @@ extension Notebook {
         modified = try c.decodeIfPresent(Date.self, forKey: .modified) ?? Date()
         pdfFile = try c.decodeIfPresent(String.self, forKey: .pdfFile)
         pdfAspect = try c.decodeIfPresent(Double.self, forKey: .pdfAspect)
+        folder = try c.decodeIfPresent(UUID.self, forKey: .folder)
     }
 
     static func pages(_ n: Int) -> [Page] { (0..<n).map { _ in Page() } }
 }
 
 enum SortOrder: String, Hashable { case modified, title }
+
+/// Kullanıcının oluşturduğu klasör (defterler ders/dönem bazında gruplansın)
+struct Folder: Identifiable, Codable, Hashable {
+    var id = UUID()
+    var name: String
+    var created = Date()
+}
+
+/// Kenar çubuğunda seçili öğe: sabit bölüm ya da klasör
+enum SidebarItem: Hashable {
+    case section(SidebarSection)
+    case folder(UUID)
+}
 
 enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
     case belgeler, favoriler, paylasilanlar, magaza, cop
@@ -176,6 +192,7 @@ enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
 @Observable
 final class Library {
     var notebooks: [Notebook] = []
+    var folders: [Folder] = []
     /// Küçük resim yenilenince artar; görünümler bunu izleyip resmi yeniden yükler
     var thumbVersion: [UUID: Int] = [:]
 
@@ -186,6 +203,7 @@ final class Library {
 
     init(store: NotebookStore = NotebookStore()) {
         self.store = store
+        folders = store.loadFolders()
         if let list = store.loadIndex() {
             notebooks = list
         } else if let migrated = LegacyMigration.migrate(into: store) {
@@ -241,6 +259,49 @@ final class Library {
         }
         textCache[id] = t
         return t
+    }
+
+    // MARK: Klasörler
+
+    func items(inFolder id: UUID, sort: SortOrder = .modified) -> [Notebook] {
+        let list = notebooks.filter { $0.folder == id && !$0.trashed }
+        switch sort {
+        case .modified: return list.sorted { $0.modified > $1.modified }
+        case .title: return list.sorted { $0.title.compare($1.title, locale: Locale(identifier: "tr_TR")) == .orderedAscending }
+        }
+    }
+
+    @discardableResult
+    func createFolder(_ name: String) -> UUID {
+        let f = Folder(name: Self.cleanName(name))
+        folders.append(f)
+        saveFolders()
+        return f.id
+    }
+
+    func renameFolder(_ id: UUID, _ name: String) {
+        guard let i = folders.firstIndex(where: { $0.id == id }) else { return }
+        folders[i].name = Self.cleanName(name)
+        saveFolders()
+    }
+
+    /// Klasörü siler; içindeki defterler silinmez, klasörsüz kalır
+    func deleteFolder(_ id: UUID) {
+        folders.removeAll { $0.id == id }
+        for i in notebooks.indices where notebooks[i].folder == id { notebooks[i].folder = nil }
+        save()
+        saveFolders()
+    }
+
+    func move(_ notebook: UUID, toFolder folder: UUID?) {
+        update(notebook) { $0.folder = folder }
+    }
+
+    func saveFolders() { store.writeFolders(folders) }
+
+    private static func cleanName(_ s: String) -> String {
+        let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        return t.isEmpty ? "Yeni klasör" : t
     }
 
     // MARK: Defter işlemleri

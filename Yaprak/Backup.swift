@@ -7,6 +7,8 @@ struct LibraryBackup: Codable {
     var version = 1
     var created = Date()
     var notebooks: [Notebook]
+    /// Klasörler (eski yedeklerde yok)
+    var folders: [Folder]? = nil
     /// "<defter-id>/<dosya-adı>" → içerik
     var files: [String: Data]
 
@@ -33,7 +35,7 @@ extension Library {
                 }
             }
         }
-        let backup = LibraryBackup(notebooks: notebooks, files: files)
+        let backup = LibraryBackup(notebooks: notebooks, folders: folders, files: files)
         let enc = PropertyListEncoder()
         enc.outputFormat = .binary
         return try enc.encode(backup)
@@ -47,6 +49,10 @@ extension Library {
               let backup = try? PropertyListDecoder().decode(LibraryBackup.self, from: data) else {
             throw BackupError.unreadable
         }
+        // Eksik klasörleri ekle
+        let knownFolders = Set(folders.map(\.id))
+        for f in backup.folders ?? [] where !knownFolders.contains(f.id) { folders.append(f) }
+        saveFolders()
         let existing = Set(notebooks.map(\.id))
         var added = 0, skipped = 0
         for nb in backup.notebooks {

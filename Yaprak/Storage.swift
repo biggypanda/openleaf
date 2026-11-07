@@ -26,6 +26,7 @@ final class NotebookStore {
     // MARK: Yollar
 
     var indexURL: URL { root.appendingPathComponent("index.json") }
+    var foldersURL: URL { root.appendingPathComponent("folders.json") }
     var notebooksDir: URL { root.appendingPathComponent("Defterler", isDirectory: true) }
     func dir(_ id: UUID) -> URL { notebooksDir.appendingPathComponent(id.uuidString, isDirectory: true) }
     func drawingURL(_ id: UUID, _ page: UUID) -> URL { dir(id).appendingPathComponent(page.uuidString + ".drawing") }
@@ -48,6 +49,22 @@ final class NotebookStore {
             let enc = JSONEncoder()
             enc.outputFormatting = [.sortedKeys]
             if let data = try? enc.encode(list) { try? data.write(to: url, options: .atomic) }
+        }
+    }
+
+    // MARK: Klasörler (kullanıcının defter grupları)
+
+    func loadFolders() -> [Folder] {
+        queue.sync {
+            guard let data = try? Data(contentsOf: foldersURL) else { return [] }
+            return (try? JSONDecoder().decode([Folder].self, from: data)) ?? []
+        }
+    }
+
+    func writeFolders(_ list: [Folder]) {
+        let url = foldersURL
+        queue.async {
+            if let data = try? JSONEncoder().encode(list) { try? data.write(to: url, options: .atomic) }
         }
     }
 
