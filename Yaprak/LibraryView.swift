@@ -39,6 +39,7 @@ struct LibraryView: View {
     @State private var showBackupExport = false
     @State private var showRestore = false
     @State private var backupMessage: (title: String, text: String)?
+    @State private var showAbout = false
     @AppStorage("siralama") private var sort: SortOrder = .modified
     @State private var columns = NavigationSplitViewVisibility.all
 
@@ -216,6 +217,10 @@ struct LibraryView: View {
                     Button { showRestore = true } label: {
                         Label("Yedekten geri yükle", systemImage: "arrow.counterclockwise")
                     }
+                    Divider()
+                    Button { showAbout = true } label: {
+                        Label("Yaprak hakkında", systemImage: "info.circle")
+                    }
                 } label: {
                     Image(systemName: "externaldrive.badge.icloud")
                         .font(.system(size: 17))
@@ -243,6 +248,11 @@ struct LibraryView: View {
                 } catch {
                     backupMessage = ("Geri yüklenemedi", error.localizedDescription)
                 }
+            }
+            .alert("Yaprak \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")", isPresented: $showAbout) {
+                Button("Tamam", role: .cancel) {}
+            } message: {
+                Text("Öğrenciler için ücretsiz ve açık kaynak not uygulaması.\n\nCopyright © 2026 biggypanda\nGNU GPL sürüm 3 ile lisanslanmıştır. Bu program HİÇBİR GARANTİ olmaksızın dağıtılır. Kaynak kodu ve lisansın tam metni projenin deposundadır.")
             }
             .alert(backupMessage?.title ?? "", isPresented: Binding(get: { backupMessage != nil }, set: { if !$0 { backupMessage = nil } })) {
                 Button("Tamam", role: .cancel) {}
