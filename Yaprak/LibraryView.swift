@@ -11,6 +11,11 @@ struct LibraryView: View {
     @State private var showNew = false
     @State private var showImporter = false
     @State private var importError: String?
+    /// Yedekleme: dışa aktarılacak dosya, geri yükleme seçici ve sonuç mesajı
+    @State private var backupDoc: BackupDocument?
+    @State private var showBackupExport = false
+    @State private var showRestore = false
+    @State private var backupMessage: (title: String, text: String)?
     @AppStorage("siralama") private var sort: SortOrder = .modified
     @State private var columns = NavigationSplitViewVisibility.all
 
@@ -96,12 +101,59 @@ struct LibraryView: View {
                     .frame(width: 34, height: 34)
                     .background(Y.surface3, in: Circle())
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("Bu iPad'de kayıtlı").font(.subheadline.weight(.semibold))
+                    Text("Bu iPad'de kayıtlı").font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
                     Text("\(library.items(for: .belgeler).count) belge").font(.caption).foregroundStyle(Y.ink3)
                 }
                 Spacer()
+                Menu {
+                    Button { exportBackup() } label: {
+                        Label("Yedeği Dosyalar'a kaydet", systemImage: "square.and.arrow.down")
+                    }
+                    Button { showRestore = true } label: {
+                        Label("Yedekten geri yükle", systemImage: "arrow.counterclockwise")
+                    }
+                } label: {
+                    Image(systemName: "externaldrive.badge.icloud")
+                        .font(.system(size: 17))
+                        .foregroundStyle(Y.accent)
+                        .frame(width: 40, height: 40)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityLabel("Yedekleme")
             }
             .padding(.horizontal, 20).padding(.vertical, 12)
+            .fileExporter(isPresented: $showBackupExport, document: backupDoc, contentType: .data,
+                          defaultFilename: BackupDocument.defaultName()) { result in
+                if case .success = result {
+                    backupMessage = ("Yedek kaydedildi", "Tüm defterlerin tek dosyada. Uygulamayı silsen bile bu dosyadan geri yükleyebilirsin.")
+                }
+                backupDoc = nil
+            }
+            .fileImporter(isPresented: $showRestore, allowedContentTypes: [.data, .item]) { result in
+                guard case .success(let url) = result else { return }
+                do {
+                    let r = try library.restoreBackup(from: url)
+                    backupMessage = ("Geri yükleme tamam",
+                                     r.added == 0 ? "Yedekteki defterlerin hepsi zaten bu iPad'de var."
+                                     : "\(r.added) defter geri yüklendi." + (r.skipped > 0 ? " \(r.skipped) defter zaten vardı, dokunulmadı." : ""))
+                } catch {
+                    backupMessage = ("Geri yüklenemedi", error.localizedDescription)
+                }
+            }
+            .alert(backupMessage?.title ?? "", isPresented: Binding(get: { backupMessage != nil }, set: { if !$0 { backupMessage = nil } })) {
+                Button("Tamam", role: .cancel) {}
+            } message: {
+                Text(backupMessage?.text ?? "")
+            }
+        }
+    }
+
+    private func exportBackup() {
+        do {
+            backupDoc = BackupDocument(data: try library.makeBackup())
+            showBackupExport = true
+        } catch {
+            backupMessage = ("Yedek oluşturulamadı", error.localizedDescription)
         }
     }
 
