@@ -404,6 +404,8 @@ struct CanvasRepresentable: UIViewRepresentable {
     /// İki parmakla yatay kaydırma: +1 sonraki sayfa (sola kaydırma), -1 önceki sayfa (sağa kaydırma)
     var onPageSwipe: ((Int) -> Void)? = nil
     var onNotesChange: ((UUID, [StickyNote]) -> Void)? = nil
+    /// Apple Pencil Pro sıkıldı: kalem ucunun pencere koordinatı (kalem havada değilse nil)
+    var onPencilSqueeze: ((CGPoint?) -> Void)? = nil
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -566,6 +568,21 @@ struct CanvasRepresentable: UIViewRepresentable {
 
         func pencilInteraction(_ interaction: UIPencilInteraction, didReceiveTap tap: UIPencilInteraction.Tap) {
             parent.onPencilTap()
+        }
+
+        /// Apple Pencil Pro sıkma: kullanıcının sistem ayarına uyar
+        func pencilInteraction(_ interaction: UIPencilInteraction, didReceiveSqueeze squeeze: UIPencilInteraction.Squeeze) {
+            guard squeeze.phase == .ended else { return }
+            switch UIPencilInteraction.preferredSqueezeAction {
+            case .ignore:
+                return
+            case .switchEraser, .switchPrevious:
+                parent.onPencilTap()
+            default:
+                let view = interaction.view
+                let p = squeeze.hoverPose.flatMap { pose in view.map { $0.convert(pose.location, to: nil) } }
+                parent.onPencilSqueeze?(p)
+            }
         }
     }
 }

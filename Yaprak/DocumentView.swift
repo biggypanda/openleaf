@@ -113,6 +113,9 @@ struct DocumentView: View {
     @State private var confirmDelete = false
     @State private var showMore = false
     @State private var pdfDoc: PDFDocument?
+    /// Kalem sıkılınca açılan hızlı menü ve açıldığı nokta (pencere koordinatı; nil ise ekran ortası)
+    @State private var quickShown = false
+    @State private var quickPoint: CGPoint?
 
     /// Kalem kalınlığı aralığı (nokta); çubukla serbestçe ayarlanır
     static let penWidthRange: ClosedRange<Double> = 0.8...14
@@ -163,7 +166,16 @@ struct DocumentView: View {
                         },
                         onPencilTap: pencilDoubleTap,
                         onPageSwipe: nb.isPaged ? { step in go(p + step, nb) } : nil,
-                        onNotesChange: { pid, list in library.setNotes(id, pid, list) }
+                        onNotesChange: { pid, list in library.setNotes(id, pid, list) },
+                        onPencilSqueeze: { point in
+                            if quickShown {
+                                withAnimation(Y.quick) { quickShown = false }
+                            } else {
+                                quickPoint = point
+                                showToolMenu = false
+                                quickShown = true
+                            }
+                        }
                     )
                 }
                 .clipped()
@@ -193,6 +205,34 @@ struct DocumentView: View {
                     .background(Color(hex: 0x2A2824).opacity(0.92), in: Capsule())
                     .padding(.bottom, 100)
                     .transition(.scale(scale: 0.8).combined(with: .opacity))
+            }
+        }
+        .overlay {
+            if quickShown {
+                GeometryReader { g in
+                    let o = g.frame(in: .global).origin
+                    let c = quickPoint.map { CGPoint(x: $0.x - o.x, y: $0.y - o.y) }
+                        ?? CGPoint(x: g.size.width / 2, y: g.size.height / 2)
+                    QuickPalette(
+                        center: c, tool: tool, color: color,
+                        canUndo: controller.canUndo, canRedo: controller.canRedo,
+                        onTool: { t in
+                            withAnimation(Y.quick) { tool = t }
+                            if t != .eraser { lastInkTool = t }
+                        },
+                        onColor: { c in
+                            color = c
+                            withAnimation(Y.quick) { tool = .pen }
+                            lastInkTool = .pen
+                        },
+                        onNote: controller.addNote,
+                        onUndo: controller.undo,
+                        onRedo: controller.redo,
+                        onClose: { withAnimation(Y.quick) { quickShown = false } }
+                    )
+                }
+                .ignoresSafeArea()
+                .transition(.opacity)
             }
         }
         .confirmationDialog("Sayfa \(p + 1) silinsin mi?", isPresented: $confirmDelete, titleVisibility: .visible) {
