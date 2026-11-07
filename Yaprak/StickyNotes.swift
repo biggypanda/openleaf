@@ -189,6 +189,8 @@ final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteraction
         loadingInk = true
         ink.drawing = d.transformed(using: CGAffineTransform(scaleX: scale, y: scale))
         loadingInk = false
+        // Boyut/yakınlık değişirken verilen çizim ekrana çıkmayabiliyor; bir tur sonra yeniden çizdir
+        redrawInk()
     }
 
     func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {

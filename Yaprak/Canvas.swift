@@ -44,28 +44,52 @@ enum PaperPattern {
     }
 }
 
-/// Tuvalin altında duran kâğıt yüzeyi
+/// Parçaları solmadan hemen gösteren döşemeli katman
+final class InstantTiledLayer: CATiledLayer {
+    override class func fadeDuration() -> CFTimeInterval { 0 }
+}
+
+/// Tuvalin altında duran kâğıt yüzeyi. Yakınlaştırınca bulanıklaşmasın diye döşemeli katmanla
+/// (her yakınlık düzeyinde yeniden) çizilir; PDF sayfası da vektör olarak çizilir.
 final class PaperUIView: UIView {
-    var style: PaperStyle = .cizgili { didSet { setNeedsDisplay() } }
-    var pageScale: CGFloat = 1 { didSet { setNeedsDisplay() } }
+    override class var layerClass: AnyClass { InstantTiledLayer.self }
+
+    var style: PaperStyle = .cizgili { didSet { redraw() } }
+    var pageScale: CGFloat = 1 { didSet { if pageScale != oldValue { redraw() } } }
     var isWhiteboard = false
     /// Doluysa desen yerine bu PDF sayfası çizilir
     var pdfPage: PDFPage? {
-        didSet { if oldValue !== pdfPage { rendered = nil; setNeedsDisplay() } }
+        didSet { if oldValue !== pdfPage { redraw() } }
     }
-    private var rendered: UIImage?
+
+    /// Döşemeler arka planda çizilir; orada kullanılan değerlerin ana iş parçacığındaki kopyası
+    private struct Snapshot {
+        var style: PaperStyle
+        var scale: CGFloat
+        var whiteboard: Bool
+        var pdf: PDFPage?
+        var traits: UITraitCollection
+        var size: CGSize
+    }
+    private let lock = NSLock()
+    private var snap = Snapshot(style: .cizgili, scale: 1, whiteboard: false, pdf: nil,
+                                traits: UITraitCollection(userInterfaceStyle: .light), size: .zero)
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         isOpaque = false
-        contentMode = .redraw
         isUserInteractionEnabled = false
+        if let tiled = layer as? CATiledLayer {
+            tiled.levelsOfDetail = 4
+            tiled.levelsOfDetailBias = 3
+            tiled.tileSize = CGSize(width: 512, height: 512)
+        }
         layer.shadowColor = UIColor(hex: 0x28220F).cgColor
         layer.shadowOpacity = 0.12
         layer.shadowRadius = 14
         layer.shadowOffset = CGSize(width: 0, height: 6)
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (v: PaperUIView, _: UITraitCollection) in
-            v.setNeedsDisplay()
+            v.redraw()
         }
     }
     required init?(coder: NSCoder) { fatalError() }
@@ -74,23 +98,35 @@ final class PaperUIView: UIView {
         super.layoutSubviews()
         layer.shadowPath = isWhiteboard ? nil : UIBezierPath(roundedRect: bounds, cornerRadius: 6).cgPath
         layer.shadowOpacity = isWhiteboard ? 0 : 0.12
+        if snapshotValue().size != bounds.size { redraw() }
+    }
+
+    private func snapshotValue() -> Snapshot { lock.lock(); defer { lock.unlock() }; return snap }
+
+    private func redraw() {
+        let s = Snapshot(style: style, scale: pageScale, whiteboard: isWhiteboard, pdf: pdfPage,
+                         traits: UITraitCollection(userInterfaceStyle: traitCollection.userInterfaceStyle),
+                         size: bounds.size)
+        lock.lock(); snap = s; lock.unlock()
+        setNeedsDisplay()
     }
 
     override func draw(_ rect: CGRect) {
         guard let ctx = UIGraphicsGetCurrentContext() else { return }
-        if let pdfPage {
-            if rendered?.size != bounds.size {
-                rendered = PDFRender.image(pdfPage, size: bounds.size, scale: max(2, traitCollection.displayScale))
-            }
-            rendered?.draw(in: bounds)
+        let s = snapshotValue()
+        let bounds = CGRect(origin: .zero, size: s.size)
+        if let pdf = s.pdf {
+            ctx.setFillColor(UIColor.white.cgColor)
+            ctx.fill(bounds)
+            PDFRender.draw(pdf, in: bounds, context: ctx)
             return
         }
-        let tc = traitCollection
-        let page = UIBezierPath(roundedRect: bounds, cornerRadius: isWhiteboard ? 0 : 6)
+        let tc = s.traits
+        let page = UIBezierPath(roundedRect: bounds, cornerRadius: s.whiteboard ? 0 : 6)
         ctx.addPath(page.cgPath)
         ctx.setFillColor(Y.paperUI.resolvedColor(with: tc).cgColor)
         ctx.fillPath()
-        PaperPattern.draw(style, in: bounds, scale: pageScale) { path, color, width in
+        PaperPattern.draw(s.style, in: bounds, scale: s.scale) { path, color, width in
             ctx.addPath(path.cgPath)
             ctx.setStrokeColor(color.resolvedColor(with: tc).cgColor)
             ctx.setLineWidth(width)
@@ -113,6 +149,10 @@ final class YaprakCanvas: PKCanvasView {
     var isWhiteboard = false
     var bottomRoom: CGFloat = 140
     private(set) var mapping = CGAffineTransform.identity
+    /// Son yerleşimin yapıldığı yakınlık
+    private var laidOutZoom: CGFloat = 0
+    /// Kanonik → ekran (yakınlaştırma dahil); notlar bununla konumlanır
+    var viewMapping: CGAffineTransform { mapping.concatenating(CGAffineTransform(scaleX: zoomScale, y: zoomScale)) }
     var onLayoutChange: (() -> Void)?
 
     /// Tuvalin kendi geri alma yöneticisi: PencilKit adımları, araç çubuğu düğmeleri ve ⌘Z
@@ -204,10 +244,10 @@ final class YaprakCanvas: PKCanvasView {
     }
 
     private func layoutNotes() {
-        let s = mapping.a
+        let m = viewMapping
         for v in noteViews {
-            v.scale = s
-            v.frame = v.note.frame.applying(mapping)
+            v.scale = m.a
+            v.frame = v.note.frame.applying(m)
             bringSubviewToFront(v)
         }
         bringSubviewToFront(cursor)
@@ -215,13 +255,14 @@ final class YaprakCanvas: PKCanvasView {
 
     /// Sürüklenen notun yeni yerini kanonik koordinata çevirir ve sayfanın içinde tutar
     private func finishMove(_ v: StickyNoteView) {
-        var f = v.frame.applying(mapping.inverted())
+        let m = viewMapping
+        var f = v.frame.applying(m.inverted())
         f.size.width = min(max(f.width, StickyNote.minSize.width), canonical.width)
         f.size.height = min(max(f.height, StickyNote.minSize.height), canonical.height)
         f.origin.x = min(max(f.minX, 0), canonical.width - f.width)
         f.origin.y = min(max(f.minY, 0), canonical.height - f.height)
         v.note.frame = f
-        UIView.animate(withDuration: 0.2) { v.frame = f.applying(self.mapping) }
+        UIView.animate(withDuration: 0.2) { v.frame = f.applying(m) }
         notesChanged()
     }
 
@@ -251,7 +292,7 @@ final class YaprakCanvas: PKCanvasView {
     /// Görünen alanın ortasına yeni bir not koyar ve yazmaya başlatır
     func addNote(color: StickyColor = .sari) {
         let visible = bounds.intersection(paper.frame)
-        let center = CGPoint(x: visible.midX, y: visible.midY).applying(mapping.inverted())
+        let center = CGPoint(x: visible.midX, y: visible.midY).applying(viewMapping.inverted())
         var note = StickyNote(x: 0, y: 0, color: color)
         note.x = min(max(center.x - note.w / 2, 0), canonical.width - note.w)
         note.y = min(max(center.y - note.h / 2, 0), canonical.height - note.h)
@@ -329,7 +370,9 @@ final class YaprakCanvas: PKCanvasView {
         let r = pageRect(forWidth: bounds.width)
         let s = r.width / canonical.width
         let newMap = CGAffineTransform(scaleX: s, y: s).concatenating(CGAffineTransform(translationX: r.minX, y: r.minY))
-        if newMap != mapping {
+        let z = zoomScale
+        let mapChanged = newMap != mapping
+        if mapChanged {
             // Döndürme / yeniden boyutlandırmada çizimi yeni yerleşime taşı
             let old = mapping
             mapping = newMap
@@ -339,11 +382,18 @@ final class YaprakCanvas: PKCanvasView {
             paper.isWhiteboard = isWhiteboard
             paper.style = style
             paper.pageScale = s
-            paper.frame = r
-            contentSize = CGSize(width: max(bounds.width, r.maxX), height: r.maxY + bottomRoom)
-            layoutNotes()
-            onLayoutChange?()
         }
+        if mapChanged || z != laidOutZoom {
+            laidOutZoom = z
+            // Kâğıt yakınlığa göre büyür (döşemeli katman her düzeyde net çizer); çizim koordinatları değişmez
+            paper.transform = .identity
+            paper.frame = CGRect(origin: .zero, size: r.size)
+            paper.transform = CGAffineTransform(scaleX: z, y: z)
+            paper.center = CGPoint(x: r.midX * z, y: r.midY * z)
+            contentSize = CGSize(width: max(bounds.width, r.maxX) * z, height: (r.maxY + bottomRoom) * z)
+            layoutNotes()
+        }
+        if mapChanged { onLayoutChange?() }
         updatePageMask()
     }
 
@@ -422,7 +472,8 @@ struct CanvasRepresentable: UIViewRepresentable {
         c.alwaysBounceVertical = true
         c.showsVerticalScrollIndicator = true
         c.minimumZoomScale = 1
-        c.maximumZoomScale = 1
+        c.maximumZoomScale = 4
+        c.bouncesZoom = true
         c.applyTool(tool)
         c.drawingPolicy = pencilOnly ? .pencilOnly : .anyInput
         c.delegate = context.coordinator
@@ -492,6 +543,8 @@ struct CanvasRepresentable: UIViewRepresentable {
             let newData = data, newNotes = notes, newPDF = pdfPage, pid = pageID
             c.animatePageTurn(forward: turnForward) {
                 coord.pageID = pid
+                // Yeni sayfa sayfaya sığar halde açılsın
+                c.setZoomScale(1, animated: false)
                 c.paper.pdfPage = newPDF
                 coord.suppress = true
                 c.load(newData)
@@ -569,6 +622,12 @@ struct CanvasRepresentable: UIViewRepresentable {
         }
 
         func gestureRecognizer(_ g: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool { true }
+
+        /// Yakınlaştırılmışken kaydırma sayfayı gezdirir, sayfa çevirmez
+        func gestureRecognizerShouldBegin(_ g: UIGestureRecognizer) -> Bool {
+            if g is UISwipeGestureRecognizer, let c = g.view as? UIScrollView { return c.zoomScale < 1.02 }
+            return true
+        }
 
         /// "Yalnızca Pencil ile çiz" açıkken parmakla kaydırırken imleç çıkmasın
         func gestureRecognizer(_ g: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
