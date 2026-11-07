@@ -469,6 +469,14 @@ struct CanvasRepresentable: UIViewRepresentable {
             swipe.numberOfTouchesRequired = 2
             swipe.delegate = context.coordinator
             c.addGestureRecognizer(swipe)
+            // Parmak çizmiyorken (yalnızca Pencil) tek parmakla da sayfa çevrilir
+            let one = UISwipeGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.pageSwipe(_:)))
+            one.direction = direction
+            one.numberOfTouchesRequired = 1
+            one.delegate = context.coordinator
+            one.isEnabled = pencilOnly
+            c.addGestureRecognizer(one)
+            context.coordinator.oneFingerSwipes.append(one)
         }
         controller.canvas = c
         return c
@@ -497,6 +505,7 @@ struct CanvasRepresentable: UIViewRepresentable {
         c.applyTool(tool)
         c.cursorDiameter = eraserCursor
         c.drawingPolicy = pencilOnly ? .pencilOnly : .anyInput
+        coord.oneFingerSwipes.forEach { $0.isEnabled = pencilOnly }
         controller.canvas = c
     }
 
@@ -512,6 +521,8 @@ struct CanvasRepresentable: UIViewRepresentable {
         var suppress = false
         var pageID: UUID?
         private var work: DispatchWorkItem?
+        /// Tek parmakla sayfa çevirme (yalnızca parmak çizmiyorken açık)
+        var oneFingerSwipes: [UISwipeGestureRecognizer] = []
 
         init(_ p: CanvasRepresentable) { parent = p }
 
@@ -561,7 +572,16 @@ struct CanvasRepresentable: UIViewRepresentable {
 
         /// "Yalnızca Pencil ile çiz" açıkken parmakla kaydırırken imleç çıkmasın
         func gestureRecognizer(_ g: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-            if g is UISwipeGestureRecognizer { return touch.type == .direct }
+            if g is UISwipeGestureRecognizer {
+                // Sayfa çevirme parmakla; yapışkan notu sürüklerken/yazarken sayfa değişmesin
+                guard touch.type == .direct else { return false }
+                var v = touch.view
+                while let x = v {
+                    if x is StickyNoteView { return false }
+                    v = x.superview
+                }
+                return true
+            }
             guard let c = g.view as? PKCanvasView else { return true }
             return !(c.drawingPolicy == .pencilOnly && touch.type == .direct)
         }

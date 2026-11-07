@@ -107,7 +107,8 @@ struct DocumentView: View {
     }
     @State private var showToolMenu = false
     @State private var focus = false
-    @State private var pencilOnly = false
+    /// Varsayılan: parmak çizmez (sayfayı kaydırır ve tek parmakla sayfa çevirir), yalnızca Pencil çizer
+    @AppStorage("kalem.sadecePencil") private var pencilOnly = true
     @State private var controller = CanvasController()
     @State private var tapRipple = false
     @State private var confirmDelete = false
