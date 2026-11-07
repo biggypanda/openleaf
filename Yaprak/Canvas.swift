@@ -250,6 +250,7 @@ final class YaprakCanvas: PKCanvasView {
             v.frame = v.note.frame.applying(m)
             bringSubviewToFront(v)
         }
+        layoutImages()
         bringSubviewToFront(cursor)
     }
 
@@ -268,6 +269,123 @@ final class YaprakCanvas: PKCanvasView {
 
     private func notesChanged() { onNotesChange?(noteViews.map(\.note)) }
 
+    // MARK: Resimler
+
+    var notebookID: UUID?
+    var onImagesChange: (([PageImage]) -> Void)?
+    private var images: [PageImage] = []
+    private var imageViews: [UUID: UIImageView] = [:]
+    private let imageSelection = ImageSelectionView()
+    private(set) var selectedImage: UUID?
+
+    func setImages(_ list: [PageImage]) {
+        selectImage(nil)
+        imageViews.values.forEach { $0.removeFromSuperview() }
+        imageViews = [:]
+        images = list
+        list.forEach(addImageView)
+        layoutImages()
+    }
+
+    private func addImageView(_ img: PageImage) {
+        let v = UIImageView()
+        v.contentMode = .scaleToFill
+        v.isUserInteractionEnabled = false
+        v.accessibilityIgnoresInvertColors = true
+        // Kâğıdın içinde durur: hep mürekkebin altında kalır, üstüne kalemle yazılabilir
+        if let nid = notebookID { v.image = ImageStore.image(nid, img.file) }
+        paper.addSubview(v)
+        imageViews[img.id] = v
+    }
+
+    /// Kanonik → kâğıdın kendi koordinatı (kâğıt yakınlaştırmayı kendi dönüşümüyle yapar)
+    private var paperMapping: CGAffineTransform { CGAffineTransform(scaleX: mapping.a, y: mapping.a) }
+
+    private func layoutImages() {
+        let m = viewMapping
+        for img in images { imageViews[img.id]?.frame = img.frame.applying(paperMapping) }
+        if let s = selectedImage, let img = images.first(where: { $0.id == s }) {
+            let p = ImageSelectionView.pad
+            imageSelection.frame = img.frame.applying(m).insetBy(dx: -p, dy: -p)
+            imageSelection.isHidden = false
+            bringSubviewToFront(imageSelection)
+        } else {
+            imageSelection.isHidden = true
+        }
+    }
+
+    private func setupSelection() {
+        guard imageSelection.superview == nil else { return }
+        imageSelection.isHidden = true
+        imageSelection.onMove = { [weak self] r in
+            guard let self, let s = self.selectedImage else { return }
+            self.imageViews[s]?.frame = self.paper.convert(r, from: self)
+            let p = ImageSelectionView.pad
+            self.imageSelection.frame = r.insetBy(dx: -p, dy: -p)
+        }
+        imageSelection.onMoveEnded = { [weak self] in self?.finishImageMove() }
+        imageSelection.onDelete = { [weak self] in self?.deleteSelectedImage() }
+        addSubview(imageSelection)
+    }
+
+    /// Taşınan/boyutlanan resmi kanonik koordinata çevirir ve sayfanın içinde tutar
+    private func finishImageMove() {
+        guard let s = selectedImage, let i = images.firstIndex(where: { $0.id == s }), let v = imageViews[s] else { return }
+        var f = convert(v.frame, from: paper).applying(viewMapping.inverted())
+        let ratio = f.height / max(f.width, 1)
+        f.size.width = min(max(f.width, PageImage.minWidth), canonical.width)
+        f.size.height = f.width * ratio
+        if f.height > canonical.height { f.size.height = canonical.height; f.size.width = f.height / ratio }
+        f.origin.x = min(max(f.minX, 0), canonical.width - f.width)
+        f.origin.y = min(max(f.minY, 0), canonical.height - f.height)
+        images[i].frame = f
+        UIView.animate(withDuration: 0.18) { self.layoutImages() }
+        onImagesChange?(images)
+    }
+
+    private func deleteSelectedImage() {
+        guard let s = selectedImage else { return }
+        let v = imageViews.removeValue(forKey: s)
+        images.removeAll { $0.id == s }
+        selectImage(nil)
+        UIView.animate(withDuration: 0.18, animations: { v?.alpha = 0 }, completion: { _ in v?.removeFromSuperview() })
+        onImagesChange?(images)
+    }
+
+    func selectImage(_ id: UUID?) {
+        setupSelection()
+        selectedImage = id
+        layoutImages()
+    }
+
+    /// Parmakla dokunma: altındaki en üstteki resmi seç, boş yere dokununca seçimi kaldır
+    func handleImageTap(at p: CGPoint) {
+        if noteViews.contains(where: { $0.frame.contains(p) }) { return }
+        if !imageSelection.isHidden, imageSelection.frame.contains(p) { return }
+        let m = viewMapping
+        let hit = images.last { $0.frame.applying(m).contains(p) }
+        selectImage(hit?.id)
+    }
+
+    /// Görünen alanın ortasına yeni resim koyar ve seçer
+    func addImage(file: String, pixelSize: CGSize) {
+        guard pixelSize.width > 0, pixelSize.height > 0 else { return }
+        let visible = bounds.intersection(paper.frame)
+        let c = CGPoint(x: visible.midX, y: visible.midY).applying(viewMapping.inverted())
+        var w = canonical.width * 0.6
+        var h = w * pixelSize.height / pixelSize.width
+        if h > canonical.height * 0.7 { h = canonical.height * 0.7; w = h * pixelSize.width / pixelSize.height }
+        let x = min(max(c.x - w / 2, 0), canonical.width - w)
+        let y = min(max(c.y - h / 2, 0), canonical.height - h)
+        let img = PageImage(file: file, x: x, y: y, w: w, h: h)
+        images.append(img)
+        addImageView(img)
+        imageViews[img.id]?.alpha = 0
+        selectImage(img.id)
+        UIView.animate(withDuration: 0.25) { self.imageViews[img.id]?.alpha = 1 }
+        onImagesChange?(images)
+    }
+
     /// Seçili aracı hem sayfaya hem notların kalem katmanına uygular
     func applyTool(_ t: PKTool) {
         tool = t
@@ -276,6 +394,11 @@ final class YaprakCanvas: PKCanvasView {
 
     /// Notun üstünde çizim başlamasın; basılı tutma ve sürükleme nota gitsin
     override func gestureRecognizerShouldBegin(_ g: UIGestureRecognizer) -> Bool {
+        // Seçili resmi taşırken/boyutlandırırken sayfa kaymasın
+        if g === panGestureRecognizer, !imageSelection.isHidden,
+           imageSelection.frame.insetBy(dx: -12, dy: -12).contains(g.location(in: self)) {
+            return false
+        }
         if g === drawingGestureRecognizer {
             let p = g.location(in: self)
             if noteViews.contains(where: { $0.frame.contains(p) }) { return false }
@@ -412,6 +535,7 @@ final class CanvasController {
     var canRedo = false
 
     func addNote() { canvas?.addNote() }
+    func addImage(file: String, pixelSize: CGSize) { canvas?.addImage(file: file, pixelSize: pixelSize) }
 
     /// Bekleyen (gecikmeli) çizim kaydını hemen yazar
     var flushHandler: (() -> Void)?
@@ -458,6 +582,9 @@ struct CanvasRepresentable: UIViewRepresentable {
     /// İki parmakla yatay kaydırma: +1 sonraki sayfa (sola kaydırma), -1 önceki sayfa (sağa kaydırma)
     var onPageSwipe: ((Int) -> Void)? = nil
     var onNotesChange: ((UUID, [StickyNote]) -> Void)? = nil
+    var notebookID: UUID? = nil
+    var images: [PageImage] = []
+    var onImagesChange: ((UUID, [PageImage]) -> Void)? = nil
     /// Apple Pencil Pro sıkıldı: kalem ucunun pencere koordinatı (kalem havada değilse nil)
     var onPencilSqueeze: ((CGPoint?) -> Void)? = nil
 
@@ -484,6 +611,12 @@ struct CanvasRepresentable: UIViewRepresentable {
         context.coordinator.pageID = pageID
         let pending = data
         let pendingNotes = notes
+        let pendingImages = images
+        c.notebookID = notebookID
+        c.onImagesChange = { [weak coord = context.coordinator] list in
+            guard let coord, let pid = coord.pageID else { return }
+            coord.parent.onImagesChange?(pid, list)
+        }
         c.onNotesChange = { [weak coord = context.coordinator] list in
             guard let coord, let pid = coord.pageID else { return }
             coord.parent.onNotesChange?(pid, list)
@@ -495,9 +628,17 @@ struct CanvasRepresentable: UIViewRepresentable {
             coord.loaded = true
             coord.suppress = true
             c.load(pending)
+            c.setImages(pendingImages)
             c.setNotes(pendingNotes)
             coord.suppress = false
         }
+        // Parmakla resme dokununca seç (taşı/boyutlandır/sil); boş yere dokununca bırak
+        let imageTap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.imageTap(_:)))
+        imageTap.allowedTouchTypes = [NSNumber(value: UITouch.TouchType.direct.rawValue)]
+        imageTap.cancelsTouchesInView = false
+        imageTap.delegate = context.coordinator
+        c.addGestureRecognizer(imageTap)
+
         let pencil = UIPencilInteraction(delegate: context.coordinator)
         c.addInteraction(pencil)
 
@@ -547,7 +688,7 @@ struct CanvasRepresentable: UIViewRepresentable {
             // Önce eski sayfayı kaydet, sonra yeni sayfayı yükle (kitap sayfası animasyonuyla)
             c.endEditing(true)
             coord.flush(c)
-            let newData = data, newNotes = notes, newPDF = pdfPage, pid = pageID
+            let newData = data, newNotes = notes, newImages = images, newPDF = pdfPage, pid = pageID
             c.animatePageTurn(forward: turnForward) {
                 coord.pageID = pid
                 // Yeni sayfa sayfaya sığar halde açılsın
@@ -555,6 +696,7 @@ struct CanvasRepresentable: UIViewRepresentable {
                 c.paper.pdfPage = newPDF
                 coord.suppress = true
                 c.load(newData)
+                c.setImages(newImages)
                 c.setNotes(newNotes)
                 c.undoManager?.removeAllActions()
                 coord.suppress = false
@@ -615,6 +757,11 @@ struct CanvasRepresentable: UIViewRepresentable {
             }
         }
 
+        @objc func imageTap(_ g: UITapGestureRecognizer) {
+            guard let c = g.view as? YaprakCanvas else { return }
+            c.handleImageTap(at: g.location(in: c))
+        }
+
         @objc func pageSwipe(_ g: UISwipeGestureRecognizer) {
             guard g.state == .ended else { return }
             parent.onPageSwipe?(g.direction == .left ? 1 : -1)
@@ -643,11 +790,12 @@ struct CanvasRepresentable: UIViewRepresentable {
                 guard touch.type == .direct else { return false }
                 var v = touch.view
                 while let x = v {
-                    if x is StickyNoteView { return false }
+                    if x is StickyNoteView || x is ImageSelectionView { return false }
                     v = x.superview
                 }
                 return true
             }
+            if g is UITapGestureRecognizer { return touch.type == .direct }
             guard let c = g.view as? PKCanvasView else { return true }
             return !(c.drawingPolicy == .pencilOnly && touch.type == .direct)
         }

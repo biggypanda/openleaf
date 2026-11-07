@@ -137,6 +137,10 @@ enum PageRenderer {
                 }
             }
             UIGraphicsPushContext(cg)
+            // Resimler kâğıdın üstünde, mürekkebin altında
+            for img in page.pageImages {
+                ImageStore.image(nb.id, img.file)?.draw(in: img.frame)
+            }
             if let d = try? PKDrawing(data: drawing), !d.strokes.isEmpty {
                 d.image(from: bounds, scale: 2).draw(in: bounds)
             }

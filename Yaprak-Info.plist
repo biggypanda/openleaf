@@ -2,7 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Yaprak'ı PDF açabilen uygulamalar arasına ekler (Paylaş > Yaprak, "Birlikte aç"). -->
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -18,9 +17,9 @@
 			</array>
 		</dict>
 	</array>
-	<!-- "Şununla Aç" listesinde görünmek için açık. Yaprak yine de PDF'i kendi klasörüne kopyalar;
-	     orijinal dosya değiştirilmez. -->
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Derste tahtanın ya da kitabın fotoğrafını çekip sayfaya eklemek için.</string>
 </dict>
 </plist>

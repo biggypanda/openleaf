@@ -78,8 +78,11 @@ struct Page: Identifiable, Codable, Equatable {
     var pdfPage: Int?
     /// Sayfadaki yapışkan notlar (eski kayıtlarda alan yok)
     var notes: [StickyNote]?
+    /// Sayfaya eklenmiş resimler (eski kayıtlarda alan yok)
+    var images: [PageImage]?
 
     var stickyNotes: [StickyNote] { notes ?? [] }
+    var pageImages: [PageImage] { images ?? [] }
 }
 
 struct Notebook: Identifiable, Codable, Equatable {
@@ -354,6 +357,7 @@ final class Library {
         }
         drawingCache[key(id, page)] = nil
         store.deleteDrawing(id, page)
+        cleanupImages(id)
         scheduleThumbnail(id)
     }
 

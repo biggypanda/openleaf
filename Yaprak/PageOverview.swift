@@ -187,6 +187,7 @@ struct PageThumbnail: View {
         let size = notebook.canonicalSize
         let data = library.drawing(notebook.id, page.id)
         let notesHash = (try? JSONEncoder().encode(page.stickyNotes))?.hashValue ?? 0
+            ^ ((try? JSONEncoder().encode(page.pageImages))?.hashValue ?? 0)
         let key = "\(page.id)-\(data.hashValue)-\(notesHash)-\(notebook.paper.rawValue)" as NSString
         ZStack {
             RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(uiColor: Y.paperUI))

@@ -1,6 +1,7 @@
 import SwiftUI
 import PencilKit
 import PDFKit
+import PhotosUI
 
 enum ToolKind: String, CaseIterable {
     case pen, highlighter, eraser, lasso
@@ -118,6 +119,10 @@ struct DocumentView: View {
     @State private var quickShown = false
     /// Sayfa genel görünümü açık mı; açıkken sıralama değişse de açık sayfa aynı kalsın diye kimliği tutulur
     @State private var showPages = false
+    /// Resim ekleme: kamera ve fotoğraf arşivi
+    @State private var showCamera = false
+    @State private var photoItem: PhotosPickerItem?
+    @State private var showPhotos = false
     @State private var pinnedPage: UUID?
     @State private var quickPoint: CGPoint?
 
@@ -150,37 +155,7 @@ struct DocumentView: View {
                         .transition(.move(edge: .top).combined(with: .opacity))
                 }
                 ZStack {
-                    CanvasRepresentable(
-                        pageID: pageID,
-                        data: library.drawing(id, pageID),
-                        notes: nb.pages[p].stickyNotes,
-                        turnForward: forward,
-                        pdfPage: nb.pages[p].pdfPage.flatMap { pdfDoc?.page(at: $0) },
-                        paper: nb.paper,
-                        canonical: nb.canonicalSize,
-                        isWhiteboard: nb.kind == .whiteboard,
-                        isPDF: nb.kind == .pdf,
-                        tool: pkTool,
-                        eraserCursor: tool == .eraser && eraser.mode == .kismi ? eraser.width : nil,
-                        pencilOnly: pencilOnly,
-                        controller: controller,
-                        onChange: { pid, data in
-                            // Sayfa kimliğiyle yaz: araya sayfa eklenip silinse de doğru dosyaya gider
-                            library.saveDrawing(id, pid, data)
-                        },
-                        onPencilTap: pencilDoubleTap,
-                        onPageSwipe: nb.isPaged ? { step in go(p + step, nb) } : nil,
-                        onNotesChange: { pid, list in library.setNotes(id, pid, list) },
-                        onPencilSqueeze: { point in
-                            if quickShown {
-                                withAnimation(Y.quick) { quickShown = false }
-                            } else {
-                                quickPoint = point
-                                showToolMenu = false
-                                quickShown = true
-                            }
-                        }
-                    )
+                    canvas(nb, page: p)
                 }
                 .clipped()
                 .ignoresSafeArea(edges: .bottom)
@@ -192,6 +167,8 @@ struct DocumentView: View {
                                canUndo: controller.canUndo, canRedo: controller.canRedo,
                                undo: controller.undo, redo: controller.redo,
                                addNote: controller.addNote,
+                               takePhoto: { showCamera = true },
+                               pickPhoto: { showPhotos = true },
                                select: select)
                     .padding(.bottom, 18)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -225,6 +202,19 @@ struct DocumentView: View {
                                  withAnimation(Y.springSoft) { showPages = false }
                              })
                     .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .photosPicker(isPresented: $showPhotos, selection: $photoItem, matching: .images)
+        .fullScreenCover(isPresented: $showCamera) {
+            CameraPicker { insertImage($0) }.ignoresSafeArea()
+        }
+        .onChange(of: photoItem) { _, item in
+            guard let item else { return }
+            Task {
+                if let data = try? await item.loadTransferable(type: Data.self), let ui = UIImage(data: data) {
+                    insertImage(ui)
+                }
+                photoItem = nil
             }
         }
         .onChange(of: nb.pages.map(\.id)) { _, ids in
@@ -402,6 +392,58 @@ struct DocumentView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { withAnimation(Y.quick) { tapRipple = false } }
     }
 
+    private func canvas(_ nb: Notebook, page p: Int) -> CanvasRepresentable {
+        let pageID = nb.pages[p].id
+        let pdf: PDFPage? = nb.pages[p].pdfPage.flatMap { pdfDoc?.page(at: $0) }
+        let cursor: CGFloat? = tool == .eraser && eraser.mode == .kismi ? eraser.width : nil
+        let swipe: ((Int) -> Void)? = nb.isPaged ? { step in go(p + step, nb) } : nil
+        let notebookID = id
+        return CanvasRepresentable(
+            pageID: pageID,
+            data: library.drawing(notebookID, pageID),
+            notes: nb.pages[p].stickyNotes,
+            turnForward: forward,
+            pdfPage: pdf,
+            paper: nb.paper,
+            canonical: nb.canonicalSize,
+            isWhiteboard: nb.kind == .whiteboard,
+            isPDF: nb.kind == .pdf,
+            tool: pkTool,
+            eraserCursor: cursor,
+            pencilOnly: pencilOnly,
+            controller: controller,
+            onChange: { pid, data in
+                // Sayfa kimliğiyle yaz: araya sayfa eklenip silinse de doğru dosyaya gider
+                library.saveDrawing(notebookID, pid, data)
+            },
+            onPencilTap: pencilDoubleTap,
+            onPageSwipe: swipe,
+            onNotesChange: { pid, list in library.setNotes(notebookID, pid, list) },
+            notebookID: notebookID,
+            images: nb.pages[p].pageImages,
+            onImagesChange: { pid, list in library.setImages(notebookID, pid, list) },
+            onPencilSqueeze: { point in squeezed(at: point) }
+        )
+    }
+
+    private func squeezed(at point: CGPoint?) {
+        if quickShown {
+            withAnimation(Y.quick) { quickShown = false }
+        } else {
+            quickPoint = point
+            showToolMenu = false
+            quickShown = true
+        }
+    }
+
+    /// Resmi küçültüp defter klasörüne kaydeder ve açık sayfanın ortasına koyar
+    private func insertImage(_ ui: UIImage) {
+        guard let prepared = ImageStore.prepare(ui) else { return }
+        let file = library.saveImageFile(id, data: prepared.data)
+        if let img = UIImage(data: prepared.data) { ImageStore.remember(id, file, img) }
+        controller.addImage(file: file, pixelSize: prepared.size)
+    }
+
     private func openPages(_ nb: Notebook, current p: Int) {
         controller.flush()
         pinnedPage = nb.pages[p].id
@@ -465,6 +507,8 @@ struct ToolbarCapsule: View {
     var undo: () -> Void
     var redo: () -> Void
     var addNote: () -> Void
+    var takePhoto: () -> Void
+    var pickPhoto: () -> Void
     var select: (ToolKind) -> Void
 
     var body: some View {
@@ -481,6 +525,20 @@ struct ToolbarCapsule: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Yapışkan not ekle")
+
+            // Resim ekle: kamera ya da fotoğraf arşivi
+            Menu {
+                Button(action: takePhoto) { Label("Fotoğraf çek", systemImage: "camera") }
+                    .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
+                Button(action: pickPhoto) { Label("Fotoğraflardan seç", systemImage: "photo.on.rectangle") }
+            } label: {
+                Image(systemName: "photo.badge.plus")
+                    .font(.system(size: 19, weight: .regular))
+                    .frame(width: 46, height: 46)
+                    .foregroundStyle(Y.ink2)
+                    .contentShape(Circle())
+            }
+            .accessibilityLabel("Resim ekle")
 
             toolButton(.lasso)
 
