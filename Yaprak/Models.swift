@@ -315,6 +315,37 @@ final class Library {
         }
     }
 
+    /// Sayfayı yeni sırasına taşır (`to`, taşınan sayfanın yeni indeksi)
+    func movePage(_ id: UUID, from: Int, to: Int) {
+        update(id) { nb in
+            guard nb.pages.indices.contains(from) else { return }
+            let p = nb.pages.remove(at: from)
+            nb.pages.insert(p, at: min(max(to, 0), nb.pages.count))
+            nb.modified = Date()
+        }
+        scheduleThumbnail(id)
+    }
+
+    /// Sayfanın kopyasını hemen arkasına ekler (mürekkep, notlar ve PDF sayfası dahil)
+    @discardableResult
+    func duplicatePage(_ id: UUID, at index: Int) -> Int? {
+        guard let nb = notebooks.first(where: { $0.id == id }), nb.pages.indices.contains(index) else { return nil }
+        let src = nb.pages[index]
+        var copy = Page()
+        copy.pdfPage = src.pdfPage
+        copy.notes = src.notes?.map { n in var c = n; c.id = UUID(); return c }
+        let data = drawing(id, src.id)
+        if !data.isEmpty {
+            drawingCache[key(id, copy.id)] = data
+            store.writeDrawing(id, copy.id, data)
+        }
+        update(id) { nb in
+            nb.pages.insert(copy, at: index + 1)
+            nb.modified = Date()
+        }
+        return index + 1
+    }
+
     func deletePage(_ id: UUID, _ page: UUID) {
         update(id) { nb in
             nb.pages.removeAll { $0.id == page }

@@ -116,6 +116,9 @@ struct DocumentView: View {
     @State private var pdfDoc: PDFDocument?
     /// Kalem sıkılınca açılan hızlı menü ve açıldığı nokta (pencere koordinatı; nil ise ekran ortası)
     @State private var quickShown = false
+    /// Sayfa genel görünümü açık mı; açıkken sıralama değişse de açık sayfa aynı kalsın diye kimliği tutulur
+    @State private var showPages = false
+    @State private var pinnedPage: UUID?
     @State private var quickPoint: CGPoint?
 
     /// Kalem kalınlığı aralığı (nokta); çubukla serbestçe ayarlanır
@@ -209,6 +212,32 @@ struct DocumentView: View {
             }
         }
         .overlay {
+            if showPages {
+                PageOverview(notebook: nb, current: p, pdf: pdfDoc,
+                             onOpen: { i in
+                                 pinnedPage = nil
+                                 forward = i >= p
+                                 page = i
+                                 withAnimation(Y.springSoft) { showPages = false }
+                             },
+                             onClose: {
+                                 pinnedPage = nil
+                                 withAnimation(Y.springSoft) { showPages = false }
+                             })
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .onChange(of: nb.pages.map(\.id)) { _, ids in
+            // Genel görünümde sıralama/silme olunca açık sayfa kaymasın
+            guard let pin = pinnedPage else { return }
+            if let i = ids.firstIndex(of: pin) {
+                page = i
+            } else {
+                page = min(page, ids.count - 1)
+                pinnedPage = ids[page]
+            }
+        }
+        .overlay {
             if quickShown {
                 GeometryReader { g in
                     let o = g.frame(in: .global).origin
@@ -274,6 +303,7 @@ struct DocumentView: View {
 
             HStack(spacing: 2) {
                 if nb.isPaged {
+                    iconButton("square.grid.2x2", "Tüm sayfalar") { openPages(nb, current: p) }
                     iconButton("chevron.up", "Önceki sayfa") { go(p - 1, nb) }.disabled(p == 0)
                     iconButton("chevron.down", "Sonraki sayfa") { go(p + 1, nb) }.disabled(p >= nb.pages.count - 1)
                     iconButton("doc.badge.plus", "Sayfa ekle") { addPage(after: p) }
@@ -370,6 +400,12 @@ struct DocumentView: View {
             tapRipple = true
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { withAnimation(Y.quick) { tapRipple = false } }
+    }
+
+    private func openPages(_ nb: Notebook, current p: Int) {
+        controller.flush()
+        pinnedPage = nb.pages[p].id
+        withAnimation(Y.springSoft) { showPages = true }
     }
 
     private func go(_ target: Int, _ nb: Notebook) {

@@ -413,6 +413,10 @@ final class CanvasController {
 
     func addNote() { canvas?.addNote() }
 
+    /// Bekleyen (gecikmeli) çizim kaydını hemen yazar
+    var flushHandler: (() -> Void)?
+    func flush() { flushHandler?() }
+
     func undo() {
         guard let u = canvas?.undoManager, u.canUndo else { return }
         u.undo()
@@ -530,6 +534,9 @@ struct CanvasRepresentable: UIViewRepresentable {
             context.coordinator.oneFingerSwipes.append(one)
         }
         controller.canvas = c
+        controller.flushHandler = { [weak c, weak coord = context.coordinator] in
+            if let c, let coord { coord.flush(c) }
+        }
         return c
     }
 
