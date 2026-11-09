@@ -40,10 +40,10 @@ struct QuickPalette: View {
             Item(id: "hl", icon: ToolKind.highlighter.icon, label: ToolKind.highlighter.name, active: tool == .highlighter) { onTool(.highlighter) },
             Item(id: "er", icon: ToolKind.eraser.icon, label: ToolKind.eraser.name, active: tool == .eraser) { onTool(.eraser) },
             Item(id: "la", icon: ToolKind.lasso.icon, label: ToolKind.lasso.name, active: tool == .lasso) { onTool(.lasso) },
-            Item(id: "note", icon: "note.text.badge.plus", label: "Yapışkan not ekle", action: onNote),
+            Item(id: "note", icon: "note.text.badge.plus", label: String(localized: "Yapışkan not ekle"), action: onNote),
             // Geri al/yinele menüyü kapatmaz: art arda basılabilsin
-            Item(id: "redo", icon: "arrow.uturn.forward", label: "Yinele", enabled: canRedo, closes: false, action: onRedo),
-            Item(id: "undo", icon: "arrow.uturn.backward", label: "Geri al", enabled: canUndo, closes: false, action: onUndo),
+            Item(id: "redo", icon: "arrow.uturn.forward", label: String(localized: "Yinele"), enabled: canRedo, closes: false, action: onRedo),
+            Item(id: "undo", icon: "arrow.uturn.backward", label: String(localized: "Geri al"), enabled: canUndo, closes: false, action: onUndo),
         ]
     }
 

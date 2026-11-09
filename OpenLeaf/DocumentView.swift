@@ -15,10 +15,10 @@ enum ToolKind: String, CaseIterable {
     }
     var name: String {
         switch self {
-        case .pen: "Kalem"
-        case .highlighter: "Vurgulayıcı"
-        case .eraser: "Silgi"
-        case .lasso: "Kement"
+        case .pen: String(localized: "Kalem")
+        case .highlighter: String(localized: "Vurgulayıcı")
+        case .eraser: String(localized: "Silgi")
+        case .lasso: String(localized: "Kement")
         }
     }
     var key: KeyEquivalent {
@@ -36,10 +36,10 @@ enum PenType: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var name: String {
         switch self {
-        case .tukenmez: "Tükenmez"
-        case .dolma: "Dolma"
-        case .kursun: "Kurşun"
-        case .firca: "Fırça"
+        case .tukenmez: String(localized: "Tükenmez")
+        case .dolma: String(localized: "Dolma")
+        case .kursun: String(localized: "Kurşun")
+        case .firca: String(localized: "Fırça")
         }
     }
     var ink: PKInk.InkType {
@@ -64,7 +64,7 @@ enum PenType: String, CaseIterable, Identifiable {
 enum EraserMode: String, CaseIterable, Identifiable {
     case kismi, butun
     var id: String { rawValue }
-    var name: String { self == .kismi ? "Kısmi" : "Bütün çizgi" }
+    var name: String { self == .kismi ? String(localized: "Kısmi") : String(localized: "Bütün çizgi") }
 }
 
 struct EraserSettings: Equatable {
@@ -179,7 +179,7 @@ struct DocumentView: View {
             }
 
             if tapRipple {
-                Text(tool == .eraser ? "Silgi" : "Kalem")
+                Text(tool == .eraser ? String(localized: "Silgi") : String(localized: "Kalem"))
                     .font(.subheadline.weight(.semibold))
                     .padding(.horizontal, 16).padding(.vertical, 10)
                     .foregroundStyle(Color(hex: 0xF1ECDF))
@@ -284,7 +284,7 @@ struct DocumentView: View {
 
             VStack(spacing: 1) {
                 Text(nb.title).font(.system(size: 17, weight: .semibold, design: .serif)).lineLimit(1)
-                Text(nb.kind == .whiteboard ? "Whiteboard" : "\(nb.subtitle.isEmpty ? "" : nb.subtitle + " · ")Sayfa \(p + 1) / \(nb.pages.count)")
+                Text(nb.kind == .whiteboard ? String(localized: "Whiteboard") : (nb.subtitle.isEmpty ? "" : nb.subtitle + " · ") + String(localized: "Sayfa \(p + 1) / \(nb.pages.count)"))
                     .font(.caption).foregroundStyle(Y.ink3).monospacedDigit()
                     .contentTransition(.numericText())
             }
@@ -335,7 +335,7 @@ struct DocumentView: View {
         .overlay(alignment: .bottom) { Rectangle().fill(Y.line2).frame(height: 1) }
     }
 
-    private func iconButton(_ icon: String, _ label: String, action: @escaping () -> Void) -> some View {
+    private func iconButton(_ icon: String, _ label: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon).font(.system(size: 17)).frame(width: 40, height: 40)
         }
@@ -633,7 +633,7 @@ struct ToolMenu: View {
                     HStack {
                         Text("KALINLIK").font(Y.eyebrow).tracking(0.8).foregroundStyle(Y.ink3)
                         Spacer()
-                        Text(String(format: "%.1f", penWidth).replacingOccurrences(of: ".", with: ","))
+                        Text(penWidth.formatted(.number.precision(.fractionLength(1))))
                             .font(.caption.monospacedDigit()).foregroundStyle(Y.ink2)
                     }
                     HStack(spacing: 12) {
@@ -641,7 +641,7 @@ struct ToolMenu: View {
                         Slider(value: $penWidth, in: DocumentView.penWidthRange)
                             .tint(Y.accent)
                             .accessibilityLabel("Kalem kalınlığı")
-                            .accessibilityValue(String(format: "%.1f", penWidth))
+                            .accessibilityValue(penWidth.formatted(.number.precision(.fractionLength(1))))
                         Circle().fill(color.swatch).frame(width: 14, height: 14)
                     }
                     // Seçilen kalınlıkta canlı çizgi önizlemesi
@@ -740,7 +740,7 @@ struct MoreMenu: View {
             .padding(.vertical, 10)
             Divider()
             Button(action: toggleFavorite) {
-                Label(favorite ? "Favorilerden çıkar" : "Favorilere ekle", systemImage: favorite ? "star.slash" : "star")
+                Label(favorite ? String(localized: "Favorilerden çıkar") : String(localized: "Favorilere ekle"), systemImage: favorite ? "star.slash" : "star")
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 12)
                     .contentShape(Rectangle())

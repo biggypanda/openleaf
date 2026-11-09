@@ -13,7 +13,7 @@ struct NewNotebookSheet: View {
             HStack(alignment: .top, spacing: 32) {
                 // Önizleme
                 VStack(spacing: 14) {
-                    CoverView(style: cover, title: title.isEmpty ? "Adsız defter" : title)
+                    CoverView(style: cover, title: title.isEmpty ? String(localized: "Adsız defter") : title)
                         .frame(width: 180)
                         .animation(Y.spring, value: cover)
                     Text("\(cover.name) · \(paper.name) · \(size.name)").font(.footnote).foregroundStyle(Y.ink3)
@@ -79,7 +79,7 @@ struct NewNotebookSheet: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Vazgeç") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Oluştur") {
-                        onCreate(Notebook(title: title.isEmpty ? "Adsız defter" : title, cover: cover, paper: paper, size: size))
+                        onCreate(Notebook(title: title.isEmpty ? String(localized: "Adsız defter") : title, cover: cover, paper: paper, size: size))
                     }
                     .fontWeight(.semibold)
                 }
@@ -88,7 +88,7 @@ struct NewNotebookSheet: View {
         .presentationSizing(.form)
     }
 
-    private func group<C: View>(_ label: String, @ViewBuilder _ content: () -> C) -> some View {
+    private func group<C: View>(_ label: LocalizedStringKey, @ViewBuilder _ content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(label).font(Y.eyebrow).tracking(0.8).foregroundStyle(Y.ink3)
             content()

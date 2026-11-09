@@ -18,10 +18,10 @@ enum StickyColor: String, Codable, CaseIterable {
 
     var name: String {
         switch self {
-        case .sari: "Sarı"
-        case .yesil: "Yeşil"
-        case .pembe: "Pembe"
-        case .mavi: "Mavi"
+        case .sari: String(localized: "Sarı")
+        case .yesil: String(localized: "Yeşil")
+        case .pembe: String(localized: "Pembe")
+        case .mavi: String(localized: "Mavi")
         }
     }
 }
@@ -115,7 +115,7 @@ final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteraction
         ink.contentInsetAdjustmentBehavior = .never
         ink.overrideUserInterfaceStyle = .light
         ink.delegate = self
-        ink.accessibilityLabel = "Not üstüne kalemle yazma alanı"
+        ink.accessibilityLabel = String(localized: "Not üstüne kalemle yazma alanı")
         addSubview(ink)
         let tap = UITapGestureRecognizer(target: self, action: #selector(tapToType(_:)))
         tap.allowedTouchTypes = [NSNumber(value: UITouch.TouchType.direct.rawValue)]
@@ -127,7 +127,7 @@ final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteraction
         resizeKnob.tintColor = UIColor.black.withAlphaComponent(0.45)
         resizeKnob.contentMode = .center
         resizeKnob.isUserInteractionEnabled = true
-        resizeKnob.accessibilityLabel = "Notu boyutlandır"
+        resizeKnob.accessibilityLabel = String(localized: "Notu boyutlandır")
         resizeKnob.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(resize(_:))))
         addSubview(resizeKnob)
 
@@ -140,10 +140,10 @@ final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteraction
         menuButton.setImage(UIImage(systemName: "ellipsis", withConfiguration: UIImage.SymbolConfiguration(pointSize: 13, weight: .bold)), for: .normal)
         menuButton.tintColor = UIColor.black.withAlphaComponent(0.45)
         menuButton.showsMenuAsPrimaryAction = true
-        menuButton.accessibilityLabel = "Not seçenekleri"
+        menuButton.accessibilityLabel = String(localized: "Not seçenekleri")
         handle.addSubview(menuButton)
         isAccessibilityElement = false
-        textView.accessibilityLabel = "Yapışkan not"
+        textView.accessibilityLabel = String(localized: "Yapışkan not")
         applyColor()
         applyScale()
     }
@@ -291,8 +291,8 @@ final class StickyNoteView: UIView, UITextViewDelegate, UIContextMenuInteraction
                 self.onChange?(self)
             }
         }
-        let renk = UIMenu(title: "Renk", image: UIImage(systemName: "paintpalette"), children: colors)
-        let sil = UIAction(title: "Notu sil", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+        let renk = UIMenu(title: String(localized: "Renk"), image: UIImage(systemName: "paintpalette"), children: colors)
+        let sil = UIAction(title: String(localized: "Notu sil"), image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
             guard let self else { return }
             self.endEditing(true)
             self.onDelete?(self)

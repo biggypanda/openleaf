@@ -129,7 +129,7 @@ final class ImageSelectionView: UIView {
         handleDot.layer.borderWidth = 2
         handleDot.isUserInteractionEnabled = false
         handle.addSubview(handleDot)
-        handle.accessibilityLabel = "Resmi boyutlandır"
+        handle.accessibilityLabel = String(localized: "Resmi boyutlandır")
         handle.addGestureRecognizer(resizePan)
         addSubview(handle)
 
@@ -140,9 +140,9 @@ final class ImageSelectionView: UIView {
         menuButton.layer.borderWidth = 1
         menuButton.layer.borderColor = UIColor.black.withAlphaComponent(0.12).cgColor
         menuButton.showsMenuAsPrimaryAction = true
-        menuButton.accessibilityLabel = "Resim seçenekleri"
+        menuButton.accessibilityLabel = String(localized: "Resim seçenekleri")
         menuButton.menu = UIMenu(children: [
-            UIAction(title: "Resmi sil", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+            UIAction(title: String(localized: "Resmi sil"), image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
                 self?.onDelete?()
             }
         ])
@@ -151,7 +151,7 @@ final class ImageSelectionView: UIView {
         let movePan = UIPanGestureRecognizer(target: self, action: #selector(dragImage(_:)))
         movePan.require(toFail: resizePan)
         addGestureRecognizer(movePan)
-        accessibilityLabel = "Seçili resim; sürükleyerek taşıyın"
+        accessibilityLabel = String(localized: "Seçili resim; sürükleyerek taşıyın")
     }
 
     required init?(coder: NSCoder) { fatalError() }

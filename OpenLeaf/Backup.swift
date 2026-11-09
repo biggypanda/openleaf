@@ -18,7 +18,7 @@ struct LibraryBackup: Codable {
 extension Library {
     enum BackupError: LocalizedError {
         case unreadable
-        var errorDescription: String? { "Bu dosya bir OpenLeaf yedeği değil ya da bozuk." }
+        var errorDescription: String? { String(localized: "Bu dosya bir OpenLeaf yedeği değil ya da bozuk.") }
     }
 
     /// Bekleyen kayıtları yazıp tüm kütüphaneyi tek bir veriye paketler
@@ -90,8 +90,8 @@ struct BackupDocument: FileDocument {
 
     static func defaultName() -> String {
         let f = DateFormatter()
-        f.locale = Locale(identifier: "tr_TR")
+        f.locale = Locale(identifier: "en_US_POSIX")
         f.dateFormat = "yyyy-MM-dd"
-        return "OpenLeaf Yedek \(f.string(from: Date())).\(LibraryBackup.fileExtension)"
+        return String(localized: "OpenLeaf Yedek \(f.string(from: Date()))") + ".\(LibraryBackup.fileExtension)"
     }
 }

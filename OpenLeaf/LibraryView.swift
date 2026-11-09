@@ -116,14 +116,14 @@ struct LibraryView: View {
     }
 
     private var folderPromptTitle: String {
-        if case .rename = folderPrompt { return "Klasörü yeniden adlandır" }
-        return "Yeni klasör"
+        if case .rename = folderPrompt { return String(localized: "Klasörü yeniden adlandır") }
+        return String(localized: "Yeni klasör")
     }
     private var folderPromptAction: String {
         switch folderPrompt {
-        case .rename: "Kaydet"
-        case .createAndMove: "Oluştur ve taşı"
-        default: "Oluştur"
+        case .rename: String(localized: "Kaydet")
+        case .createAndMove: String(localized: "Oluştur ve taşı")
+        default: String(localized: "Oluştur")
         }
     }
 
@@ -234,7 +234,7 @@ struct LibraryView: View {
             .fileExporter(isPresented: $showBackupExport, document: backupDoc, contentType: .data,
                           defaultFilename: BackupDocument.defaultName()) { result in
                 if case .success = result {
-                    backupMessage = ("Yedek kaydedildi", "Tüm defterlerin tek dosyada. Uygulamayı silsen bile bu dosyadan geri yükleyebilirsin.")
+                    backupMessage = (String(localized: "Yedek kaydedildi"), String(localized: "Tüm defterlerin tek dosyada. Uygulamayı silsen bile bu dosyadan geri yükleyebilirsin."))
                 }
                 backupDoc = nil
             }
@@ -242,11 +242,11 @@ struct LibraryView: View {
                 guard case .success(let url) = result else { return }
                 do {
                     let r = try library.restoreBackup(from: url)
-                    backupMessage = ("Geri yükleme tamam",
-                                     r.added == 0 ? "Yedekteki defterlerin hepsi zaten bu iPad'de var."
-                                     : "\(r.added) defter geri yüklendi." + (r.skipped > 0 ? " \(r.skipped) defter zaten vardı, dokunulmadı." : ""))
+                    backupMessage = (String(localized: "Geri yükleme tamam"),
+                                     r.added == 0 ? String(localized: "Yedekteki defterlerin hepsi zaten bu iPad'de var.")
+                                     : String(localized: "\(r.added) defter geri yüklendi.") + (r.skipped > 0 ? " " + String(localized: "\(r.skipped) defter zaten vardı, dokunulmadı.") : ""))
                 } catch {
-                    backupMessage = ("Geri yüklenemedi", error.localizedDescription)
+                    backupMessage = (String(localized: "Geri yüklenemedi"), error.localizedDescription)
                 }
             }
             .alert("OpenLeaf \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")", isPresented: $showAbout) {
@@ -267,7 +267,7 @@ struct LibraryView: View {
             backupDoc = BackupDocument(data: try library.makeBackup())
             showBackupExport = true
         } catch {
-            backupMessage = ("Yedek oluşturulamadı", error.localizedDescription)
+            backupMessage = (String(localized: "Yedek oluşturulamadı"), error.localizedDescription)
         }
     }
 
@@ -282,13 +282,13 @@ struct LibraryView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 if folder == nil && s == .belgeler && search.isEmpty && !items.isEmpty {
-                    Text(sort == .modified ? "SON DÜZENLENENLER" : "ADA GÖRE").font(Y.eyebrow).tracking(0.8).foregroundStyle(Y.ink3)
+                    Text(sort == .modified ? String(localized: "SON DÜZENLENENLER") : String(localized: "ADA GÖRE")).font(Y.eyebrow).tracking(0.8).foregroundStyle(Y.ink3)
                         .padding(.top, 4)
                 }
                 if items.isEmpty {
                     if folder != nil {
-                        ContentUnavailableView(search.isEmpty ? "Klasör boş" : "Sonuç yok", systemImage: "folder",
-                                               description: Text(search.isEmpty ? "Bir belgeye basılı tutup “Klasöre taşı”yı seçin ya da Yeni ile burada oluşturun." : "“\(search)” için eşleşme bulunamadı."))
+                        ContentUnavailableView(search.isEmpty ? String(localized: "Klasör boş") : String(localized: "Sonuç yok"), systemImage: "folder",
+                                               description: Text(search.isEmpty ? String(localized: "Bir belgeye basılı tutup “Klasöre taşı”yı seçin ya da Yeni ile burada oluşturun.") : String(localized: "“\(search)” için eşleşme bulunamadı.")))
                             .frame(maxWidth: .infinity, minHeight: 420)
                     } else {
                         empty(s)
@@ -340,12 +340,12 @@ struct LibraryView: View {
     @ViewBuilder
     private func empty(_ s: SidebarSection) -> some View {
         let (icon, title, text): (String, String, String) = switch s {
-        case .favoriler: ("star", "Favori yok", "Bir belgeye basılı tutup Favorilere ekleyin.")
-        case .paylasilanlar: ("person.2", "Paylaşılan belge yok", "Sizinle paylaşılan belgeler burada görünür.")
-        case .magaza: ("square.grid.2x2", "Galeri yakında", "Ücretsiz şablon, kapak ve çıkartma paketleri burada olacak.")
-        case .cop: ("trash", "Çöp boş", "Silinen belgeler 30 gün burada kalır.")
-        case .belgeler: ("doc.on.doc", search.isEmpty ? "Henüz belge yok" : "Sonuç yok",
-                         search.isEmpty ? "Yeni düğmesiyle ilk defterinizi oluşturun." : "“\(search)” için eşleşme bulunamadı.")
+        case .favoriler: ("star", String(localized: "Favori yok"), String(localized: "Bir belgeye basılı tutup Favorilere ekleyin."))
+        case .paylasilanlar: ("person.2", String(localized: "Paylaşılan belge yok"), String(localized: "Sizinle paylaşılan belgeler burada görünür."))
+        case .magaza: ("square.grid.2x2", String(localized: "Galeri yakında"), String(localized: "Ücretsiz şablon, kapak ve çıkartma paketleri burada olacak."))
+        case .cop: ("trash", String(localized: "Çöp boş"), String(localized: "Silinen belgeler 30 gün burada kalır."))
+        case .belgeler: ("doc.on.doc", search.isEmpty ? String(localized: "Henüz belge yok") : String(localized: "Sonuç yok"),
+                         search.isEmpty ? String(localized: "Yeni düğmesiyle ilk defterinizi oluşturun.") : String(localized: "“\(search)” için eşleşme bulunamadı."))
         }
         ContentUnavailableView(title, systemImage: icon, description: Text(text))
             .frame(maxWidth: .infinity, minHeight: 420)
@@ -357,7 +357,7 @@ struct LibraryView: View {
             Button("Geri yükle", systemImage: "arrow.uturn.backward") { library.update(nb.id) { $0.trashed = false } }
             Button("Kalıcı olarak sil", systemImage: "trash", role: .destructive) { library.deleteForever(nb.id) }
         } else {
-            Button(nb.favorite ? "Favorilerden çıkar" : "Favorilere ekle", systemImage: nb.favorite ? "star.slash" : "star") {
+            Button(nb.favorite ? String(localized: "Favorilerden çıkar") : String(localized: "Favorilere ekle"), systemImage: nb.favorite ? "star.slash" : "star") {
                 library.update(nb.id) { $0.favorite.toggle() }
             }
             Button("Çoğalt", systemImage: "plus.square.on.square") { library.duplicate(nb) }
@@ -409,8 +409,8 @@ struct LibraryView: View {
 
     private func quick(kind: DocKind) {
         let nb = kind == .whiteboard
-            ? Notebook(title: "Adsız Whiteboard", kind: .whiteboard, cover: .kagit, paper: .bos)
-            : Notebook(title: "Hızlı not", subtitle: Date().formatted(.dateTime.day().month(.wide).locale(Locale(identifier: "tr_TR"))),
+            ? Notebook(title: String(localized: "Adsız Whiteboard"), kind: .whiteboard, cover: .kagit, paper: .bos)
+            : Notebook(title: String(localized: "Hızlı not"), subtitle: Date().formatted(.dateTime.day().month(.wide)),
                        cover: .tas, paper: .cizgili)
         var placed = nb
         placed.folder = currentFolder
@@ -447,8 +447,8 @@ struct DocCard: View {
     }
 
     private var meta: String {
-        nb.kind == .whiteboard ? "Whiteboard · \(nb.modified.relativeText)"
-            : nb.kind == .pdf ? "PDF · \(nb.pages.count) sayfa · \(nb.modified.relativeText)"
-            : "\(nb.pages.count) sayfa · \(nb.modified.relativeText)"
+        nb.kind == .whiteboard ? String(localized: "Whiteboard") + " · \(nb.modified.relativeText)"
+            : nb.kind == .pdf ? "PDF · " + String(localized: "\(nb.pages.count) sayfa") + " · \(nb.modified.relativeText)"
+            : String(localized: "\(nb.pages.count) sayfa") + " · \(nb.modified.relativeText)"
     }
 }

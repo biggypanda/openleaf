@@ -88,11 +88,11 @@ enum PenColor: Int, CaseIterable, Codable {
 
     var name: String {
         switch self {
-        case .ink: "Mürekkep"
-        case .indigo: "Çivit"
-        case .green: "Yeşil"
-        case .wine: "Şarap"
-        case .ochre: "Hardal"
+        case .ink: String(localized: "Mürekkep")
+        case .indigo: String(localized: "Çivit")
+        case .green: String(localized: "Yeşil")
+        case .wine: String(localized: "Şarap")
+        case .ochre: String(localized: "Hardal")
         }
     }
 }

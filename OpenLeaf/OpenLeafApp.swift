@@ -10,7 +10,6 @@ struct OpenLeafApp: App {
             LibraryView()
                 .environment(library)
                 .tint(Y.accent)
-                .environment(\.locale, Locale(identifier: "tr_TR"))
                 // Başka uygulamadan gelen PDF yeni pencere açmasın, açık pencerede içe aktarılsın
                 .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
         }

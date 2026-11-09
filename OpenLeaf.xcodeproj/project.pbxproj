@@ -84,9 +84,10 @@
 				};
 			};
 			buildConfigurationList = AA0000000000000000000010 /* Build configuration list for PBXProject "OpenLeaf" */;
-			developmentRegion = tr;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				en,
 				tr,
 				Base,
 			);

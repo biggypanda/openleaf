@@ -7,14 +7,14 @@ enum CoverStyle: String, Codable, CaseIterable, Identifiable {
 
     var name: String {
         switch self {
-        case .ketenYesil: "Keten yeşil"
-        case .keten: "Keten"
-        case .ketenLacivert: "Keten lacivert"
-        case .deri: "Deri"
-        case .kraft: "Kraft"
-        case .tas: "Taş"
-        case .kagit: "Kâğıt"
-        case .bordo: "Bordo"
+        case .ketenYesil: String(localized: "Keten yeşil")
+        case .keten: String(localized: "Keten")
+        case .ketenLacivert: String(localized: "Keten lacivert")
+        case .deri: String(localized: "Deri")
+        case .kraft: String(localized: "Kraft")
+        case .tas: String(localized: "Taş")
+        case .kagit: String(localized: "Kâğıt")
+        case .bordo: String(localized: "Bordo")
         }
     }
 
@@ -41,10 +41,10 @@ enum PaperStyle: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
     var name: String {
         switch self {
-        case .cizgili: "Çizgili"
-        case .kareli: "Kareli"
-        case .noktali: "Noktalı"
-        case .bos: "Boş"
+        case .cizgili: String(localized: "Çizgili")
+        case .kareli: String(localized: "Kareli")
+        case .noktali: String(localized: "Noktalı")
+        case .bos: String(localized: "Boş")
         }
     }
 }
@@ -56,9 +56,9 @@ enum PaperSize: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
     var name: String {
         switch self {
-        case .a4: "A4"
-        case .a5: "A5"
-        case .mektup: "Mektup"
+        case .a4: String(localized: "A4")
+        case .a5: String(localized: "A5")
+        case .mektup: String(localized: "Mektup")
         }
     }
     /// Kanonik sayfa boyutu (genişlik 768 pt). A5 daha dar sayfa: aynı oran, satırlar daha iri görünür.
@@ -170,11 +170,11 @@ enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .belgeler: "Belgeler"
-        case .favoriler: "Favoriler"
-        case .paylasilanlar: "Paylaşılanlar"
-        case .magaza: "Galeri"
-        case .cop: "Çöp"
+        case .belgeler: String(localized: "Belgeler")
+        case .favoriler: String(localized: "Favoriler")
+        case .paylasilanlar: String(localized: "Paylaşılanlar")
+        case .magaza: String(localized: "Galeri")
+        case .cop: String(localized: "Çöp")
         }
     }
     var icon: String {
@@ -229,7 +229,7 @@ final class Library {
         }
         switch sort {
         case .modified: return list.sorted { $0.modified > $1.modified }
-        case .title: return list.sorted { $0.title.compare($1.title, locale: Locale(identifier: "tr_TR")) == .orderedAscending }
+        case .title: return list.sorted { $0.title.compare($1.title, locale: .autoupdatingCurrent) == .orderedAscending }
         }
     }
 
@@ -267,7 +267,7 @@ final class Library {
         let list = notebooks.filter { $0.folder == id && !$0.trashed }
         switch sort {
         case .modified: return list.sorted { $0.modified > $1.modified }
-        case .title: return list.sorted { $0.title.compare($1.title, locale: Locale(identifier: "tr_TR")) == .orderedAscending }
+        case .title: return list.sorted { $0.title.compare($1.title, locale: .autoupdatingCurrent) == .orderedAscending }
         }
     }
 
@@ -301,7 +301,7 @@ final class Library {
 
     private static func cleanName(_ s: String) -> String {
         let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
-        return t.isEmpty ? "Yeni klasör" : t
+        return t.isEmpty ? String(localized: "Yeni klasör") : t
     }
 
     // MARK: Defter işlemleri
@@ -332,7 +332,7 @@ final class Library {
     func duplicate(_ nb: Notebook) {
         var copy = nb
         copy.id = UUID()
-        copy.title += " (kopya)"
+        copy.title += String(localized: " (kopya)")
         copy.favorite = false
         copy.created = Date()
         copy.modified = Date()
@@ -461,18 +461,18 @@ final class Library {
         let now = Date()
         func ago(_ h: Double) -> Date { now.addingTimeInterval(-h * 3600) }
         return [
-            Notebook(title: "Organik Kimya", subtitle: "Alkenler", cover: .ketenYesil, paper: .cizgili,
+            Notebook(title: String(localized: "Organik Kimya"), subtitle: String(localized: "Alkenler"), cover: .ketenYesil, paper: .cizgili,
                      pages: Notebook.pages(4), favorite: true, modified: ago(0.5)),
-            Notebook(title: "Mimarlık Tarihi", subtitle: "Gotik dönem", cover: .deri, paper: .noktali,
+            Notebook(title: String(localized: "Mimarlık Tarihi"), subtitle: String(localized: "Gotik dönem"), cover: .deri, paper: .noktali,
                      pages: Notebook.pages(3), modified: ago(5)),
-            Notebook(title: "Haftalık Plan", subtitle: "Kasım", cover: .kraft, paper: .kareli, modified: ago(26)),
-            Notebook(title: "Fikir Panosu", kind: .whiteboard, cover: .kagit, paper: .bos, modified: ago(30)),
-            Notebook(title: "Biyokimya", subtitle: "Enzimler", cover: .ketenLacivert, paper: .kareli,
+            Notebook(title: String(localized: "Haftalık Plan"), subtitle: String(localized: "Kasım"), cover: .kraft, paper: .kareli, modified: ago(26)),
+            Notebook(title: String(localized: "Fikir Panosu"), kind: .whiteboard, cover: .kagit, paper: .bos, modified: ago(30)),
+            Notebook(title: String(localized: "Biyokimya"), subtitle: String(localized: "Enzimler"), cover: .ketenLacivert, paper: .kareli,
                      pages: Notebook.pages(2), favorite: true, modified: ago(50)),
-            Notebook(title: "Toplantı Notları", subtitle: "Ekip", cover: .tas, paper: .cizgili, modified: ago(75)),
-            Notebook(title: "Sözleşme Hukuku", subtitle: "Vize", cover: .bordo, paper: .cizgili,
+            Notebook(title: String(localized: "Toplantı Notları"), subtitle: String(localized: "Ekip"), cover: .tas, paper: .cizgili, modified: ago(75)),
+            Notebook(title: String(localized: "Sözleşme Hukuku"), subtitle: String(localized: "Vize"), cover: .bordo, paper: .cizgili,
                      pages: Notebook.pages(2), modified: ago(120)),
-            Notebook(title: "Okuma Notu", subtitle: "Romanlar", cover: .keten, paper: .noktali, modified: ago(200)),
+            Notebook(title: String(localized: "Okuma Notu"), subtitle: String(localized: "Romanlar"), cover: .keten, paper: .noktali, modified: ago(200)),
         ]
     }
 }
@@ -480,10 +480,10 @@ final class Library {
 extension Date {
     var relativeText: String {
         let f = RelativeDateTimeFormatter()
-        f.locale = Locale(identifier: "tr_TR")
+        f.locale = .autoupdatingCurrent
         f.unitsStyle = .full
-        if Calendar.current.isDateInToday(self) { return "Bugün" }
-        if Calendar.current.isDateInYesterday(self) { return "Dün" }
+        if Calendar.current.isDateInToday(self) { return String(localized: "Bugün") }
+        if Calendar.current.isDateInYesterday(self) { return String(localized: "Dün") }
         return f.localizedString(for: self, relativeTo: Date())
     }
 }

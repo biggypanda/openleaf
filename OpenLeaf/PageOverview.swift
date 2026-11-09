@@ -54,7 +54,7 @@ struct PageOverview: View {
 
     private var deleteTitle: String {
         guard let p = confirmDelete, let i = notebook.pages.firstIndex(where: { $0.id == p.id }) else { return "" }
-        return "Sayfa \(i + 1) silinsin mi?"
+        return String(localized: "Sayfa \(i + 1) silinsin mi?")
     }
 
     // MARK: Üst kısım
@@ -108,7 +108,7 @@ struct PageOverview: View {
                 }
                 .onDrop(of: [UTType.text], delegate: PageDrop(target: page.id, notebookID: notebook.id,
                                                                library: library, dragging: $dragging))
-                .accessibilityLabel("Sayfa \(i + 1)\(isCurrent ? ", açık sayfa" : "")")
+                .accessibilityLabel(isCurrent ? String(localized: "Sayfa \(i + 1), açık sayfa") : String(localized: "Sayfa \(i + 1)"))
                 .accessibilityAddTraits(.isButton)
                 .overlay(alignment: .topTrailing) { actions(page, index: i) }
             Text("\(i + 1)")

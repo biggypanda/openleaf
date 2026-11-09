@@ -1,7 +1,7 @@
 # OpenLeaf
 
 Öğrenciler için ücretsiz ve açık kaynak, Apple Pencil ile el yazısı not alma uygulaması (iPad öncelikli).
-Reklam yok, abonelik yok, uygulama içi satın alma yok; notlar cihazda kalır.
+Reklam yok, abonelik yok, uygulama içi satın alma yok; notlar cihazda kalır. Türkçe ve İngilizce.
 
 ## Özellikler
 

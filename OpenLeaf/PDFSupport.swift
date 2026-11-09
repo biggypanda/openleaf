@@ -8,7 +8,7 @@ import UniformTypeIdentifiers
 extension Library {
     enum ImportError: LocalizedError {
         case unreadable
-        var errorDescription: String? { "Bu dosya açılamadı. Bozuk ya da parola korumalı bir PDF olabilir." }
+        var errorDescription: String? { String(localized: "Bu dosya açılamadı. Bozuk ya da parola korumalı bir PDF olabilir.") }
     }
 
     /// PDF'i yeni defterin klasörüne kopyalar, her sayfası için bir not sayfası açar
