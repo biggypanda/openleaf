@@ -17,7 +17,7 @@ Reklam yok, abonelik yok, uygulama içi satın alma yok; notlar cihazda kalır. 
 - **Sayfalar:** kitap gibi kıvrılarak çevirme, genel görünüm (küçük resim ızgarası), sürükleyerek sıralama, çoğaltma
 - **PDF:** içe aktarma, sayfaların üstüne yazma, "Şununla Aç → OpenLeaf", her defteri PDF olarak dışa aktarma
 - **Yedekleme:** tüm kütüphane tek dosya olarak Dosyalar'a / iCloud Drive'a; yedekten geri yükleme
-- Açık ve koyu tema; Türkçe arayüz; reklam, abonelik, hesap yok
+- Açık ve koyu tema; Türkçe ve İngilizce arayüz; reklam, abonelik, hesap yok
 
 ## Gereksinimler
 

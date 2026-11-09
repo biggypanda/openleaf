@@ -393,22 +393,6 @@
         }
       }
     },
-    "Belge tara": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Scan document"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Belge tara"
-          }
-        }
-      }
-    },
     "Belgeler": {
       "localizations": {
         "en": {
@@ -2361,18 +2345,18 @@
         }
       }
     },
-    "Silinen belgeler 30 gün burada kalır.": {
+    "Silinen belgeler burada kalır; geri yükleyebilir ya da kalıcı olarak silebilirsin.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Deleted documents stay here for 30 days."
+            "value": "Deleted documents stay here until you restore them or delete them permanently."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Silinen belgeler 30 gün burada kalır."
+            "value": "Silinen belgeler burada kalır; geri yükleyebilir ya da kalıcı olarak silebilirsin."
           }
         }
       }

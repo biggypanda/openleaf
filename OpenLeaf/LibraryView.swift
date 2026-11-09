@@ -160,7 +160,7 @@ struct LibraryView: View {
             .selectionDisabled()
 
             Section {
-                ForEach(SidebarSection.allCases) { s in
+                ForEach(SidebarSection.visible) { s in
                     NavigationLink(value: SidebarItem.section(s)) {
                         HStack {
                             Label(s.title, systemImage: s.icon)
@@ -325,7 +325,6 @@ struct LibraryView: View {
                     Button("Whiteboard", systemImage: "rectangle.on.rectangle.angled") { quick(kind: .whiteboard) }
                     Divider()
                     Button("Klasör", systemImage: "folder.badge.plus") { askFolderName(.create) }
-                    Button("Belge tara", systemImage: "doc.viewfinder") {}.disabled(true)
                     Button("PDF içe aktar", systemImage: "square.and.arrow.down") { showImporter = true }
                 } label: {
                     Label("Yeni", systemImage: "plus")
@@ -343,7 +342,7 @@ struct LibraryView: View {
         case .favoriler: ("star", String(localized: "Favori yok"), String(localized: "Bir belgeye basılı tutup Favorilere ekleyin."))
         case .paylasilanlar: ("person.2", String(localized: "Paylaşılan belge yok"), String(localized: "Sizinle paylaşılan belgeler burada görünür."))
         case .magaza: ("square.grid.2x2", String(localized: "Galeri yakında"), String(localized: "Ücretsiz şablon, kapak ve çıkartma paketleri burada olacak."))
-        case .cop: ("trash", String(localized: "Çöp boş"), String(localized: "Silinen belgeler 30 gün burada kalır."))
+        case .cop: ("trash", String(localized: "Çöp boş"), String(localized: "Silinen belgeler burada kalır; geri yükleyebilir ya da kalıcı olarak silebilirsin."))
         case .belgeler: ("doc.on.doc", search.isEmpty ? String(localized: "Henüz belge yok") : String(localized: "Sonuç yok"),
                          search.isEmpty ? String(localized: "Yeni düğmesiyle ilk defterinizi oluşturun.") : String(localized: "“\(search)” için eşleşme bulunamadı."))
         }

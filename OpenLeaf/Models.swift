@@ -167,6 +167,8 @@ enum SidebarItem: Hashable {
 
 enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
     case belgeler, favoriler, paylasilanlar, magaza, cop
+    /// Kenar çubuğunda gösterilenler (paylaşım ve galeri henüz yok)
+    static let visible: [SidebarSection] = [.belgeler, .favoriler, .cop]
     var id: String { rawValue }
     var title: String {
         switch self {
