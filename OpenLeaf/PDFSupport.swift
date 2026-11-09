@@ -243,10 +243,10 @@ enum PDFExporter {
         let safe = nb.title.components(separatedBy: CharacterSet(charactersIn: "/\\:?%*|\"<>")).joined(separator: "-")
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let url = dir.appendingPathComponent((safe.isEmpty ? "Yaprak" : safe) + ".pdf")
+        let url = dir.appendingPathComponent((safe.isEmpty ? "OpenLeaf" : safe) + ".pdf")
 
         let format = UIGraphicsPDFRendererFormat()
-        format.documentInfo = [kCGPDFContextCreator as String: "Yaprak", kCGPDFContextTitle as String: nb.title]
+        format.documentInfo = [kCGPDFContextCreator as String: "OpenLeaf", kCGPDFContextTitle as String: nb.title]
         let renderer = UIGraphicsPDFRenderer(bounds: bounds, format: format)
         try? renderer.writePDF(to: url) { ctx in
             for page in nb.pages {

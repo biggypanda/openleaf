@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct YaprakApp: App {
+struct OpenLeafApp: App {
     @State private var library = Library()
     @Environment(\.scenePhase) private var scenePhase
 

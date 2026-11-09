@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-// Yaprak tasarım tokenları (b-kagit/parts/base.css ile aynı değerler).
+// OpenLeaf tasarım tokenları (b-kagit/parts/base.css ile aynı değerler).
 
 extension UIColor {
     convenience init(hex: UInt32, alpha: CGFloat = 1) {

@@ -7,11 +7,11 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		AA0000000000000000000001 /* Yaprak.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yaprak.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA0000000000000000000001 /* OpenLeaf.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenLeaf.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		AA0000000000000000000002 /* Yaprak */ = {isa = PBXFileSystemSynchronizedRootGroup; path = Yaprak; sourceTree = "<group>"; };
+		AA0000000000000000000002 /* OpenLeaf */ = {isa = PBXFileSystemSynchronizedRootGroup; path = OpenLeaf; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -28,7 +28,7 @@
 		AA0000000000000000000003 = {
 			isa = PBXGroup;
 			children = (
-				AA0000000000000000000002 /* Yaprak */,
+				AA0000000000000000000002 /* OpenLeaf */,
 				AA0000000000000000000004 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -36,7 +36,7 @@
 		AA0000000000000000000004 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				AA0000000000000000000001 /* Yaprak.app */,
+				AA0000000000000000000001 /* OpenLeaf.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -44,9 +44,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		AA0000000000000000000008 /* Yaprak */ = {
+		AA0000000000000000000008 /* OpenLeaf */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AA0000000000000000000011 /* Build configuration list for PBXNativeTarget "Yaprak" */;
+			buildConfigurationList = AA0000000000000000000011 /* Build configuration list for PBXNativeTarget "OpenLeaf" */;
 			buildPhases = (
 				AA0000000000000000000005 /* Sources */,
 				AA0000000000000000000006 /* Frameworks */,
@@ -57,11 +57,11 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				AA0000000000000000000002 /* Yaprak */,
+				AA0000000000000000000002 /* OpenLeaf */,
 			);
-			name = Yaprak;
-			productName = Yaprak;
-			productReference = AA0000000000000000000001 /* Yaprak.app */;
+			name = OpenLeaf;
+			productName = OpenLeaf;
+			productReference = AA0000000000000000000001 /* OpenLeaf.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -79,7 +79,7 @@
 					};
 				};
 			};
-			buildConfigurationList = AA0000000000000000000010 /* Build configuration list for PBXProject "Yaprak" */;
+			buildConfigurationList = AA0000000000000000000010 /* Build configuration list for PBXProject "OpenLeaf" */;
 			developmentRegion = tr;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -93,7 +93,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				AA0000000000000000000008 /* Yaprak */,
+				AA0000000000000000000008 /* OpenLeaf */,
 			);
 		};
 /* End PBXProject section */
@@ -159,15 +159,15 @@
 				DEVELOPMENT_TEAM = 5KL794873S;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Yaprak-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = Yaprak;
+				INFOPLIST_FILE = "OpenLeaf-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = OpenLeaf;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.biggypanda.yaprak;
+				PRODUCT_BUNDLE_IDENTIFIER = com.biggypanda.openleaf;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -184,15 +184,15 @@
 				DEVELOPMENT_TEAM = 5KL794873S;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Yaprak-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = Yaprak;
+				INFOPLIST_FILE = "OpenLeaf-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = OpenLeaf;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.biggypanda.yaprak;
+				PRODUCT_BUNDLE_IDENTIFIER = com.biggypanda.openleaf;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -203,7 +203,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		AA0000000000000000000010 /* Build configuration list for PBXProject "Yaprak" */ = {
+		AA0000000000000000000010 /* Build configuration list for PBXProject "OpenLeaf" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AA0000000000000000000012 /* Debug */,
@@ -212,7 +212,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		AA0000000000000000000011 /* Build configuration list for PBXNativeTarget "Yaprak" */ = {
+		AA0000000000000000000011 /* Build configuration list for PBXNativeTarget "OpenLeaf" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AA0000000000000000000014 /* Debug */,

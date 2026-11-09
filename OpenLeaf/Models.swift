@@ -478,7 +478,7 @@ final class Library {
 }
 
 extension Date {
-    var yaprakRelative: String {
+    var relativeText: String {
         let f = RelativeDateTimeFormatter()
         f.locale = Locale(identifier: "tr_TR")
         f.unitsStyle = .full

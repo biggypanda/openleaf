@@ -28,7 +28,7 @@ enum ImageStore {
     /// NotebookStore'un varsayılan kökü ile aynı yer
     static func url(_ notebook: UUID, _ file: String) -> URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Yaprak/Defterler", isDirectory: true)
+            .appendingPathComponent("OpenLeaf/Defterler", isDirectory: true)
             .appendingPathComponent(notebook.uuidString, isDirectory: true)
             .appendingPathComponent(file)
     }

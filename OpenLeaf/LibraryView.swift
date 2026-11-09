@@ -78,7 +78,7 @@ struct LibraryView: View {
                 importError = error.localizedDescription
             }
         }
-        // Başka uygulamadan "Yaprak'ta aç" / Paylaş > Yaprak ile gelen PDF
+        // Başka uygulamadan "OpenLeaf'te aç" / Paylaş > OpenLeaf ile gelen PDF
         .onOpenURL { url in openIncoming(url) }
         .alert("PDF içe aktarılamadı", isPresented: Binding(get: { importError != nil }, set: { if !$0 { importError = nil } })) {
             Button("Tamam", role: .cancel) {}
@@ -153,7 +153,7 @@ struct LibraryView: View {
         List(selection: $selection) {
             HStack(spacing: 10) {
                 LogoMark(size: 30)
-                Text("Yaprak").font(.system(size: 24, weight: .semibold, design: .serif))
+                Text("OpenLeaf").font(.system(size: 24, weight: .semibold, design: .serif))
             }
             .padding(.vertical, 6)
             .listRowBackground(Color.clear)
@@ -219,7 +219,7 @@ struct LibraryView: View {
                     }
                     Divider()
                     Button { showAbout = true } label: {
-                        Label("Yaprak hakkında", systemImage: "info.circle")
+                        Label("OpenLeaf hakkında", systemImage: "info.circle")
                     }
                 } label: {
                     Image(systemName: "externaldrive.badge.icloud")
@@ -249,7 +249,7 @@ struct LibraryView: View {
                     backupMessage = ("Geri yüklenemedi", error.localizedDescription)
                 }
             }
-            .alert("Yaprak \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")", isPresented: $showAbout) {
+            .alert("OpenLeaf \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")", isPresented: $showAbout) {
                 Button("Tamam", role: .cancel) {}
             } message: {
                 Text("Öğrenciler için ücretsiz ve açık kaynak not uygulaması.\n\nCopyright © 2026 biggypanda\nGNU GPL sürüm 3 ile lisanslanmıştır. Bu program HİÇBİR GARANTİ olmaksızın dağıtılır. Kaynak kodu ve lisansın tam metni projenin deposundadır.")
@@ -447,8 +447,8 @@ struct DocCard: View {
     }
 
     private var meta: String {
-        nb.kind == .whiteboard ? "Whiteboard · \(nb.modified.yaprakRelative)"
-            : nb.kind == .pdf ? "PDF · \(nb.pages.count) sayfa · \(nb.modified.yaprakRelative)"
-            : "\(nb.pages.count) sayfa · \(nb.modified.yaprakRelative)"
+        nb.kind == .whiteboard ? "Whiteboard · \(nb.modified.relativeText)"
+            : nb.kind == .pdf ? "PDF · \(nb.pages.count) sayfa · \(nb.modified.relativeText)"
+            : "\(nb.pages.count) sayfa · \(nb.modified.relativeText)"
     }
 }

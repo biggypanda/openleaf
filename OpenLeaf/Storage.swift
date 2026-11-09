@@ -1,8 +1,8 @@
 import Foundation
 
-/// Yaprak'ın yerel dosya deposu.
+/// OpenLeaf'in yerel dosya deposu.
 ///
-///     Belgeler/Yaprak/
+///     Belgeler/OpenLeaf/
 ///       index.json                 kütüphane dizini (defter bilgileri ve sayfa listeleri; çizim yok)
 ///       Defterler/<defter-id>/
 ///         <sayfa-id>.drawing       her sayfanın mürekkebi (PencilKit verisi, kanonik koordinatlarda)
@@ -14,12 +14,18 @@ import Foundation
 /// böylece yarım yazılmış bir dosya hiç okunmaz.
 final class NotebookStore {
     let root: URL
-    private let queue = DispatchQueue(label: "yaprak.depo", qos: .utility)
+    private let queue = DispatchQueue(label: "openleaf.depo", qos: .utility)
     private let fm = FileManager.default
 
     init(root: URL? = nil) {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        self.root = root ?? docs.appendingPathComponent("Yaprak", isDirectory: true)
+        let defaultRoot = docs.appendingPathComponent("OpenLeaf", isDirectory: true)
+        // Uygulamanın eski adı Yaprak'tı: eski klasör varsa yeni adına taşı
+        let oldRoot = docs.appendingPathComponent("Yaprak", isDirectory: true)
+        if root == nil, !fm.fileExists(atPath: defaultRoot.path), fm.fileExists(atPath: oldRoot.path) {
+            try? fm.moveItem(at: oldRoot, to: defaultRoot)
+        }
+        self.root = root ?? defaultRoot
         try? fm.createDirectory(at: notebooksDir, withIntermediateDirectories: true)
     }
 

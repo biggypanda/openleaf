@@ -1,4 +1,4 @@
-# Yaprak
+# OpenLeaf
 
 Öğrenciler için ücretsiz ve açık kaynak, Apple Pencil ile el yazısı not alma uygulaması (iPad öncelikli).
 Reklam yok, abonelik yok, uygulama içi satın alma yok; notlar cihazda kalır.
@@ -15,7 +15,7 @@ Reklam yok, abonelik yok, uygulama içi satın alma yok; notlar cihazda kalır.
 - **Yapışkan notlar:** klavyeyle ya da kalemle yazılır, taşınır, köşeden boyutlandırılır, renk değiştirir
 - **Fotoğraf/resim:** kamerayla çek ya da arşivden seç; taşı, boyutlandır, üstüne yaz
 - **Sayfalar:** kitap gibi kıvrılarak çevirme, genel görünüm (küçük resim ızgarası), sürükleyerek sıralama, çoğaltma
-- **PDF:** içe aktarma, sayfaların üstüne yazma, "Şununla Aç → Yaprak", her defteri PDF olarak dışa aktarma
+- **PDF:** içe aktarma, sayfaların üstüne yazma, "Şununla Aç → OpenLeaf", her defteri PDF olarak dışa aktarma
 - **Yedekleme:** tüm kütüphane tek dosya olarak Dosyalar'a / iCloud Drive'a; yedekten geri yükleme
 - Açık ve koyu tema; Türkçe arayüz; reklam, abonelik, hesap yok
 
@@ -26,43 +26,43 @@ Reklam yok, abonelik yok, uygulama içi satın alma yok; notlar cihazda kalır.
 
 ## Çalıştırma
 
-1. `Yaprak.xcodeproj` dosyasını Xcode'da açın.
+1. `OpenLeaf.xcodeproj` dosyasını Xcode'da açın.
 2. Bir iPad simülatörü veya cihaz seçin.
 3. Çalıştır'a (⌘R) basın.
 
 Komut satırından simülatör için derleme:
 
 ```bash
-xcodebuild -project Yaprak.xcodeproj -scheme Yaprak -destination 'platform=iOS Simulator,name=iPad Air 11-inch (M4)' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+xcodebuild -project OpenLeaf.xcodeproj -scheme OpenLeaf -destination 'platform=iOS Simulator,name=iPad Air 11-inch (M4)' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
 ```
 
 ## Proje yapısı
 
 | Dosya | İçerik |
 | --- | --- |
-| `Yaprak/YaprakApp.swift` | Uygulama girişi |
-| `Yaprak/Theme.swift` | Tasarım tokenları (renk, köşe, hareket, cam) |
-| `Yaprak/Models.swift` | Defter ve sayfa modeli, kütüphane (arayüz durumu) |
-| `Yaprak/Storage.swift` | Yerel dosya deposu ve eski kayıtların taşınması |
-| `Yaprak/LibraryView.swift` | Kütüphane ekranı |
-| `Yaprak/NewNotebookSheet.swift` | Yeni defter penceresi |
-| `Yaprak/DocumentView.swift` | Not alma ekranı ve araç çubuğu |
-| `Yaprak/Canvas.swift` | PencilKit tuvali ve kâğıt desenleri |
-| `Yaprak/CoverView.swift` | Kapaklar ve logo |
-| `Yaprak/PDFSupport.swift` | PDF içe aktarma, sayfa çizimi, küçük resim, dışa aktarma |
-| `Yaprak/StickyNotes.swift` | Yapışkan notlar (yazı ve kalem katmanı) |
-| `Yaprak/PageImages.swift` | Sayfadaki resimler, seçim, kamera |
-| `Yaprak/PageOverview.swift` | Sayfa genel görünümü ve sıralama |
-| `Yaprak/QuickPalette.swift` | Pencil Pro sıkma menüsü |
-| `Yaprak/Backup.swift` | Yedekleme ve geri yükleme |
-| `Yaprak-Info.plist` | PDF belge türü kaydı |
+| `OpenLeaf/OpenLeafApp.swift` | Uygulama girişi |
+| `OpenLeaf/Theme.swift` | Tasarım tokenları (renk, köşe, hareket, cam) |
+| `OpenLeaf/Models.swift` | Defter ve sayfa modeli, kütüphane (arayüz durumu) |
+| `OpenLeaf/Storage.swift` | Yerel dosya deposu ve eski kayıtların taşınması |
+| `OpenLeaf/LibraryView.swift` | Kütüphane ekranı |
+| `OpenLeaf/NewNotebookSheet.swift` | Yeni defter penceresi |
+| `OpenLeaf/DocumentView.swift` | Not alma ekranı ve araç çubuğu |
+| `OpenLeaf/Canvas.swift` | PencilKit tuvali ve kâğıt desenleri |
+| `OpenLeaf/CoverView.swift` | Kapaklar ve logo |
+| `OpenLeaf/PDFSupport.swift` | PDF içe aktarma, sayfa çizimi, küçük resim, dışa aktarma |
+| `OpenLeaf/StickyNotes.swift` | Yapışkan notlar (yazı ve kalem katmanı) |
+| `OpenLeaf/PageImages.swift` | Sayfadaki resimler, seçim, kamera |
+| `OpenLeaf/PageOverview.swift` | Sayfa genel görünümü ve sıralama |
+| `OpenLeaf/QuickPalette.swift` | Pencil Pro sıkma menüsü |
+| `OpenLeaf/Backup.swift` | Yedekleme ve geri yükleme |
+| `OpenLeaf-Info.plist` | PDF belge türü kaydı |
 
 ## Veri nasıl saklanır
 
 Her şey cihazda, uygulamanın Belgeler klasöründe durur; sunucu yoktur.
 
 ```
-Yaprak/
+OpenLeaf/
   index.json                kütüphane dizini (defter bilgileri, sayfa listeleri, notlar, resim yerleri)
   folders.json              klasörler
   Defterler/<defter-id>/
@@ -79,10 +79,10 @@ yapılır; uygulama arka plana geçerken bekleyen kayıtlar tamamlanır. İlk s�
 
 ## Lisans
 
-Yaprak, [GNU Genel Kamu Lisansı sürüm 3](LICENSE) (GPL-3.0) ile yayınlanan özgür yazılımdır.
+OpenLeaf, [GNU Genel Kamu Lisansı sürüm 3](LICENSE) (GPL-3.0) ile yayınlanan özgür yazılımdır.
 
 Kodu kullanabilir, değiştirebilir ve paylaşabilirsiniz. Değiştirilmiş bir sürümü dağıtırsanız
-onun kaynak kodunu da aynı lisansla açmanız gerekir; böylece Yaprak'tan türeyen uygulamalar da
+onun kaynak kodunu da aynı lisansla açmanız gerekir; böylece OpenLeaf'ten türeyen uygulamalar da
 öğrenciler için özgür kalır.
 
 Copyright (C) 2026 biggypanda

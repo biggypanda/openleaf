@@ -142,7 +142,7 @@ final class PaperUIView: UIView {
 // MARK: - Tuval
 
 /// Çizimler kanonik sayfa koordinatlarında saklanır (genişlik 768); ekranda sayfa genişliğine ölçeklenir.
-final class YaprakCanvas: PKCanvasView {
+final class OpenLeafCanvas: PKCanvasView {
     let paper = PaperUIView()
     var canonical = CGSize(width: 768, height: 994)
     var style: PaperStyle = .cizgili
@@ -530,7 +530,7 @@ final class YaprakCanvas: PKCanvasView {
 
 @Observable
 final class CanvasController {
-    weak var canvas: YaprakCanvas?
+    weak var canvas: OpenLeafCanvas?
     var canUndo = false
     var canRedo = false
 
@@ -590,8 +590,8 @@ struct CanvasRepresentable: UIViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
-    func makeUIView(context: Context) -> YaprakCanvas {
-        let c = YaprakCanvas()
+    func makeUIView(context: Context) -> OpenLeafCanvas {
+        let c = OpenLeafCanvas()
         c.style = paper
         c.paper.pdfPage = pdfPage
         c.isWhiteboard = isWhiteboard
@@ -681,7 +681,7 @@ struct CanvasRepresentable: UIViewRepresentable {
         return c
     }
 
-    func updateUIView(_ c: YaprakCanvas, context: Context) {
+    func updateUIView(_ c: OpenLeafCanvas, context: Context) {
         let coord = context.coordinator
         coord.parent = self
         if coord.loaded, coord.pageID != pageID {
@@ -711,7 +711,7 @@ struct CanvasRepresentable: UIViewRepresentable {
         controller.canvas = c
     }
 
-    static func dismantleUIView(_ c: YaprakCanvas, coordinator: Coordinator) {
+    static func dismantleUIView(_ c: OpenLeafCanvas, coordinator: Coordinator) {
         coordinator.flush(c)
         // Kapanan sayfanın geri alma adımları yeni sayfada çalışmasın
         c.undoManager?.removeAllActions()
@@ -731,7 +731,7 @@ struct CanvasRepresentable: UIViewRepresentable {
         func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
             // Geri al adımı çizgi bitince kaydedilir; durumu bir tur sonra oku
             DispatchQueue.main.async { [weak self] in self?.parent.controller.refresh() }
-            guard loaded, !suppress, let c = canvasView as? YaprakCanvas, let pid = pageID else { return }
+            guard loaded, !suppress, let c = canvasView as? OpenLeafCanvas, let pid = pageID else { return }
             work?.cancel()
             let item = DispatchWorkItem { [weak self, weak c] in
                 guard let self, let c else { return }
@@ -742,14 +742,14 @@ struct CanvasRepresentable: UIViewRepresentable {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: item)
         }
 
-        func flush(_ c: YaprakCanvas) {
+        func flush(_ c: OpenLeafCanvas) {
             guard work != nil, loaded, let pid = pageID else { return }
             work?.cancel(); work = nil
             parent.onChange(pid, c.canonicalData)
         }
 
         @objc func track(_ g: UILongPressGestureRecognizer) {
-            guard let c = g.view as? YaprakCanvas else { return }
+            guard let c = g.view as? OpenLeafCanvas else { return }
             if g.state == .began { c.endNoteEditingIfOutside(g.location(in: c)) }
             switch g.state {
             case .began, .changed: c.showCursor(at: g.location(in: c))
@@ -758,7 +758,7 @@ struct CanvasRepresentable: UIViewRepresentable {
         }
 
         @objc func imageTap(_ g: UITapGestureRecognizer) {
-            guard let c = g.view as? YaprakCanvas else { return }
+            guard let c = g.view as? OpenLeafCanvas else { return }
             c.handleImageTap(at: g.location(in: c))
         }
 
@@ -768,7 +768,7 @@ struct CanvasRepresentable: UIViewRepresentable {
         }
 
         @objc func hover(_ g: UIHoverGestureRecognizer) {
-            guard let c = g.view as? YaprakCanvas else { return }
+            guard let c = g.view as? OpenLeafCanvas else { return }
             switch g.state {
             case .began, .changed: c.showCursor(at: g.location(in: c))
             default: c.hideCursor()
