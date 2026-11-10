@@ -3,6 +3,8 @@
 Öğrenciler için ücretsiz ve açık kaynak, Apple Pencil ile el yazısı not alma uygulaması (iPad öncelikli).
 Reklam yok, abonelik yok, uygulama içi satın alma yok; notlar cihazda kalır. Türkçe ve İngilizce.
 
+<a href="https://apps.apple.com/app/id6832556915"><img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/tr-tr" alt="App Store'dan indirin" height="50"></a>
+
 ## Özellikler
 
 - **Kütüphane:** malzemeli defter kapakları (keten, deri, kraft…), klasörler, favoriler, çöp, arama, sıralama
