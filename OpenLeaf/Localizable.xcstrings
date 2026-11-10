@@ -361,22 +361,6 @@
         }
       }
     },
-    "Alkenler": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alkenes"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alkenler"
-          }
-        }
-      }
-    },
     "BOYUT": {
       "localizations": {
         "en": {
@@ -453,22 +437,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bitti"
-          }
-        }
-      }
-    },
-    "Biyokimya": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Biochemistry"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Biyokimya"
           }
         }
       }
@@ -729,38 +697,6 @@
         }
       }
     },
-    "Ekip": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Team"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ekip"
-          }
-        }
-      }
-    },
-    "Enzimler": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enzymes"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enzimler"
-          }
-        }
-      }
-    },
     "Favori yok": {
       "localizations": {
         "en": {
@@ -821,22 +757,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Favorilere ekle"
-          }
-        }
-      }
-    },
-    "Fikir Panosu": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Idea Board"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fikir Panosu"
           }
         }
       }
@@ -985,38 +905,6 @@
         }
       }
     },
-    "Gotik dönem": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gothic period"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gotik dönem"
-          }
-        }
-      }
-    },
-    "Haftalık Plan": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Weekly Plan"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Haftalık Plan"
-          }
-        }
-      }
-    },
     "Hardal": {
       "localizations": {
         "en": {
@@ -1029,22 +917,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hardal"
-          }
-        }
-      }
-    },
-    "Henüz belge yok": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No documents yet"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Henüz belge yok"
           }
         }
       }
@@ -1205,22 +1077,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kareli"
-          }
-        }
-      }
-    },
-    "Kasım": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "November"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kasım"
           }
         }
       }
@@ -1577,22 +1433,6 @@
         }
       }
     },
-    "Mimarlık Tarihi": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Architectural History"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mimarlık Tarihi"
-          }
-        }
-      }
-    },
     "Mürekkep": {
       "localizations": {
         "en": {
@@ -1621,6 +1461,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Noktalı"
+          }
+        }
+      }
+    },
+    "Not almaya başla ya da bir PDF'i içe aktarıp üstüne yaz.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start taking notes or import a PDF to write on it."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not almaya başla ya da bir PDF'i içe aktarıp üstüne yaz."
           }
         }
       }
@@ -1737,22 +1593,6 @@
         }
       }
     },
-    "Okuma Notu": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reading Notes"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Okuma Notu"
-          }
-        }
-      }
-    },
     "Oluştur": {
       "localizations": {
         "en": {
@@ -1845,22 +1685,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "OpenLeaf hakkında"
-          }
-        }
-      }
-    },
-    "Organik Kimya": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Organic Chemistry"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Organik Kimya"
           }
         }
       }
@@ -2069,22 +1893,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Resmi sil"
-          }
-        }
-      }
-    },
-    "Romanlar": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Novels"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Romanlar"
           }
         }
       }
@@ -2441,22 +2249,6 @@
         }
       }
     },
-    "Sözleşme Hukuku": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Contract Law"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sözleşme Hukuku"
-          }
-        }
-      }
-    },
     "Sıralama": {
       "localizations": {
         "en": {
@@ -2501,22 +2293,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Taş"
-          }
-        }
-      }
-    },
-    "Toplantı Notları": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Meeting Notes"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Toplantı Notları"
           }
         }
       }
@@ -2581,22 +2357,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vazgeç"
-          }
-        }
-      }
-    },
-    "Vize": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Midterm"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vize"
           }
         }
       }
@@ -2809,18 +2569,18 @@
         }
       }
     },
-    "Yeni düğmesiyle ilk defterinizi oluşturun.": {
+    "Yeni defter oluştur": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Create your first notebook with the New button."
+            "value": "Create notebook"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Yeni düğmesiyle ilk defterinizi oluşturun."
+            "value": "Yeni defter oluştur"
           }
         }
       }
@@ -3061,6 +2821,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ücretsiz şablon, kapak ve çıkartma paketleri burada olacak."
+          }
+        }
+      }
+    },
+    "İlk defterini oluştur": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create your first notebook"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İlk defterini oluştur"
           }
         }
       }

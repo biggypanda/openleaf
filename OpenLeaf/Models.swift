@@ -147,7 +147,6 @@ extension Notebook {
         folder = try c.decodeIfPresent(UUID.self, forKey: .folder)
     }
 
-    static func pages(_ n: Int) -> [Page] { (0..<n).map { _ in Page() } }
 }
 
 enum SortOrder: String, Hashable { case modified, title }
@@ -213,8 +212,7 @@ final class Library {
             save()
             notebooks.forEach { scheduleThumbnail($0.id, delay: 0.5) }
         } else {
-            notebooks = Library.seed
-            notebooks.forEach { store.createDir($0.id) }
+            notebooks = []
             save()
         }
     }
@@ -457,25 +455,6 @@ final class Library {
         thumbWork.values.forEach { $0.perform() }
         thumbWork.removeAll()
         store.flush()
-    }
-
-    static var seed: [Notebook] {
-        let now = Date()
-        func ago(_ h: Double) -> Date { now.addingTimeInterval(-h * 3600) }
-        return [
-            Notebook(title: String(localized: "Organik Kimya"), subtitle: String(localized: "Alkenler"), cover: .ketenYesil, paper: .cizgili,
-                     pages: Notebook.pages(4), favorite: true, modified: ago(0.5)),
-            Notebook(title: String(localized: "Mimarlık Tarihi"), subtitle: String(localized: "Gotik dönem"), cover: .deri, paper: .noktali,
-                     pages: Notebook.pages(3), modified: ago(5)),
-            Notebook(title: String(localized: "Haftalık Plan"), subtitle: String(localized: "Kasım"), cover: .kraft, paper: .kareli, modified: ago(26)),
-            Notebook(title: String(localized: "Fikir Panosu"), kind: .whiteboard, cover: .kagit, paper: .bos, modified: ago(30)),
-            Notebook(title: String(localized: "Biyokimya"), subtitle: String(localized: "Enzimler"), cover: .ketenLacivert, paper: .kareli,
-                     pages: Notebook.pages(2), favorite: true, modified: ago(50)),
-            Notebook(title: String(localized: "Toplantı Notları"), subtitle: String(localized: "Ekip"), cover: .tas, paper: .cizgili, modified: ago(75)),
-            Notebook(title: String(localized: "Sözleşme Hukuku"), subtitle: String(localized: "Vize"), cover: .bordo, paper: .cizgili,
-                     pages: Notebook.pages(2), modified: ago(120)),
-            Notebook(title: String(localized: "Okuma Notu"), subtitle: String(localized: "Romanlar"), cover: .keten, paper: .noktali, modified: ago(200)),
-        ]
     }
 }
 

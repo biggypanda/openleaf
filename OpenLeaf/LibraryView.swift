@@ -343,11 +343,28 @@ struct LibraryView: View {
         case .paylasilanlar: ("person.2", String(localized: "Paylaşılan belge yok"), String(localized: "Sizinle paylaşılan belgeler burada görünür."))
         case .magaza: ("square.grid.2x2", String(localized: "Galeri yakında"), String(localized: "Ücretsiz şablon, kapak ve çıkartma paketleri burada olacak."))
         case .cop: ("trash", String(localized: "Çöp boş"), String(localized: "Silinen belgeler burada kalır; geri yükleyebilir ya da kalıcı olarak silebilirsin."))
-        case .belgeler: ("doc.on.doc", search.isEmpty ? String(localized: "Henüz belge yok") : String(localized: "Sonuç yok"),
-                         search.isEmpty ? String(localized: "Yeni düğmesiyle ilk defterinizi oluşturun.") : String(localized: "“\(search)” için eşleşme bulunamadı."))
+        case .belgeler: ("doc.on.doc", String(localized: "Sonuç yok"), String(localized: "“\(search)” için eşleşme bulunamadı."))
         }
-        ContentUnavailableView(title, systemImage: icon, description: Text(text))
+        if s == .belgeler && search.isEmpty {
+            ContentUnavailableView {
+                Label("İlk defterini oluştur", systemImage: "book.closed")
+            } description: {
+                Text("Not almaya başla ya da bir PDF'i içe aktarıp üstüne yaz.")
+            } actions: {
+                Button("Yeni defter oluştur", systemImage: "plus") { showNew = true }
+                    .buttonStyle(.borderedProminent)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.large)
+                Button("PDF içe aktar", systemImage: "square.and.arrow.down") { showImporter = true }
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.large)
+            }
             .frame(maxWidth: .infinity, minHeight: 420)
+        } else {
+            ContentUnavailableView(title, systemImage: icon, description: Text(text))
+                .frame(maxWidth: .infinity, minHeight: 420)
+        }
     }
 
     @ViewBuilder
