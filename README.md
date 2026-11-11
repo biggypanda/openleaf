@@ -1,7 +1,7 @@
 # OpenLeaf
 
 Öğrenciler için ücretsiz ve açık kaynak, Apple Pencil ile el yazısı not alma uygulaması (iPad öncelikli).
-Reklam yok, abonelik yok, uygulama içi satın alma yok; notlar cihazda kalır. Türkçe ve İngilizce.
+Reklam yok, abonelik yok, uygulama içi satın alma yok; notlar cihazda kalır. Türkçe, İngilizce ve Almanca.
 
 <a href="https://apps.apple.com/app/id6832556915"><img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/tr-tr" alt="App Store'dan indirin" height="50"></a>
 
@@ -19,7 +19,7 @@ Reklam yok, abonelik yok, uygulama içi satın alma yok; notlar cihazda kalır. 
 - **Sayfalar:** kitap gibi kıvrılarak çevirme, genel görünüm (küçük resim ızgarası), sürükleyerek sıralama, çoğaltma
 - **PDF:** içe aktarma, sayfaların üstüne yazma, "Şununla Aç → OpenLeaf", her defteri PDF olarak dışa aktarma
 - **Yedekleme:** tüm kütüphane tek dosya olarak Dosyalar'a / iCloud Drive'a; yedekten geri yükleme
-- Açık ve koyu tema; Türkçe ve İngilizce arayüz; reklam, abonelik, hesap yok
+- Açık ve koyu tema; Türkçe, İngilizce ve Almanca arayüz; reklam, abonelik, hesap yok
 
 ## Gereksinimler
 

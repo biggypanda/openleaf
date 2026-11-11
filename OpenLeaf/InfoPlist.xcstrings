@@ -14,6 +14,12 @@
             "state": "translated",
             "value": "OpenLeaf"
           }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenLeaf"
+          }
         }
       }
     },
@@ -26,6 +32,12 @@
           }
         },
         "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenLeaf"
+          }
+        },
+        "de": {
           "stringUnit": {
             "state": "translated",
             "value": "OpenLeaf"
@@ -45,6 +57,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Derste tahtanın ya da kitabın fotoğrafını çekip sayfaya eklemek için."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Um im Unterricht ein Foto der Tafel oder eines Buches aufzunehmen und es zu deiner Seite hinzuzufügen."
           }
         }
       }

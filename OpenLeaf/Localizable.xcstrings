@@ -3,6 +3,12 @@
   "strings": {
     " (kopya)": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " (Kopie)"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -19,6 +25,12 @@
     },
     "%@ · %@ · %@": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@ · %3$@"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -35,6 +47,12 @@
     },
     "%@, %@": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -51,6 +69,12 @@
     },
     "%@.pdf": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@.pdf"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -67,6 +91,12 @@
     },
     "%lld": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -83,6 +113,24 @@
     },
     "%lld belge": {
       "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Dokument"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Dokumente"
+                }
+              }
+            }
+          }
+        },
         "en": {
           "variations": {
             "plural": {
@@ -111,6 +159,24 @@
     },
     "%lld defter geri yüklendi.": {
       "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Notizbuch wiederhergestellt."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Notizbücher wiederhergestellt."
+                }
+              }
+            }
+          }
+        },
         "en": {
           "variations": {
             "plural": {
@@ -139,6 +205,24 @@
     },
     "%lld defter zaten vardı, dokunulmadı.": {
       "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Notizbuch war bereits vorhanden und wurde nicht verändert."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Notizbücher waren bereits vorhanden und wurden nicht verändert."
+                }
+              }
+            }
+          }
+        },
         "en": {
           "variations": {
             "plural": {
@@ -167,6 +251,24 @@
     },
     "%lld nokta": {
       "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Punkt"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Punkte"
+                }
+              }
+            }
+          }
+        },
         "en": {
           "variations": {
             "plural": {
@@ -195,6 +297,12 @@
     },
     "%lld pt": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld pt"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -211,6 +319,24 @@
     },
     "%lld sayfa": {
       "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Seite"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Seiten"
+                }
+              }
+            }
+          }
+        },
         "en": {
           "variations": {
             "plural": {
@@ -239,6 +365,24 @@
     },
     "%lld sayfa · sıralamak için basılı tutup sürükleyin": {
       "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Seite · zum Umsortieren gedrückt halten und ziehen"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Seiten · zum Umsortieren gedrückt halten und ziehen"
+                }
+              }
+            }
+          }
+        },
         "en": {
           "variations": {
             "plural": {
@@ -267,6 +411,12 @@
     },
     "A4": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A4"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -283,6 +433,12 @@
     },
     "A5": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A5"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -299,6 +455,12 @@
     },
     "ADA GÖRE": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NACH NAME"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -315,6 +477,12 @@
     },
     "Ada göre": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nach Name"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -331,6 +499,12 @@
     },
     "Adsız Whiteboard": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unbenanntes Whiteboard"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -347,6 +521,12 @@
     },
     "Adsız defter": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unbenanntes Notizbuch"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -363,6 +543,12 @@
     },
     "BOYUT": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GRÖSSE"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -379,6 +565,12 @@
     },
     "Belgeler": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dokumente"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -395,6 +587,12 @@
     },
     "Bir belgeye basılı tutup Favorilere ekleyin.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Halte ein Dokument gedrückt und wähle „Zu Favoriten hinzufügen“."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -411,6 +609,12 @@
     },
     "Bir belgeye basılı tutup “Klasöre taşı”yı seçin ya da Yeni ile burada oluşturun.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Halte ein Dokument gedrückt und wähle „In Ordner bewegen“ oder erstelle hier eins mit „Neu“."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -427,6 +631,12 @@
     },
     "Bitti": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fertig"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -443,6 +653,12 @@
     },
     "Bordo": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Burgund"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -459,6 +675,12 @@
     },
     "Boş": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leer"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -475,6 +697,12 @@
     },
     "Bu dosya açılamadı. Bozuk ya da parola korumalı bir PDF olabilir.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Datei konnte nicht geöffnet werden. Möglicherweise ist das PDF beschädigt oder passwortgeschützt."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -491,6 +719,12 @@
     },
     "Bu dosya bir OpenLeaf yedeği değil ya da bozuk.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Datei ist kein OpenLeaf-Backup oder sie ist beschädigt."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -507,6 +741,12 @@
     },
     "Bu iPad'de kayıtlı": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf diesem iPad"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -523,6 +763,12 @@
     },
     "Bu sayfadaki notlar kalıcı olarak silinir.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Notizen auf dieser Seite werden endgültig gelöscht."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -539,6 +785,12 @@
     },
     "Bu sayfayı sil": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Seite löschen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -555,6 +807,12 @@
     },
     "Bugün": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heute"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -571,6 +829,12 @@
     },
     "Bütün çizgi": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ganzer Strich"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -587,6 +851,12 @@
     },
     "Defter": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notizbuch"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -603,6 +873,12 @@
     },
     "Defter adı": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name des Notizbuchs"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -619,6 +895,12 @@
     },
     "Deri": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leder"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -635,6 +917,12 @@
     },
     "Diğer seçenekler": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weitere Optionen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -651,6 +939,12 @@
     },
     "Dokunulan çizginin tamamı silinir.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Löscht den ganzen Strich, den du berührst."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -667,6 +961,12 @@
     },
     "Dolma": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Füller"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -683,6 +983,12 @@
     },
     "Dün": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gestern"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -699,6 +1005,12 @@
     },
     "Favori yok": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine Favoriten"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -715,6 +1027,12 @@
     },
     "Favoriler": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favoriten"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -731,6 +1049,12 @@
     },
     "Favorilerden çıkar": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus Favoriten entfernen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -747,6 +1071,12 @@
     },
     "Favorilere ekle": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zu Favoriten hinzufügen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -763,6 +1093,12 @@
     },
     "Fotoğraf çek": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foto aufnehmen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -779,6 +1115,12 @@
     },
     "Fotoğraflardan seç": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus Fotos auswählen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -795,6 +1137,12 @@
     },
     "Fırça": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pinsel"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -811,6 +1159,12 @@
     },
     "Galeri": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Galerie"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -827,6 +1181,12 @@
     },
     "Galeri yakında": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Galerie folgt bald"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -843,6 +1203,12 @@
     },
     "Geri al": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widerrufen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -859,6 +1225,12 @@
     },
     "Geri yükle": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -875,6 +1247,12 @@
     },
     "Geri yükleme tamam": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellung abgeschlossen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -891,6 +1269,12 @@
     },
     "Geri yüklenemedi": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellen fehlgeschlagen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -907,6 +1291,12 @@
     },
     "Hardal": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ocker"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -923,6 +1313,12 @@
     },
     "Hızlı menü": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schnellmenü"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -939,6 +1335,12 @@
     },
     "Hızlı menüyü kapat": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schnellmenü schließen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -955,6 +1357,12 @@
     },
     "Hızlı not": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schnelle Notiz"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -971,6 +1379,12 @@
     },
     "KALINLIK": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "STÄRKE"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -987,6 +1401,12 @@
     },
     "KAPAK": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EINBAND"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1003,6 +1423,12 @@
     },
     "Kalem": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stift"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1019,6 +1445,12 @@
     },
     "Kalem kalınlığı": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strichstärke"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1035,6 +1467,12 @@
     },
     "Kalem türü": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stiftart"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1051,6 +1489,12 @@
     },
     "Kalıcı olarak sil": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Endgültig löschen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1067,6 +1511,12 @@
     },
     "Kareli": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kariert"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1083,6 +1533,12 @@
     },
     "Kaydet": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sichern"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1099,6 +1555,12 @@
     },
     "Kement": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lasso"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1115,6 +1577,12 @@
     },
     "Keten": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leinen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1131,6 +1599,12 @@
     },
     "Keten lacivert": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marineblaues Leinen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1147,6 +1621,12 @@
     },
     "Keten yeşil": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grünes Leinen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1163,6 +1643,12 @@
     },
     "Klasör": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordner"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1179,6 +1665,12 @@
     },
     "Klasör adı": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordnername"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1195,6 +1687,12 @@
     },
     "Klasör boş": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordner ist leer"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1211,6 +1709,12 @@
     },
     "Klasörden çıkar": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus Ordner entfernen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1227,6 +1731,12 @@
     },
     "Klasöre taşı": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Ordner bewegen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1243,6 +1753,12 @@
     },
     "Klasörler": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordner"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1259,6 +1775,12 @@
     },
     "Klasörü sil": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordner löschen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1275,6 +1797,12 @@
     },
     "Klasörü yeniden adlandır": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordner umbenennen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1291,6 +1819,12 @@
     },
     "Kraft": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kraftpapier"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1307,6 +1841,12 @@
     },
     "Kurşun": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bleistift"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1323,6 +1863,12 @@
     },
     "KÂĞIT BOYUTU": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PAPIERFORMAT"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1339,6 +1885,12 @@
     },
     "Kâğıt": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Papier"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1355,6 +1907,12 @@
     },
     "Kâğıt boyutu": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Papierformat"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1371,6 +1929,12 @@
     },
     "Kütüphane": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bibliothek"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1387,6 +1951,12 @@
     },
     "Kısmi": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teilweise"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1403,6 +1973,12 @@
     },
     "Mavi": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blau"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1419,6 +1995,12 @@
     },
     "Mektup": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "US-Letter"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1435,6 +2017,12 @@
     },
     "Mürekkep": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tinte"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1451,6 +2039,12 @@
     },
     "Noktalı": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gepunktet"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1467,6 +2061,12 @@
     },
     "Not almaya başla ya da bir PDF'i içe aktarıp üstüne yaz.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beginne mit deinen Notizen oder importiere ein PDF, um darauf zu schreiben."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1483,6 +2083,12 @@
     },
     "Not seçenekleri": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notizoptionen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1499,6 +2105,12 @@
     },
     "Not üstüne kalemle yazma alanı": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schreibbereich für den Stift auf der Notiz"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1515,6 +2127,12 @@
     },
     "Notlarda ara": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notizen durchsuchen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1531,6 +2149,12 @@
     },
     "Notu boyutlandır": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notizgröße ändern"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1547,6 +2171,12 @@
     },
     "Notu sil": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notiz löschen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1563,6 +2193,12 @@
     },
     "Odak modu": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fokusmodus"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1579,6 +2215,12 @@
     },
     "Odak modundan çık": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fokusmodus beenden"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1595,6 +2237,12 @@
     },
     "Oluştur": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erstellen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1611,6 +2259,12 @@
     },
     "Oluştur ve taşı": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erstellen und bewegen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1627,6 +2281,12 @@
     },
     "OpenLeaf": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenLeaf"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1643,6 +2303,12 @@
     },
     "OpenLeaf %@": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenLeaf %@"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1659,6 +2325,12 @@
     },
     "OpenLeaf Yedek %@": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenLeaf-Backup %@"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1675,6 +2347,12 @@
     },
     "OpenLeaf hakkında": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Über OpenLeaf"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1691,6 +2369,12 @@
     },
     "PDF": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PDF"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1707,6 +2391,12 @@
     },
     "PDF içe aktar": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PDF importieren"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1723,6 +2413,12 @@
     },
     "PDF içe aktarılamadı": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PDF konnte nicht importiert werden"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1739,6 +2435,12 @@
     },
     "PDF olarak paylaş": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Als PDF teilen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1755,6 +2457,12 @@
     },
     "Paylaşılan belge yok": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine geteilten Dokumente"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1771,6 +2479,12 @@
     },
     "Paylaşılanlar": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geteilt"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1787,6 +2501,12 @@
     },
     "Pembe": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rosa"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1803,6 +2523,12 @@
     },
     "RENKLER": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FARBEN"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1819,6 +2545,12 @@
     },
     "Renk": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Farbe"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1835,6 +2567,12 @@
     },
     "Resim ekle": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bild hinzufügen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1851,6 +2589,12 @@
     },
     "Resim seçenekleri": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bildoptionen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1867,6 +2611,12 @@
     },
     "Resmi boyutlandır": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bildgröße ändern"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1883,6 +2633,12 @@
     },
     "Resmi sil": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bild löschen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1899,6 +2655,12 @@
     },
     "SON DÜZENLENENLER": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ZULETZT BEARBEITET"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1915,6 +2677,12 @@
     },
     "Sadece dairenin değdiği yer silinir.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Löscht nur dort, wo der Kreis berührt."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1931,6 +2699,12 @@
     },
     "Sarı": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gelb"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1947,6 +2721,12 @@
     },
     "Sarı fosforlu kalem; metnin altında kalır gibi yarı saydam çizer.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein gelber Textmarker, der halbtransparent zeichnet, als läge er unter dem Text."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1963,6 +2743,12 @@
     },
     "Sayfa %lld": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seite %lld"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1979,6 +2765,12 @@
     },
     "Sayfa %lld / %lld": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seite %1$lld von %2$lld"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -1995,6 +2787,12 @@
     },
     "Sayfa %lld seçenekleri": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optionen für Seite %lld"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2011,6 +2809,12 @@
     },
     "Sayfa %lld silinsin mi?": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seite %lld löschen?"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2027,6 +2831,12 @@
     },
     "Sayfa %lld, açık sayfa": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seite %lld, aktuelle Seite"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2043,6 +2853,12 @@
     },
     "Sayfa ekle": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seite hinzufügen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2059,6 +2875,12 @@
     },
     "Sayfalar": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seiten"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2075,6 +2897,12 @@
     },
     "Sayfayı sil": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seite löschen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2091,6 +2919,12 @@
     },
     "Seçili resim; sürükleyerek taşıyın": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgewähltes Bild; zum Bewegen ziehen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2107,6 +2941,12 @@
     },
     "Silgi": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Radierer"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2123,6 +2963,12 @@
     },
     "Silgi boyutu": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Radierergröße"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2139,6 +2985,12 @@
     },
     "Silgi türü": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Radiererart"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2155,6 +3007,12 @@
     },
     "Silinen belgeler burada kalır; geri yükleyebilir ya da kalıcı olarak silebilirsin.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gelöschte Dokumente bleiben hier, bis du sie wiederherstellst oder endgültig löschst."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2171,6 +3029,12 @@
     },
     "Sizinle paylaşılan belgeler burada görünür.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mit dir geteilte Dokumente erscheinen hier."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2187,6 +3051,12 @@
     },
     "Son düzenlenen": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zuletzt bearbeitet"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2203,6 +3073,12 @@
     },
     "Sonraki sayfa": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nächste Seite"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2219,6 +3095,12 @@
     },
     "Sonrasına sayfa ekle": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seite danach hinzufügen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2235,6 +3117,12 @@
     },
     "Sonuç yok": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine Ergebnisse"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2251,6 +3139,12 @@
     },
     "Sıralama": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sortieren"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2267,6 +3161,12 @@
     },
     "Tamam": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2283,6 +3183,12 @@
     },
     "Taş": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stein"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2299,6 +3205,12 @@
     },
     "Tükenmez": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kuli"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2315,6 +3227,12 @@
     },
     "Tüm defterlerin tek dosyada. Uygulamayı silsen bile bu dosyadan geri yükleyebilirsin.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle deine Notizbücher in einer einzigen Datei. Auch wenn du die App löschst, kannst du sie aus dieser Datei wiederherstellen."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2331,6 +3249,12 @@
     },
     "Tüm sayfalar": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle Seiten"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2347,6 +3271,12 @@
     },
     "Vazgeç": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abbrechen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2363,6 +3293,12 @@
     },
     "Vurgulayıcı": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Textmarker"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2379,6 +3315,12 @@
     },
     "Whiteboard": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whiteboard"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2395,6 +3337,12 @@
     },
     "Yalnızca Pencil ile çiz": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nur mit dem Pencil zeichnen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2411,6 +3359,12 @@
     },
     "Yapışkan not": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haftnotiz"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2427,6 +3381,12 @@
     },
     "Yapışkan not ekle": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haftnotiz hinzufügen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2443,6 +3403,12 @@
     },
     "Yedek kaydedildi": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup gesichert"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2459,6 +3425,12 @@
     },
     "Yedek oluşturulamadı": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup konnte nicht erstellt werden"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2475,6 +3447,12 @@
     },
     "Yedekleme": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2491,6 +3469,12 @@
     },
     "Yedekteki defterlerin hepsi zaten bu iPad'de var.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle Notizbücher aus dem Backup sind bereits auf diesem iPad."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2507,6 +3491,12 @@
     },
     "Yedekten geri yükle": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus Backup wiederherstellen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2523,6 +3513,12 @@
     },
     "Yedeği Dosyalar'a kaydet": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup in Dateien sichern"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2539,6 +3535,12 @@
     },
     "Yeni": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neu"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2555,6 +3557,12 @@
     },
     "Yeni defter": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neues Notizbuch"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2571,6 +3579,12 @@
     },
     "Yeni defter oluştur": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notizbuch erstellen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2587,6 +3601,12 @@
     },
     "Yeni klasör": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neuer Ordner"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2603,6 +3623,12 @@
     },
     "Yeni klasör…": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neuer Ordner …"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2619,6 +3645,12 @@
     },
     "Yeni sayfa": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neue Seite"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2635,6 +3667,12 @@
     },
     "Yeniden adlandır": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Umbenennen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2651,6 +3689,12 @@
     },
     "Yeşil": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grün"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2667,6 +3711,12 @@
     },
     "Yinele": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederholen"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2683,6 +3733,12 @@
     },
     "Çivit": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indigo"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2699,6 +3755,12 @@
     },
     "Çizgili": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Liniert"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2715,6 +3777,12 @@
     },
     "Çoğalt": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duplizieren"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2731,6 +3799,12 @@
     },
     "Çöp": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Papierkorb"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2747,6 +3821,12 @@
     },
     "Çöp boş": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Papierkorb ist leer"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2763,6 +3843,12 @@
     },
     "Çöpe taşı": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In den Papierkorb"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2779,6 +3865,12 @@
     },
     "Önceki sayfa": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vorherige Seite"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2795,6 +3887,12 @@
     },
     "Öğrenciler için ücretsiz ve açık kaynak not uygulaması.\n\nCopyright © 2026 biggypanda\nGNU GPL sürüm 3 ile lisanslanmıştır. Bu program HİÇBİR GARANTİ olmaksızın dağıtılır. Kaynak kodu ve lisansın tam metni projenin deposundadır.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eine kostenlose Open-Source-Notiz-App für Studierende und Schüler.\n\nCopyright © 2026 biggypanda\nLizenziert unter der GNU GPL Version 3. Dieses Programm wird OHNE JEGLICHE GEWÄHRLEISTUNG bereitgestellt. Der Quellcode und der vollständige Lizenztext befinden sich im Repository des Projekts."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2811,6 +3909,12 @@
     },
     "Ücretsiz şablon, kapak ve çıkartma paketleri burada olacak.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hier wird es kostenlose Vorlagen-, Einband- und Sticker-Pakete geben."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2827,6 +3931,12 @@
     },
     "İlk defterini oluştur": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erstelle dein erstes Notizbuch"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2843,6 +3953,12 @@
     },
     "İçindeki defterler silinmez, Belgeler'de kalır.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die enthaltenen Notizbücher werden nicht gelöscht; sie bleiben in „Dokumente“."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2859,6 +3975,12 @@
     },
     "ŞABLON": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VORLAGE"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2875,6 +3997,12 @@
     },
     "Şarap": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weinrot"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2891,6 +4019,12 @@
     },
     "“%@” için eşleşme bulunamadı.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine Treffer für „%@“."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -2907,6 +4041,12 @@
     },
     "“%@” klasörü silinsin mi?": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordner „%@“ löschen?"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",

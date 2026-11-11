@@ -38,10 +38,24 @@ struct CoverView: View {
         .shadow(color: Color(hex: 0x28220F).opacity(0.10), radius: 12, y: 8)
     }
 
+    /// Uzun tek kelimeler (ör. "Vertragsrecht") ortadan bölünmesin diye
+    /// en geniş kelime etikete sığacak kadar yazıyı küçültür.
+    private var titleSize: CGFloat {
+        let base: CGFloat = compact ? 9 : 15
+        let room: CGFloat = compact ? 38 : 90
+        guard let desc = UIFont.systemFont(ofSize: base, weight: .semibold).fontDescriptor.withDesign(.serif) else { return base }
+        let font = UIFont(descriptor: desc, size: base)
+        let widest = title.split(whereSeparator: \.isWhitespace)
+            .map { String($0).size(withAttributes: [.font: font]).width }
+            .max() ?? 0
+        guard widest > room else { return base }
+        return max(base * 0.6, (base * room / widest).rounded(.down))
+    }
+
     private var label: some View {
         VStack(spacing: 2) {
             Text(title)
-                .font(.system(size: compact ? 9 : 15, weight: .semibold, design: .serif))
+                .font(.system(size: titleSize, weight: .semibold, design: .serif))
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
             if !subtitle.isEmpty && !compact {
