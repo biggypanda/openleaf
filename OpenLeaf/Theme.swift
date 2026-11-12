@@ -29,6 +29,10 @@ enum Y {
     static let paperUI = UIColor.dyn(0xFFFEFA, 0x26241F)
     static let paperLineUI = UIColor.dyn(0xD9E0DC, 0x37403B)
     static let paperMarginUI = UIColor.dyn(0xE3C9C2, 0x5A3A3A)
+    /// Şablonlarda: soluk yardımcı çizgi, belirgin tablo/bölme çizgisi ve başlık yazısı
+    static let paperLineFaintUI = UIColor.dyn(0xD9E0DC, 0x37403B, 0.55, 0.55)
+    static let paperRuleUI = UIColor.dyn(0xB4C0BA, 0x4C5852)
+    static let paperTextUI = UIColor.dyn(0x8E9189, 0x7F7B70)
 
     // Metin
     static let ink = Color(uiColor: .dyn(0x1F2421, 0xEDE8DB))

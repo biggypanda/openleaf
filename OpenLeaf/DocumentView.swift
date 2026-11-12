@@ -4,11 +4,12 @@ import PDFKit
 import PhotosUI
 
 enum ToolKind: String, CaseIterable {
-    case pen, highlighter, eraser, lasso
+    case pen, highlighter, tape, eraser, lasso
     var icon: String {
         switch self {
         case .pen: "pencil.tip"
         case .highlighter: "highlighter"
+        case .tape: "bandage"
         case .eraser: "eraser"
         case .lasso: "lasso"
         }
@@ -17,6 +18,7 @@ enum ToolKind: String, CaseIterable {
         switch self {
         case .pen: String(localized: "Kalem")
         case .highlighter: String(localized: "Vurgulayıcı")
+        case .tape: String(localized: "Bant")
         case .eraser: String(localized: "Silgi")
         case .lasso: String(localized: "Kement")
         }
@@ -25,6 +27,7 @@ enum ToolKind: String, CaseIterable {
         switch self {
         case .pen: "p"
         case .highlighter: "h"
+        case .tape: "t"
         case .eraser: "e"
         case .lasso: "l"
         }
@@ -106,6 +109,10 @@ struct DocumentView: View {
         Binding(get: { EraserSettings(mode: eraserMode, size: eraserSize) },
                 set: { eraserMode = $0.mode; eraserSize = $0.size })
     }
+    @AppStorage("bant.renk") private var tapeColor: TapeColor = .sari
+    @AppStorage("bant.kalinlik") private var tapeSize: TapeSize = .orta
+    /// PencilKit cetveli (düz çizgi çekmek için); belge kapanınca kapanır
+    @State private var ruler = false
     @State private var showToolMenu = false
     @State private var focus = false
     /// Varsayılan: parmak çizmez (sayfayı kaydırır ve tek parmakla sayfa çevirir), yalnızca Pencil çizer
@@ -164,6 +171,8 @@ struct DocumentView: View {
             if !focus {
                 ToolbarCapsule(tool: $tool, color: $color, showToolMenu: $showToolMenu,
                                penType: $penType, penWidth: $penWidth, eraser: eraserBinding,
+                               tapeColor: $tapeColor, tapeSize: $tapeSize, ruler: $ruler,
+                               revealTapes: controller.revealTapes,
                                canUndo: controller.canUndo, canRedo: controller.canRedo,
                                undo: controller.undo, redo: controller.redo,
                                addNote: controller.addNote,
@@ -179,7 +188,7 @@ struct DocumentView: View {
             }
 
             if tapRipple {
-                Text(tool == .eraser ? String(localized: "Silgi") : String(localized: "Kalem"))
+                Text(tool.name)
                     .font(.subheadline.weight(.semibold))
                     .padding(.horizontal, 16).padding(.vertical, 10)
                     .foregroundStyle(Color(hex: 0xF1ECDF))
@@ -363,7 +372,9 @@ struct DocumentView: View {
 
     private var pkTool: PKTool {
         switch tool {
-        case .pen:
+        case .pen, .tape:
+            // Bantı tuval kendisi çeker, PencilKit çizimi o sırada kapalıdır. Araç yine de kalem kalır:
+            // silgi olsaydı ve bir dokunuş kaçsaydı bantın altındaki yazı görünmeden silinirdi.
             return PKInkingTool(penType.ink, color: color.ui, width: CGFloat(penWidth) * penType.widthScale)
         case .highlighter:
             return PKInkingTool(.marker, color: UIColor(hex: 0xF3D77A).withAlphaComponent(0.9), width: 22)
@@ -422,7 +433,14 @@ struct DocumentView: View {
             notebookID: notebookID,
             images: nb.pages[p].pageImages,
             onImagesChange: { pid, list in library.setImages(notebookID, pid, list) },
-            onPencilSqueeze: { point in squeezed(at: point) }
+            onPencilSqueeze: { point in squeezed(at: point) },
+            tapes: nb.pages[p].pageTapes,
+            onTapesChange: { pid, list in library.setTapes(notebookID, pid, list) },
+            tapeMode: tool == .tape,
+            erasesTapes: tool == .eraser,
+            tapeColor: tapeColor,
+            tapeThickness: tapeSize.thickness,
+            ruler: ruler
         )
     }
 
@@ -502,6 +520,10 @@ struct ToolbarCapsule: View {
     @Binding var penType: PenType
     @Binding var penWidth: Double
     @Binding var eraser: EraserSettings
+    @Binding var tapeColor: TapeColor
+    @Binding var tapeSize: TapeSize
+    @Binding var ruler: Bool
+    var revealTapes: (Bool) -> Void
     var canUndo: Bool
     var canRedo: Bool
     var undo: () -> Void
@@ -513,7 +535,7 @@ struct ToolbarCapsule: View {
 
     var body: some View {
         HStack(spacing: 2) {
-            ForEach([ToolKind.pen, .highlighter, .eraser], id: \.self) { toolButton($0) }
+            ForEach([ToolKind.pen, .highlighter, .tape, .eraser], id: \.self) { toolButton($0) }
 
             // Silginin sağında: yapışkan not ekle
             Button(action: addNote) {
@@ -542,6 +564,19 @@ struct ToolbarCapsule: View {
 
             toolButton(.lasso)
 
+            // Cetvel: açıkken çizgiler cetvelin kenarına yapışır; iki parmakla taşınır ve döndürülür
+            Button { ruler.toggle() } label: {
+                Image(systemName: "ruler")
+                    .font(.system(size: 19, weight: .regular))
+                    .frame(width: 46, height: 46)
+                    .foregroundStyle(ruler ? Y.accent : Y.ink2)
+                    .background(Circle().fill(ruler ? Y.accentSoft : .clear))
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Cetvel")
+            .accessibilityAddTraits(ruler ? .isSelected : [])
+
             sep
 
             colorButtons
@@ -555,6 +590,7 @@ struct ToolbarCapsule: View {
         .glass(Capsule())
         .animation(Y.quick, value: tool)
         .animation(Y.quick, value: color)
+        .animation(Y.quick, value: ruler)
     }
 
     private func toolButton(_ t: ToolKind) -> some View {
@@ -570,7 +606,8 @@ struct ToolbarCapsule: View {
                 .accessibilityAddTraits(tool == t ? .isSelected : [])
                 .popover(isPresented: Binding(get: { showToolMenu && tool == t }, set: { if !$0 { showToolMenu = false } }),
                          arrowEdge: .bottom) {
-                    ToolMenu(tool: t, penType: $penType, penWidth: $penWidth, color: $color, eraser: $eraser)
+                    ToolMenu(tool: t, penType: $penType, penWidth: $penWidth, color: $color, eraser: $eraser,
+                             tapeColor: $tapeColor, tapeSize: $tapeSize, revealTapes: revealTapes)
                         .presentationCompactAdaptation(.popover)
                 }
     }
@@ -613,13 +650,16 @@ struct ToolbarCapsule: View {
     }
 }
 
-/// Aktif araç menüsü: kalem türü, kalınlık, renk
+/// Aktif araç menüsü: kalem türü, kalınlık, renk; silgi türü; bant ayarları
 struct ToolMenu: View {
     var tool: ToolKind
     @Binding var penType: PenType
     @Binding var penWidth: Double
     @Binding var color: PenColor
     @Binding var eraser: EraserSettings
+    @Binding var tapeColor: TapeColor
+    @Binding var tapeSize: TapeSize
+    var revealTapes: (Bool) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -712,6 +752,47 @@ struct ToolMenu: View {
                     Text("Dokunulan çizginin tamamı silinir.")
                         .font(.footnote).foregroundStyle(Y.ink2)
                 }
+            } else if tool == .tape {
+                Picker("Bant kalınlığı", selection: $tapeSize) {
+                    ForEach(TapeSize.allCases) { Text($0.name).tag($0) }
+                }
+                .pickerStyle(.segmented)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("RENKLER").font(Y.eyebrow).tracking(0.8).foregroundStyle(Y.ink3)
+                    HStack(spacing: 10) {
+                        ForEach(TapeColor.allCases) { c in
+                            Button { tapeColor = c } label: {
+                                RoundedRectangle(cornerRadius: 5, style: .continuous).fill(Color(uiColor: c.ui))
+                                    .frame(width: 52, height: 26)
+                                    .padding(4)
+                                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .strokeBorder(c == tapeColor ? Y.accent : .clear, lineWidth: 2))
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(c.name)
+                            .accessibilityAddTraits(c == tapeColor ? .isSelected : [])
+                        }
+                    }
+                }
+
+                HStack(spacing: 10) {
+                    Button { revealTapes(false) } label: {
+                        Label("Hepsini kapat", systemImage: "eye.slash").frame(maxWidth: .infinity)
+                    }
+                    Button { revealTapes(true) } label: {
+                        Label("Hepsini aç", systemImage: "eye").frame(maxWidth: .infinity)
+                    }
+                }
+                .buttonStyle(.bordered)
+                .tint(Y.accent)
+                .font(.subheadline)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+
+                Text("Kendini sınamak için yazının üstüne sürükleyerek bant çek. Banta dokununca altı görünür, yeniden dokununca kapanır. Silmek için silgiyle banta dokun.")
+                    .font(.footnote).foregroundStyle(Y.ink2)
+                    .fixedSize(horizontal: false, vertical: true)
             } else {
                 Label("Vurgulayıcı", systemImage: "highlighter").font(.headline)
                 Text("Sarı fosforlu kalem; metnin altında kalır gibi yarı saydam çizer.")

@@ -46,19 +46,29 @@ struct NewNotebookSheet: View {
                     }
 
                     group("ŞABLON") {
-                        HStack(spacing: 12) {
-                            ForEach(PaperStyle.allCases) { p in
-                                VStack(spacing: 6) {
-                                    PaperSwatch(style: p)
-                                        .frame(width: 64, height: 84)
-                                        .overlay {
-                                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                                .strokeBorder(p == paper ? Y.accent : Y.line, lineWidth: p == paper ? 2.5 : 1)
-                                        }
-                                    Text(p.name).font(.caption).foregroundStyle(p == paper ? Y.accent : Y.ink2)
+                        // Şablonlar tek sıraya sığmaz: yana kaydırılır
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(alignment: .top, spacing: 12) {
+                                ForEach(PaperStyle.allCases) { p in
+                                    VStack(spacing: 6) {
+                                        PaperSwatch(style: p)
+                                            .frame(width: 58, height: 76)
+                                            .overlay {
+                                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                                    .strokeBorder(p == paper ? Y.accent : Y.line, lineWidth: p == paper ? 2.5 : 1)
+                                            }
+                                        Text(p.name).font(.caption).foregroundStyle(p == paper ? Y.accent : Y.ink2)
+                                            .lineLimit(1).fixedSize()
+                                    }
+                                    .frame(minWidth: 58)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture { paper = p }
+                                    .accessibilityElement(children: .ignore)
+                                    .accessibilityLabel(p.name)
+                                    .accessibilityAddTraits(p == paper ? [.isButton, .isSelected] : .isButton)
                                 }
-                                .onTapGesture { paper = p }
                             }
+                            .padding(.vertical, 3).padding(.horizontal, 2)
                         }
                     }
 
@@ -102,10 +112,22 @@ struct PaperSwatch: View {
     var body: some View {
         Canvas { ctx, size in
             ctx.fill(Path(CGRect(origin: .zero, size: size)), with: .color(Color(uiColor: Y.paperUI)))
-            PaperPattern.draw(style, in: CGRect(origin: .zero, size: size), scale: 0.35) { path, color, width in
+            // Desenler yakından, sayfa düzenleri (tablo, bölmeler) sayfanın minyatürü olarak gösterilir
+            let scale: CGFloat = switch style {
+            case _ where style.isLayout: size.width / 768
+            case .nota: 0.2
+            case .milimetrik: 0.6
+            default: 0.35
+            }
+            PaperPattern.draw(style, in: CGRect(origin: .zero, size: size), scale: scale) { path, color, width in
                 ctx.stroke(path, with: .color(Color(uiColor: color)), lineWidth: width)
             } fill: { path, color in
                 ctx.fill(path, with: .color(Color(uiColor: color)))
+            } text: { string, point, fontSize, align in
+                guard fontSize >= 3.5 else { return }
+                ctx.draw(Text(string).font(.system(size: fontSize, weight: .medium))
+                            .foregroundStyle(Color(uiColor: Y.paperTextUI)),
+                         at: point, anchor: align == .center ? .center : .leading)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))

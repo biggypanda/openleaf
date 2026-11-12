@@ -12,7 +12,9 @@ import Foundation
 ///
 /// Tüm yazmalar tek sıralı kuyrukta ve atomik yapılır; okumalar aynı kuyruktan geçer,
 /// böylece yarım yazılmış bir dosya hiç okunmaz.
-final class NotebookStore {
+///
+/// Değişen durumu yoktur (kök klasör ve kuyruk sabit), bu yüzden iş parçacıkları arasında paylaşılabilir.
+final class NotebookStore: @unchecked Sendable {
     let root: URL
     private let queue = DispatchQueue(label: "openleaf.depo", qos: .utility)
     private let fm = FileManager.default

@@ -12,7 +12,7 @@ extension Library {
     }
 
     /// PDF'i yeni defterin klasörüne kopyalar, her sayfası için bir not sayfası açar
-    /// ve metnini aranabilir olsun diye `text.txt` olarak saklar.
+    /// ve metnini aranabilir olsun diye `text.txt` olarak saklar (metin arka planda çıkarılır).
     func importPDF(from source: URL) throws -> UUID {
         let scoped = source.startAccessingSecurityScopedResource()
         defer { if scoped { source.stopAccessingSecurityScopedResource() } }
@@ -31,8 +31,13 @@ extension Library {
             throw ImportError.unreadable
         }
 
-        let text = PDFRender.text(of: doc)
-        if !text.isEmpty, let data = text.data(using: .utf8) { store.writeFile(data, to: store.textURL(id)) }
+        // Aranabilir metni çıkarmak büyük kitaplarda saniyeler sürer: arayüzü bekletmeden arka planda yap.
+        // (Bitmeden arama yapılırsa `searchText` metni kendisi çıkarır.)
+        let store = self.store
+        DispatchQueue.global(qos: .utility).async {
+            let text = PDFRender.text(of: dest)
+            if !text.isEmpty, let data = text.data(using: .utf8) { store.writeFile(data, to: store.textURL(id)) }
+        }
 
         let size = PDFRender.displaySize(of: first)
         var nb = Notebook(
@@ -112,9 +117,10 @@ enum PDFRender {
 // MARK: - Sayfa çizimi (küçük resim ve dışa aktarma aynı kodu kullanır)
 
 enum PageRenderer {
-    /// Bir sayfayı (PDF sayfası veya kâğıt deseni + mürekkep) kanonik boyutta `cg` bağlamına çizer.
+    /// Bir sayfayı (PDF sayfası veya kâğıt deseni + resimler, mürekkep, bantlar, notlar) kanonik boyutta `cg` bağlamına çizer.
     @MainActor
-    static func draw(_ nb: Notebook, page: Page, drawing: Data, source: PDFDocument?, in cg: CGContext) {
+    static func draw(_ nb: Notebook, page: Page, drawing: Data, source: PDFDocument?, in cg: CGContext,
+                     exporting: Bool = false) {
         let bounds = CGRect(origin: .zero, size: nb.canonicalSize)
         let light = UITraitCollection(userInterfaceStyle: .light)
         light.performAsCurrent {
@@ -133,6 +139,9 @@ enum PageRenderer {
                         cg.addPath(path.cgPath)
                         cg.setFillColor(color.resolvedColor(with: light).cgColor)
                         cg.fillPath()
+                    } text: { string, point, size, align in
+                        PaperText.draw(string, at: point, size: size, align: align,
+                                       color: Y.paperTextUI.resolvedColor(with: light), in: cg)
                     }
                 }
             }
@@ -144,6 +153,8 @@ enum PageRenderer {
             if let d = try? PKDrawing(data: drawing), !d.strokes.isEmpty {
                 d.image(from: bounds, scale: 2).draw(in: bounds)
             }
+            // Bantlar küçük resimlerde ekrandaki gibi örter; dışa aktarılan PDF'te yarı saydamdır ki not kaybolmasın
+            TapeArt.draw(page.pageTapes, look: exporting ? .export : .covered, in: cg)
             StickyRenderer.draw(page.stickyNotes, in: cg)
             UIGraphicsPopContext()
         }
@@ -251,7 +262,8 @@ enum PDFExporter {
         try? renderer.writePDF(to: url) { ctx in
             for page in nb.pages {
                 ctx.beginPage()
-                PageRenderer.draw(nb, page: page, drawing: library.drawing(nb.id, page.id), source: source, in: ctx.cgContext)
+                PageRenderer.draw(nb, page: page, drawing: library.drawing(nb.id, page.id), source: source,
+                                  in: ctx.cgContext, exporting: true)
             }
         }
         return withExtendedLifetime(source) { url }

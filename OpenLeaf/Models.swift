@@ -38,6 +38,7 @@ enum CoverStyle: String, Codable, CaseIterable, Identifiable {
 
 enum PaperStyle: String, Codable, CaseIterable, Identifiable {
     case cizgili, kareli, noktali, bos
+    case cornell, milimetrik, nota, haftalik, dersProgrami, konuTakip, denemeAnalizi
     var id: String { rawValue }
     var name: String {
         switch self {
@@ -45,6 +46,22 @@ enum PaperStyle: String, Codable, CaseIterable, Identifiable {
         case .kareli: String(localized: "Kareli")
         case .noktali: String(localized: "Noktalı")
         case .bos: String(localized: "Boş")
+        case .cornell: String(localized: "Cornell")
+        case .milimetrik: String(localized: "Milimetrik")
+        case .nota: String(localized: "Nota")
+        case .haftalik: String(localized: "Haftalık plan")
+        case .dersProgrami: String(localized: "Ders programı")
+        case .konuTakip: String(localized: "Konu takip")
+        case .denemeAnalizi: String(localized: "Deneme analizi")
+        }
+    }
+
+    /// Sayfanın tamamına yerleşen düzen (tablo, bölmeler); küçük önizlemesi sayfanın gerçek minyatürü olarak çizilir.
+    /// Diğerleri tekrarlayan desendir, önizlemede yakından gösterilir.
+    var isLayout: Bool {
+        switch self {
+        case .cornell, .haftalik, .dersProgrami, .konuTakip, .denemeAnalizi: true
+        default: false
         }
     }
 }
@@ -80,9 +97,12 @@ struct Page: Identifiable, Codable, Equatable {
     var notes: [StickyNote]?
     /// Sayfaya eklenmiş resimler (eski kayıtlarda alan yok)
     var images: [PageImage]?
+    /// Sayfadaki bantlar (eski kayıtlarda alan yok)
+    var tapes: [Tape]?
 
     var stickyNotes: [StickyNote] { notes ?? [] }
     var pageImages: [PageImage] { images ?? [] }
+    var pageTapes: [Tape] { tapes ?? [] }
 }
 
 struct Notebook: Identifiable, Codable, Equatable {
@@ -390,7 +410,7 @@ final class Library {
         scheduleThumbnail(id)
     }
 
-    /// Sayfanın kopyasını hemen arkasına ekler (mürekkep, notlar ve PDF sayfası dahil)
+    /// Sayfanın kopyasını hemen arkasına ekler (mürekkep, notlar, bantlar ve PDF sayfası dahil)
     @discardableResult
     func duplicatePage(_ id: UUID, at index: Int) -> Int? {
         guard let nb = notebooks.first(where: { $0.id == id }), nb.pages.indices.contains(index) else { return nil }
@@ -398,6 +418,7 @@ final class Library {
         var copy = Page()
         copy.pdfPage = src.pdfPage
         copy.notes = src.notes?.map { n in var c = n; c.id = UUID(); return c }
+        copy.tapes = src.tapes?.map { t in var c = t; c.id = UUID(); return c }
         let data = drawing(id, src.id)
         if !data.isEmpty {
             drawingCache[key(id, copy.id)] = data

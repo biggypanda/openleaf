@@ -5,10 +5,16 @@ import PDFKit
 // MARK: - Kâğıt deseni (önizleme ve sayfa altlığı aynı kodu kullanır)
 
 enum PaperPattern {
+    enum Align { case leading, center }
+    typealias Stroke = (Path, UIColor, CGFloat) -> Void
+    typealias Fill = (Path, UIColor) -> Void
+    /// Şablon yazısı: (yazı, konum, punto, hizalama). Konum yazının dikey ortasıdır;
+    /// yatayda hizalamaya göre sol kenarı ya da ortası.
+    typealias Label = (String, CGPoint, CGFloat, Align) -> Void
+
     /// `s` = sayfa ölçeği (kanonik sayfa genişliği 768 pt)
     static func draw(_ style: PaperStyle, in r: CGRect, scale s: CGFloat,
-                     stroke: (Path, UIColor, CGFloat) -> Void,
-                     fill: (Path, UIColor) -> Void) {
+                     stroke: Stroke, fill: Fill, text: Label = { _, _, _, _ in }) {
         switch style {
         case .cizgili:
             var p = Path()
@@ -40,6 +46,8 @@ enum PaperPattern {
             fill(p, Y.paperLineUI.withAlphaComponent(1))
         case .bos:
             break
+        default:
+            drawTemplate(style, in: r, scale: s, stroke: stroke, fill: fill, text: text)
         }
     }
 }
@@ -135,6 +143,9 @@ final class PaperUIView: UIView {
             ctx.addPath(path.cgPath)
             ctx.setFillColor(color.resolvedColor(with: tc).cgColor)
             ctx.fillPath()
+        } text: { string, point, size, align in
+            PaperText.draw(string, at: point, size: size, align: align,
+                           color: Y.paperTextUI.resolvedColor(with: tc), in: ctx)
         }
     }
 }
@@ -194,6 +205,8 @@ final class OpenLeafCanvas: PKCanvasView {
 
     /// Mürekkep sayfanın dışında başlamasın: dokunuş kâğıdın dışındaysa tuval o dokunuşu almaz
     override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        // Her yeni dokunuş buradan geçer: PencilKit'in bu dokunuşla çizip çizmeyeceğine şimdi karar ver
+        updateDrawingGate(at: point)
         if isWhiteboard { return super.point(inside: point, with: event) }
         return paper.frame.contains(point) && super.point(inside: point, with: event)
     }
@@ -245,6 +258,7 @@ final class OpenLeafCanvas: PKCanvasView {
 
     private func layoutNotes() {
         let m = viewMapping
+        layoutTapes(m)
         for v in noteViews {
             v.scale = m.a
             v.frame = v.note.frame.applying(m)
@@ -268,6 +282,185 @@ final class OpenLeafCanvas: PKCanvasView {
     }
 
     private func notesChanged() { onNotesChange?(noteViews.map(\.note)) }
+
+    // MARK: Bantlar
+
+    var onTapesChange: (([Tape]) -> Void)?
+    /// Bant aracı seçili: kalem (parmakla çizim açıksa parmak da) mürekkep yerine bant çeker
+    var tapeMode = false {
+        didSet {
+            if oldValue, !tapeMode { cancelTapeDrag() }
+            updateDrawingGate()
+        }
+    }
+    /// Silgi seçili: bantın üstünde başlayan silgi dokunuşu mürekkebi değil bantı siler
+    var erasesTapes = false {
+        didSet {
+            if oldValue, !erasesTapes { erasingTapes = false }
+            updateDrawingGate()
+        }
+    }
+    var tapeColor: TapeColor = .sari
+    /// Yeni şerit bantların kalınlığı (kanonik)
+    var tapeThickness: CGFloat = 30
+    private var tapes: [Tape] = []
+    private var tapeViews: [UUID: TapeView] = [:]
+    /// Dokunulup açılmış bantlar (saklanmaz; sayfa her açılışta kapalı gelir)
+    private var revealedTapes: Set<UUID> = []
+    /// Sürüklenirken gösterilen taslak bant ve sürüklemenin başladığı nokta (kanonik)
+    private var draftTape: TapeView?
+    private var tapeDragStart: CGPoint?
+    /// Süren silgi dokunuşu bir bantın üstünde başladı
+    private var erasingTapes = false
+
+    /// PencilKit'in çizim/silme hareketini açıp kapatır. Bant aracında hep kapalıdır; silgide dokunuş
+    /// bir bantın üstüne iniyorsa o dokunuş için kapanır (bant silinir, altındaki yazı silinmez).
+    /// Hareketi kapatmak tek güvenilir yol: `gestureRecognizerShouldBegin` çizim hareketi için çağrılmıyor,
+    /// açık kalırsa bantın altındaki (görünmeyen) yazı fark edilmeden silinebilir.
+    func updateDrawingGate(at point: CGPoint? = nil) {
+        var allow = !tapeMode
+        if allow, erasesTapes, let p = point, tape(at: p) != nil { allow = false }
+        if drawingGestureRecognizer.isEnabled != allow { drawingGestureRecognizer.isEnabled = allow }
+    }
+
+    func setTapes(_ list: [Tape]) {
+        cancelTapeDrag()
+        erasingTapes = false
+        revealedTapes = []
+        tapes = list
+        rebuildTapeViews()
+    }
+
+    private func rebuildTapeViews() {
+        tapeViews.values.forEach { $0.removeFromSuperview() }
+        tapeViews = [:]
+        for t in tapes {
+            let v = TapeView(color: t.color)
+            v.revealed = revealedTapes.contains(t.id)
+            v.onActivate = { [weak self] in self?.toggleTape(t.id) }
+            addSubview(v)
+            tapeViews[t.id] = v
+        }
+        layoutNotes()
+    }
+
+    /// Bantlar mürekkebin üstünde, yapışkan notların altında durur
+    private func layoutTapes(_ m: CGAffineTransform) {
+        for t in tapes {
+            guard let v = tapeViews[t.id] else { continue }
+            v.scale = m.a
+            v.frame = t.frame.applying(m)
+            bringSubviewToFront(v)
+        }
+        if let d = draftTape { bringSubviewToFront(d) }
+    }
+
+    /// Bant listesini değiştirir (ekleme/silme); geri alınabilir
+    private func changeTapes(_ new: [Tape]) {
+        let old = tapes
+        undoManager?.registerUndo(withTarget: self) { $0.changeTapes(old) }
+        tapes = new
+        revealedTapes.formIntersection(new.map(\.id))
+        rebuildTapeViews()
+        onTapesChange?(tapes)
+    }
+
+    /// Ekran noktasının altındaki en üstteki bant (küçük bantlara dokunmak kolay olsun diye biraz payla)
+    private func tape(at p: CGPoint) -> Tape? {
+        let c = p.applying(viewMapping.inverted())
+        return tapes.last { $0.frame.insetBy(dx: -4, dy: -4).contains(c) }
+    }
+
+    private func setRevealed(_ on: Bool, _ id: UUID) {
+        guard let v = tapeViews[id], v.revealed != on else { return }
+        UIView.transition(with: v, duration: 0.18, options: [.transitionCrossDissolve, .allowUserInteraction]) {
+            v.revealed = on
+        }
+    }
+
+    /// Bantı açar (altı görünür) ya da yeniden kapatır
+    func toggleTape(_ id: UUID) {
+        let on = !revealedTapes.contains(id)
+        if on { revealedTapes.insert(id) } else { revealedTapes.remove(id) }
+        setRevealed(on, id)
+    }
+
+    func setAllTapesRevealed(_ on: Bool) {
+        revealedTapes = on ? Set(tapes.map(\.id)) : []
+        tapes.forEach { setRevealed(on, $0.id) }
+    }
+
+    private func cancelTapeDrag() {
+        draftTape?.removeFromSuperview()
+        draftTape = nil
+        tapeDragStart = nil
+    }
+
+    /// Kalem/parmak dokunuşunu bant aracı ve silgi için izler (çizimle aynı dokunuş kurallarıyla gelir).
+    /// Dokunuşu bant aracı kullandıysa true döner.
+    func tapeTouch(_ state: UIGestureRecognizer.State, at p: CGPoint) -> Bool {
+        if tapeMode { trackTapeDrag(state, at: p); return true }
+        if erasesTapes { trackTapeErase(state, at: p) }
+        return false
+    }
+
+    /// Bant aracı: sürükleme yeni bant çeker, dokunma alttaki bantı açıp kapatır
+    private func trackTapeDrag(_ state: UIGestureRecognizer.State, at p: CGPoint) {
+        let toPage = viewMapping.inverted()
+        func rect(to b: CGPoint) -> CGRect? {
+            guard let a = tapeDragStart, hypot(b.x - a.x, b.y - a.y) >= Tape.minLength else { return nil }
+            let r = Tape.rect(from: a, to: b, thickness: tapeThickness)
+                .intersection(CGRect(origin: .zero, size: canonical))
+            return r.isNull || min(r.width, r.height) < 6 ? nil : r
+        }
+        switch state {
+        case .began:
+            cancelTapeDrag()
+            if !noteViews.contains(where: { $0.frame.contains(p) }) { tapeDragStart = p.applying(toPage) }
+        case .changed:
+            guard tapeDragStart != nil else { return }
+            guard let r = rect(to: p.applying(toPage)) else { draftTape?.isHidden = true; return }
+            let v: TapeView
+            if let d = draftTape { v = d } else {
+                v = TapeView(color: tapeColor)
+                v.alpha = 0.8
+                v.isAccessibilityElement = false
+                addSubview(v)
+                draftTape = v
+            }
+            v.isHidden = false
+            v.scale = viewMapping.a
+            v.frame = r.applying(viewMapping)
+        case .ended:
+            guard let a = tapeDragStart else { return }
+            let b = p.applying(toPage)
+            let r = rect(to: b)
+            let moved = draftTape != nil || hypot(b.x - a.x, b.y - a.y) >= Tape.minLength
+            cancelTapeDrag()
+            if let r {
+                var t = Tape(x: 0, y: 0, w: 0, h: 0, color: tapeColor)
+                t.frame = r
+                changeTapes(tapes + [t])
+            } else if !moved, let t = tape(at: p) {
+                toggleTape(t.id)
+            }
+        default:
+            cancelTapeDrag()
+        }
+    }
+
+    /// Silgi: bantın üstünde başlayan dokunuş, geçtiği bantları siler
+    private func trackTapeErase(_ state: UIGestureRecognizer.State, at p: CGPoint) {
+        switch state {
+        case .began:
+            erasingTapes = tape(at: p) != nil && !noteViews.contains(where: { $0.frame.contains(p) })
+        case .changed, .ended:
+            if erasingTapes, let t = tape(at: p) { changeTapes(tapes.filter { $0.id != t.id }) }
+            if state == .ended { erasingTapes = false }
+        default:
+            erasingTapes = false
+        }
+    }
 
     // MARK: Resimler
 
@@ -361,6 +554,9 @@ final class OpenLeafCanvas: PKCanvasView {
     /// Parmakla dokunma: altındaki en üstteki resmi seç, boş yere dokununca seçimi kaldır
     func handleImageTap(at p: CGPoint) {
         if noteViews.contains(where: { $0.frame.contains(p) }) { return }
+        // Parmak çizmiyorken (yalnızca Pencil) banta parmakla dokunmak onu açıp kapatır.
+        // Parmakla çizim açıkken bunu bant aracı yapar (`tapeTouch`).
+        if drawingPolicy == .pencilOnly, let t = tape(at: p) { toggleTape(t.id); return }
         if !imageSelection.isHidden, imageSelection.frame.contains(p) { return }
         let m = viewMapping
         let hit = images.last { $0.frame.applying(m).contains(p) }
@@ -399,6 +595,8 @@ final class OpenLeafCanvas: PKCanvasView {
            imageSelection.frame.insetBy(dx: -12, dy: -12).contains(g.location(in: self)) {
             return false
         }
+        // Bant çekerken sayfa kaymasın
+        if g === panGestureRecognizer, tapeDragStart != nil { return false }
         if g === drawingGestureRecognizer {
             let p = g.location(in: self)
             if noteViews.contains(where: { $0.frame.contains(p) }) { return false }
@@ -536,6 +734,8 @@ final class CanvasController {
 
     func addNote() { canvas?.addNote() }
     func addImage(file: String, pixelSize: CGSize) { canvas?.addImage(file: file, pixelSize: pixelSize) }
+    /// Sayfadaki tüm bantları açar ya da kapatır
+    func revealTapes(_ on: Bool) { canvas?.setAllTapesRevealed(on) }
 
     /// Bekleyen (gecikmeli) çizim kaydını hemen yazar
     var flushHandler: (() -> Void)?
@@ -587,8 +787,31 @@ struct CanvasRepresentable: UIViewRepresentable {
     var onImagesChange: ((UUID, [PageImage]) -> Void)? = nil
     /// Apple Pencil Pro sıkıldı: kalem ucunun pencere koordinatı (kalem havada değilse nil)
     var onPencilSqueeze: ((CGPoint?) -> Void)? = nil
+    var tapes: [Tape] = []
+    var onTapesChange: ((UUID, [Tape]) -> Void)? = nil
+    /// Bant aracı seçili mi; silgi seçili mi (silgi bantları da siler)
+    var tapeMode = false
+    var erasesTapes = false
+    var tapeColor: TapeColor = .sari
+    var tapeThickness: CGFloat = 30
+    /// PencilKit cetveli açık mı
+    var ruler = false
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    /// Araçla birlikte değişen ayarlar (kurulumda ve her güncellemede)
+    private func applySettings(_ c: OpenLeafCanvas) {
+        c.applyTool(tool)
+        c.cursorDiameter = eraserCursor
+        c.drawingPolicy = pencilOnly ? .pencilOnly : .anyInput
+        c.tapeMode = tapeMode
+        c.erasesTapes = erasesTapes
+        c.tapeColor = tapeColor
+        c.tapeThickness = tapeThickness
+        // Araç ya da çizim kuralı atanınca PencilKit hareketini yeniden açmış olabilir
+        c.updateDrawingGate()
+        if c.isRulerActive != ruler { c.isRulerActive = ruler }
+    }
 
     func makeUIView(context: Context) -> OpenLeafCanvas {
         let c = OpenLeafCanvas()
@@ -605,14 +828,20 @@ struct CanvasRepresentable: UIViewRepresentable {
         c.minimumZoomScale = 1
         c.maximumZoomScale = 4
         c.bouncesZoom = true
-        c.applyTool(tool)
-        c.drawingPolicy = pencilOnly ? .pencilOnly : .anyInput
+        applySettings(c)
         c.delegate = context.coordinator
         context.coordinator.pageID = pageID
         let pending = data
         let pendingNotes = notes
         let pendingImages = images
+        let pendingTapes = tapes
         c.notebookID = notebookID
+        c.onTapesChange = { [weak coord = context.coordinator] list in
+            guard let coord, let pid = coord.pageID else { return }
+            coord.parent.onTapesChange?(pid, list)
+            // Bant ekleme/silme geri alınabilir: düğmelerin durumunu güncelle
+            DispatchQueue.main.async { [weak coord] in coord?.parent.controller.refresh() }
+        }
         c.onImagesChange = { [weak coord = context.coordinator] list in
             guard let coord, let pid = coord.pageID else { return }
             coord.parent.onImagesChange?(pid, list)
@@ -629,6 +858,7 @@ struct CanvasRepresentable: UIViewRepresentable {
             coord.suppress = true
             c.load(pending)
             c.setImages(pendingImages)
+            c.setTapes(pendingTapes)
             c.setNotes(pendingNotes)
             coord.suppress = false
         }
@@ -655,7 +885,6 @@ struct CanvasRepresentable: UIViewRepresentable {
         let hover = UIHoverGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.hover(_:)))
         hover.delegate = context.coordinator
         c.addGestureRecognizer(hover)
-        c.cursorDiameter = eraserCursor
 
         // İki parmakla sola/sağa kaydırınca sayfa değişir. Tek parmak ve kalem çizmeye,
         // iki parmakla dikey kaydırma sayfayı kaydırmaya devam eder.
@@ -688,7 +917,7 @@ struct CanvasRepresentable: UIViewRepresentable {
             // Önce eski sayfayı kaydet, sonra yeni sayfayı yükle (kitap sayfası animasyonuyla)
             c.endEditing(true)
             coord.flush(c)
-            let newData = data, newNotes = notes, newImages = images, newPDF = pdfPage, pid = pageID
+            let newData = data, newNotes = notes, newImages = images, newTapes = tapes, newPDF = pdfPage, pid = pageID
             c.animatePageTurn(forward: turnForward) {
                 coord.pageID = pid
                 // Yeni sayfa sayfaya sığar halde açılsın
@@ -697,6 +926,7 @@ struct CanvasRepresentable: UIViewRepresentable {
                 coord.suppress = true
                 c.load(newData)
                 c.setImages(newImages)
+                c.setTapes(newTapes)
                 c.setNotes(newNotes)
                 c.undoManager?.removeAllActions()
                 coord.suppress = false
@@ -704,9 +934,7 @@ struct CanvasRepresentable: UIViewRepresentable {
             DispatchQueue.main.async { [weak controller] in controller?.refresh() }
             c.setContentOffset(CGPoint(x: -c.adjustedContentInset.left, y: -c.adjustedContentInset.top), animated: false)
         }
-        c.applyTool(tool)
-        c.cursorDiameter = eraserCursor
-        c.drawingPolicy = pencilOnly ? .pencilOnly : .anyInput
+        applySettings(c)
         coord.oneFingerSwipes.forEach { $0.isEnabled = pencilOnly }
         controller.canvas = c
     }
@@ -751,6 +979,7 @@ struct CanvasRepresentable: UIViewRepresentable {
         @objc func track(_ g: UILongPressGestureRecognizer) {
             guard let c = g.view as? OpenLeafCanvas else { return }
             if g.state == .began { c.endNoteEditingIfOutside(g.location(in: c)) }
+            if c.tapeTouch(g.state, at: g.location(in: c)) { c.hideCursor(); return }
             switch g.state {
             case .began, .changed: c.showCursor(at: g.location(in: c))
             default: c.hideCursor()
@@ -777,9 +1006,12 @@ struct CanvasRepresentable: UIViewRepresentable {
 
         func gestureRecognizer(_ g: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool { true }
 
-        /// Yakınlaştırılmışken kaydırma sayfayı gezdirir, sayfa çevirmez
+        /// Yakınlaştırılmışken kaydırma sayfayı gezdirir, sayfa çevirmez.
+        /// Cetvel açıkken iki parmak cetveli taşır/döndürür, sayfa çevirmez.
         func gestureRecognizerShouldBegin(_ g: UIGestureRecognizer) -> Bool {
-            if g is UISwipeGestureRecognizer, let c = g.view as? UIScrollView { return c.zoomScale < 1.02 }
+            if g is UISwipeGestureRecognizer, let c = g.view as? PKCanvasView {
+                return c.zoomScale < 1.02 && !c.isRulerActive
+            }
             return true
         }
 

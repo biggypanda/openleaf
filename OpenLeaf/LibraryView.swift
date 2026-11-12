@@ -1,10 +1,12 @@
 import SwiftUI
+import StoreKit
 import UniformTypeIdentifiers
 
 struct OpenDoc: Identifiable, Hashable { let id: UUID }
 
 struct LibraryView: View {
     @Environment(Library.self) private var library
+    @Environment(\.requestReview) private var requestReview
     @State private var selection: SidebarItem? = .section(.belgeler)
     /// Klasör adı penceresi: yeni klasör, yeniden adlandır ya da defteri yeni klasöre taşı
     @State private var folderPrompt: FolderPrompt?
@@ -56,7 +58,10 @@ struct LibraryView: View {
             // Belge kütüphanenin üstünde açılır. Sistem geçişleri (yakınlaştırma, tam ekran) iki parmak
             // hareketlerini "kapat" sayıp yazarken belgeyi kapatabiliyordu; burada çıkış yalnızca düğmeyle.
             if let doc = openDoc {
-                DocumentView(id: doc.id, onClose: { openDoc = nil })
+                DocumentView(id: doc.id, onClose: {
+                    openDoc = nil
+                    askForReviewIfDue()
+                })
                     .id(doc.id)
                     .transition(.asymmetric(
                         insertion: .scale(scale: 0.92).combined(with: .opacity),
@@ -400,6 +405,21 @@ struct LibraryView: View {
                 withAnimation(Y.spring) { library.update(nb.id) { $0.trashed = true } }
             }
         }
+    }
+
+    /// App Store puanı ister: en az üç defteri olan ve birkaç kez not almış kullanıcıya,
+    /// belgeyi kapatıp kütüphaneye döndüğü anda, sürüm başına en fazla bir kez.
+    /// (Pencereyi gösterip göstermemeye sistem karar verir; yılda en çok üç kez çıkar.)
+    private func askForReviewIfDue() {
+        let defaults = UserDefaults.standard
+        let closes = defaults.integer(forKey: "puan.kapanis") + 1
+        defaults.set(closes, forKey: "puan.kapanis")
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        guard closes >= 5,
+              library.notebooks.filter({ !$0.trashed }).count >= 3,
+              defaults.string(forKey: "puan.sorulanSurum") != version else { return }
+        defaults.set(version, forKey: "puan.sorulanSurum")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { requestReview() }
     }
 
     private func openIncoming(_ url: URL) {

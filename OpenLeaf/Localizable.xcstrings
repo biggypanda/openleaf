@@ -541,6 +541,50 @@
         }
       }
     },
+    "Anahtar kelimeler": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stichworte"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cues"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anahtar kelimeler"
+          }
+        }
+      }
+    },
+    "Açık": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aufgedeckt"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revealed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Açık"
+          }
+        }
+      }
+    },
     "BOYUT": {
       "localizations": {
         "de": {
@@ -559,6 +603,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "BOYUT"
+          }
+        }
+      }
+    },
+    "Bant": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abdeckband"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tape"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bant"
+          }
+        }
+      }
+    },
+    "Bant kalınlığı": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bandbreite"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tape width"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bant kalınlığı"
           }
         }
       }
@@ -849,6 +937,50 @@
         }
       }
     },
+    "Cetvel": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lineal"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ruler"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cetvel"
+          }
+        }
+      }
+    },
+    "Cornell": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cornell"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cornell"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cornell"
+          }
+        }
+      }
+    },
     "Defter": {
       "localizations": {
         "de": {
@@ -893,6 +1025,50 @@
         }
       }
     },
+    "Deneme": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Probeklausur"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mock exam"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deneme"
+          }
+        }
+      }
+    },
+    "Deneme analizi": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prüfungsanalyse"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mock exam review"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deneme analizi"
+          }
+        }
+      }
+    },
     "Deri": {
       "localizations": {
         "de": {
@@ -911,6 +1087,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "Deri"
+          }
+        }
+      }
+    },
+    "Ders": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fach"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subject"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ders"
+          }
+        }
+      }
+    },
+    "Ders programı": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stundenplan"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timetable"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ders programı"
           }
         }
       }
@@ -977,6 +1197,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dolma"
+          }
+        }
+      }
+    },
+    "Doğru": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Richtig"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correct"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Doğru"
           }
         }
       }
@@ -1289,6 +1531,50 @@
         }
       }
     },
+    "Hafta": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Woche"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Week"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hafta"
+          }
+        }
+      }
+    },
+    "Haftalık plan": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wochenplan"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly plan"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haftalık plan"
+          }
+        }
+      }
+    },
     "Hardal": {
       "localizations": {
         "de": {
@@ -1307,6 +1593,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hardal"
+          }
+        }
+      }
+    },
+    "Hepsini aç": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle aufdecken"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reveal all"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hepsini aç"
+          }
+        }
+      }
+    },
+    "Hepsini kapat": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle abdecken"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cover all"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hepsini kapat"
           }
         }
       }
@@ -1509,6 +1839,50 @@
         }
       }
     },
+    "Kalın": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Breit"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thick"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kalın"
+          }
+        }
+      }
+    },
+    "Kapalı": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abgedeckt"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Covered"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapalı"
+          }
+        }
+      }
+    },
     "Kareli": {
       "localizations": {
         "de": {
@@ -1571,6 +1945,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kement"
+          }
+        }
+      }
+    },
+    "Kendini sınamak için yazının üstüne sürükleyerek bant çek. Banta dokununca altı görünür, yeniden dokununca kapanır. Silmek için silgiyle banta dokun.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ziehe über deine Notizen, um sie mit Band abzudecken und dich selbst abzufragen. Tippe auf ein Band, um es aufzudecken, und erneut, um es wieder abzudecken. Zum Entfernen tippe mit dem Radiergummi darauf."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag across your notes to cover them with tape and quiz yourself. Tap a tape to reveal what’s underneath, tap again to cover it. To remove a tape, tap it with the eraser."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kendini sınamak için yazının üstüne sürükleyerek bant çek. Banta dokununca altı görünür, yeniden dokununca kapanır. Silmek için silgiyle banta dokun."
           }
         }
       }
@@ -1817,6 +2213,50 @@
         }
       }
     },
+    "Konu": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thema"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Topic"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konu"
+          }
+        }
+      }
+    },
+    "Konu takip": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Themenliste"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Topic tracker"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konu takip"
+          }
+        }
+      }
+    },
     "Kraft": {
       "localizations": {
         "de": {
@@ -2015,6 +2455,28 @@
         }
       }
     },
+    "Milimetrik": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Millimeter"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Graph"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Milimetrik"
+          }
+        }
+      }
+    },
     "Mürekkep": {
       "localizations": {
         "de": {
@@ -2033,6 +2495,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mürekkep"
+          }
+        }
+      }
+    },
+    "Net": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Punkte"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Score"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Net"
           }
         }
       }
@@ -2121,6 +2605,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "Not üstüne kalemle yazma alanı"
+          }
+        }
+      }
+    },
+    "Nota": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nota"
+          }
+        }
+      }
+    },
+    "Notlar": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notizen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notes"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notlar"
           }
         }
       }
@@ -2363,6 +2891,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "OpenLeaf hakkında"
+          }
+        }
+      }
+    },
+    "Orta": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mittel"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medium"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orta"
           }
         }
       }
@@ -2671,6 +3221,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "SON DÜZENLENENLER"
+          }
+        }
+      }
+    },
+    "Saat": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zeit"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saat"
           }
         }
       }
@@ -3137,6 +3709,50 @@
         }
       }
     },
+    "Soru": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fragen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Questions"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soru"
+          }
+        }
+      }
+    },
+    "Soru çözdüm": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geübt"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Practiced"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soru çözdüm"
+          }
+        }
+      }
+    },
     "Sıralama": {
       "localizations": {
         "de": {
@@ -3181,6 +3797,28 @@
         }
       }
     },
+    "Tarih": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datum"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tarih"
+          }
+        }
+      }
+    },
     "Taş": {
       "localizations": {
         "de": {
@@ -3199,6 +3837,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "Taş"
+          }
+        }
+      }
+    },
+    "Tekrar": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederholt"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reviewed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tekrar"
+          }
+        }
+      }
+    },
+    "Toplam": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gesamt"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Total"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toplam"
           }
         }
       }
@@ -3353,6 +4035,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "Yalnızca Pencil ile çiz"
+          }
+        }
+      }
+    },
+    "Yanlış": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Falsch"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wrong"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yanlış"
+          }
+        }
+      }
+    },
+    "Yanlış yaptığım konular": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Themen mit Fehlern"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Topics I got wrong"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yanlış yaptığım konular"
           }
         }
       }
@@ -3731,6 +4457,28 @@
         }
       }
     },
+    "Çalıştım": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gelernt"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Studied"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çalıştım"
+          }
+        }
+      }
+    },
     "Çivit": {
       "localizations": {
         "de": {
@@ -3885,6 +4633,28 @@
         }
       }
     },
+    "Özet": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zusammenfassung"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Summary"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Özet"
+          }
+        }
+      }
+    },
     "Öğrenciler için ücretsiz ve açık kaynak not uygulaması.\n\nCopyright © 2026 biggypanda\nGNU GPL sürüm 3 ile lisanslanmıştır. Bu program HİÇBİR GARANTİ olmaksızın dağıtılır. Kaynak kodu ve lisansın tam metni projenin deposundadır.": {
       "localizations": {
         "de": {
@@ -3947,6 +4717,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "İlk defterini oluştur"
+          }
+        }
+      }
+    },
+    "İnce": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schmal"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thin"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İnce"
           }
         }
       }

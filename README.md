@@ -8,9 +8,11 @@ Reklam yok, abonelik yok, uygulama içi satın alma yok; notlar cihazda kalır. 
 ## Özellikler
 
 - **Kütüphane:** malzemeli defter kapakları (keten, deri, kraft…), klasörler, favoriler, çöp, arama, sıralama
-- **Yeni defter:** 8 kapak, 4 şablon (çizgili, kareli, noktalı, boş), A4 / A5 / Mektup
+- **Yeni defter:** 8 kapak, A4 / A5 / Mektup; şablonlar: çizgili, kareli, noktalı, boş, Cornell, milimetrik, nota, haftalık plan, ders programı, konu takip, deneme analizi
 - **Yazma (PencilKit):** tükenmez, dolma, kurşun ve fırça kalem; ayarlanabilir kalınlık; vurgulayıcı; kement
 - **Silgi:** dairenin değdiği yeri silen kısmi silgi (boyutu ayarlanabilir) ya da bütün çizgi
+- **Bant:** yazının üstünü kapatır, dokununca altı görünür (kendini sınamak için); şerit ya da kutu, dört renk
+- **Cetvel:** düz çizgiler için PencilKit cetveli
 - **Apple Pencil:** iki kez dokununca silgiye geç; Pencil Pro'yu sıkınca dairesel hızlı menü
 - **Yalnızca Pencil yazar:** parmak sayfayı kaydırır, tek ya da iki parmakla sayfa çevirir
 - **İki parmakla yakınlaştırma** (4 kata kadar, kâğıt ve PDF her yakınlıkta net)
@@ -52,6 +54,8 @@ xcodebuild -project OpenLeaf.xcodeproj -scheme OpenLeaf -destination 'platform=i
 | `OpenLeaf/Canvas.swift` | PencilKit tuvali ve kâğıt desenleri |
 | `OpenLeaf/CoverView.swift` | Kapaklar ve logo |
 | `OpenLeaf/PDFSupport.swift` | PDF içe aktarma, sayfa çizimi, küçük resim, dışa aktarma |
+| `OpenLeaf/Templates.swift` | Sayfa şablonları (Cornell, planlayıcılar, sınav tabloları) |
+| `OpenLeaf/Tapes.swift` | Bantlar: model, çizim, görünüm |
 | `OpenLeaf/StickyNotes.swift` | Yapışkan notlar (yazı ve kalem katmanı) |
 | `OpenLeaf/PageImages.swift` | Sayfadaki resimler, seçim, kamera |
 | `OpenLeaf/PageOverview.swift` | Sayfa genel görünümü ve sıralama |
@@ -65,7 +69,7 @@ Her şey cihazda, uygulamanın Belgeler klasöründe durur; sunucu yoktur.
 
 ```
 OpenLeaf/
-  index.json                kütüphane dizini (defter bilgileri, sayfa listeleri, notlar, resim yerleri)
+  index.json                kütüphane dizini (defter bilgileri, sayfa listeleri, notlar, bantlar, resim yerleri)
   folders.json              klasörler
   Defterler/<defter-id>/
     <sayfa-id>.drawing      her sayfanın mürekkebi (PencilKit)
