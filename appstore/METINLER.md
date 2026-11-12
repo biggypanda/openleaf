@@ -54,6 +54,7 @@ OpenLeaf, öğrenciler için yapılmış açık kaynak bir not alma uygulaması.
 
 DEFTERLER
 • 8 farklı kapak, çizgili, kareli, noktalı ya da boş sayfa
+• Hazır şablonlar: Cornell, milimetrik, nota, haftalık plan, ders programı, konu takip, deneme analizi
 • A4, A5 ve Mektup boyutları
 • Klasörler, favoriler, çöp kutusu, arama ve sıralama
 • Hızlı not ve beyaz tahta
@@ -62,6 +63,8 @@ APPLE PENCIL İLE YAZ
 • Tükenmez, dolma, kurşun ve fırça kalem; ayarlanabilir kalınlık
 • Fosforlu kalem ve kement ile seçip taşıma
 • Kısmi silgi ya da bütün çizgiyi silen silgi
+• Bant: yazının üstünü kapat, dokununca aç; kendini sınamak için
+• Düz çizgiler için cetvel
 • Pencil'a iki kez dokununca silgiye geç; Pencil Pro'yu sıkınca hızlı menü
 • Yalnızca kalem yazar, parmakla sayfayı kaydırır ve çevirirsin
 
@@ -82,10 +85,12 @@ AÇIK KAYNAK
 OpenLeaf'in kaynak kodu GitHub'da herkese açık (GPL-3.0). Hata bildirebilir, öneri yapabilir ya da katkıda bulunabilirsin: github.com/biggypanda/openleaf
 ```
 
-**Bu sürümdeki yenilikler** (1.0.2):
+**Bu sürümdeki yenilikler** (1.0.3):
 ```
-• Almanca arayüz
-• Kütüphane artık boş başlıyor: tek dokunuşla ilk defterini oluştur ya da bir PDF içe aktar
+• Bant: yazının üstüne bant çek, dokununca altı görünsün. Kendini sınamanın en kolay yolu
+• Yeni şablonlar: Cornell, milimetrik, nota, haftalık plan, ders programı, konu takip ve deneme analizi
+• Cetvel: düz çizgiler için
+• Büyük PDF'ler artık beklemeden açılıyor
 ```
 
 ---
@@ -114,6 +119,7 @@ OpenLeaf is an open-source note-taking app made for students. Take class notes w
 
 NOTEBOOKS
 • 8 covers with lined, grid, dotted or blank paper
+• Ready-made templates: Cornell, graph paper, music staves, weekly plan, timetable, topic tracker, mock exam review
 • A4, A5 and Letter sizes
 • Folders, favorites, trash, search and sorting
 • Quick notes and a whiteboard
@@ -122,6 +128,8 @@ WRITE WITH APPLE PENCIL
 • Ballpoint, fountain, pencil and brush pens with adjustable thickness
 • Highlighter and lasso to select and move
 • Partial eraser or whole-stroke eraser
+• Tape: cover your notes and tap to reveal them, for quizzing yourself
+• Ruler for straight lines
 • Double-tap Apple Pencil to switch to the eraser; squeeze Apple Pencil Pro for a quick menu
 • Only the Pencil draws; your finger scrolls and turns pages
 
@@ -142,10 +150,12 @@ OPEN SOURCE
 OpenLeaf's source code is public on GitHub (GPL-3.0). Report bugs, suggest ideas or contribute: github.com/biggypanda/openleaf
 ```
 
-**What's New** (1.0.2):
+**What's New** (1.0.3):
 ```
-• German interface
-• The library now starts empty: create your first notebook or import a PDF with one tap
+• Tape: cover parts of your notes and tap to reveal them. The easiest way to quiz yourself
+• New templates: Cornell, graph paper, music staves, weekly plan, timetable, topic tracker and mock exam review
+• Ruler for straight lines
+• Large PDFs now open without a wait
 ```
 
 ---
@@ -174,6 +184,7 @@ OpenLeaf ist eine Open-Source-Notiz-App für Schüler und Studierende. Schreib M
 
 NOTIZBÜCHER
 • 8 Einbände, liniertes, kariertes, gepunktetes oder leeres Papier
+• Fertige Vorlagen: Cornell, Millimeterpapier, Notenlinien, Wochenplan, Stundenplan, Themenliste, Prüfungsanalyse
 • Formate A4, A5 und US-Letter
 • Ordner, Favoriten, Papierkorb, Suche und Sortierung
 • Schnelle Notizen und ein Whiteboard
@@ -182,6 +193,8 @@ SCHREIBEN MIT DEM APPLE PENCIL
 • Kugelschreiber, Füller, Bleistift und Pinsel mit einstellbarer Stärke
 • Textmarker und Lasso zum Auswählen und Verschieben
 • Radierer für Teile oder ganze Striche
+• Abdeckband: Notizen abdecken und per Tippen aufdecken, zum Selbstabfragen
+• Lineal für gerade Linien
 • Doppeltippen auf den Apple Pencil wechselt zum Radierer; Drücken des Apple Pencil Pro öffnet ein Schnellmenü
 • Nur der Pencil schreibt; mit dem Finger scrollst und blätterst du
 
@@ -202,8 +215,10 @@ OPEN SOURCE
 Der Quellcode von OpenLeaf ist öffentlich auf GitHub (GPL-3.0). Melde Fehler, schlag Ideen vor oder mach mit: github.com/biggypanda/openleaf
 ```
 
-**Neuerungen** (1.0.2):
+**Neuerungen** (1.0.3):
 ```
-• Deutsche Oberfläche
-• Die Bibliothek startet jetzt leer: Erstelle mit einem Tippen dein erstes Notizbuch oder importiere ein PDF
+• Abdeckband: Decke Teile deiner Notizen ab und tippe, um sie aufzudecken. Der einfachste Weg, dich selbst abzufragen
+• Neue Vorlagen: Cornell, Millimeterpapier, Notenlinien, Wochenplan, Stundenplan, Themenliste und Prüfungsanalyse
+• Lineal für gerade Linien
+• Große PDFs öffnen sich jetzt ohne Wartezeit
 ```
