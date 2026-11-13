@@ -1,95 +1,102 @@
 # OpenLeaf
 
-Öğrenciler için ücretsiz ve açık kaynak, Apple Pencil ile el yazısı not alma uygulaması (iPad öncelikli).
-Reklam yok, abonelik yok, uygulama içi satın alma yok; notlar cihazda kalır. Türkçe, İngilizce ve Almanca.
+A free and open-source handwriting note app for students, built for iPad and Apple Pencil.
+No ads, no subscription, no in-app purchases; your notes stay on your device. Available in English, Turkish and German.
 
-<a href="https://apps.apple.com/app/id6832556915"><img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/tr-tr" alt="App Store'dan indirin" height="50"></a>
+<a href="https://apps.apple.com/app/id6832556915"><img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/en-us" alt="Download on the App Store" height="50"></a>
 
-## Özellikler
+## Features
 
-- **Kütüphane:** malzemeli defter kapakları (keten, deri, kraft…), klasörler, favoriler, çöp, arama, sıralama
-- **Yeni defter:** 8 kapak, A4 / A5 / Mektup; şablonlar: çizgili, kareli, noktalı, boş, Cornell, milimetrik, nota, haftalık plan, ders programı, konu takip, deneme analizi
-- **Yazma (PencilKit):** tükenmez, dolma, kurşun ve fırça kalem; ayarlanabilir kalınlık; vurgulayıcı; kement
-- **Silgi:** dairenin değdiği yeri silen kısmi silgi (boyutu ayarlanabilir) ya da bütün çizgi
-- **Bant:** yazının üstünü kapatır, dokununca altı görünür (kendini sınamak için); şerit ya da kutu, dört renk
-- **Cetvel:** düz çizgiler için PencilKit cetveli
-- **Apple Pencil:** iki kez dokununca silgiye geç; Pencil Pro'yu sıkınca dairesel hızlı menü
-- **Yalnızca Pencil yazar:** parmak sayfayı kaydırır, tek ya da iki parmakla sayfa çevirir
-- **İki parmakla yakınlaştırma** (4 kata kadar, kâğıt ve PDF her yakınlıkta net)
-- **Yapışkan notlar:** klavyeyle ya da kalemle yazılır, taşınır, köşeden boyutlandırılır, renk değiştirir
-- **Fotoğraf/resim:** kamerayla çek ya da arşivden seç; taşı, boyutlandır, üstüne yaz
-- **Sayfalar:** kitap gibi kıvrılarak çevirme, genel görünüm (küçük resim ızgarası), sürükleyerek sıralama, çoğaltma
-- **PDF:** içe aktarma, sayfaların üstüne yazma, "Şununla Aç → OpenLeaf", her defteri PDF olarak dışa aktarma
-- **Yedekleme:** tüm kütüphane tek dosya olarak Dosyalar'a / iCloud Drive'a; yedekten geri yükleme
-- Açık ve koyu tema; Türkçe, İngilizce ve Almanca arayüz; reklam, abonelik, hesap yok
+- **Library:** notebook covers with real materials (linen, leather, kraft…), folders, favorites, trash, search, sorting
+- **New notebook:** 8 covers, A4 / A5 / Letter; templates: lined, grid, dotted, blank, Cornell, graph paper, music staves, weekly plan, timetable, topic tracker, mock exam review
+- **Writing (PencilKit):** ballpoint, fountain, pencil and brush pens; adjustable thickness; highlighter; lasso
+- **Eraser:** a partial eraser that removes only what the circle touches (adjustable size), or a whole-stroke eraser
+- **Tape:** covers your notes and reveals them on tap, for quizzing yourself; strip or box, four colors
+- **Ruler:** the PencilKit ruler for straight lines
+- **Apple Pencil:** double-tap to switch to the eraser; squeeze Apple Pencil Pro for a radial quick menu
+- **Pencil-only drawing:** your finger scrolls the page and turns pages with one or two fingers
+- **Pinch to zoom** (up to 4×, paper and PDFs stay sharp at every zoom level)
+- **Sticky notes:** type or handwrite, move, resize from the corner, change color
+- **Photos and images:** take a photo or pick one from your library; move, resize, write on top
+- **Pages:** book-style page curl, overview (thumbnail grid), drag to reorder, duplicate
+- **PDF:** import, write on pages, "Open In → OpenLeaf", export any notebook as a PDF
+- **Backup:** the whole library as a single file to Files / iCloud Drive; restore from a backup
+- Light and dark themes; English, Turkish and German interface; no ads, subscription or account
 
-## Gereksinimler
+## Requirements
 
-- Xcode 26 veya üstü
-- iPadOS / iOS 18 veya üstü (Liquid Glass görünümü iPadOS 26 ve üstünde)
+- Xcode 26 or later
+- iPadOS / iOS 18 or later (the Liquid Glass look needs iPadOS 26 or later)
 
-## Çalıştırma
+## Running
 
-1. `OpenLeaf.xcodeproj` dosyasını Xcode'da açın.
-2. Bir iPad simülatörü veya cihaz seçin.
-3. Çalıştır'a (⌘R) basın.
+1. Open `OpenLeaf.xcodeproj` in Xcode.
+2. Pick an iPad simulator or a device.
+3. Press Run (⌘R).
 
-Komut satırından simülatör için derleme:
+To build for the simulator from the command line:
 
 ```bash
 xcodebuild -project OpenLeaf.xcodeproj -scheme OpenLeaf -destination 'platform=iOS Simulator,name=iPad Air 11-inch (M4)' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
 ```
 
-## Proje yapısı
+## Project structure
 
-| Dosya | İçerik |
+| File | Contents |
 | --- | --- |
-| `OpenLeaf/OpenLeafApp.swift` | Uygulama girişi |
-| `OpenLeaf/Theme.swift` | Tasarım tokenları (renk, köşe, hareket, cam) |
-| `OpenLeaf/Models.swift` | Defter ve sayfa modeli, kütüphane (arayüz durumu) |
-| `OpenLeaf/Storage.swift` | Yerel dosya deposu ve eski kayıtların taşınması |
-| `OpenLeaf/LibraryView.swift` | Kütüphane ekranı |
-| `OpenLeaf/NewNotebookSheet.swift` | Yeni defter penceresi |
-| `OpenLeaf/DocumentView.swift` | Not alma ekranı ve araç çubuğu |
-| `OpenLeaf/Canvas.swift` | PencilKit tuvali ve kâğıt desenleri |
-| `OpenLeaf/CoverView.swift` | Kapaklar ve logo |
-| `OpenLeaf/PDFSupport.swift` | PDF içe aktarma, sayfa çizimi, küçük resim, dışa aktarma |
-| `OpenLeaf/Templates.swift` | Sayfa şablonları (Cornell, planlayıcılar, sınav tabloları) |
-| `OpenLeaf/Tapes.swift` | Bantlar: model, çizim, görünüm |
-| `OpenLeaf/StickyNotes.swift` | Yapışkan notlar (yazı ve kalem katmanı) |
-| `OpenLeaf/PageImages.swift` | Sayfadaki resimler, seçim, kamera |
-| `OpenLeaf/PageOverview.swift` | Sayfa genel görünümü ve sıralama |
-| `OpenLeaf/QuickPalette.swift` | Pencil Pro sıkma menüsü |
-| `OpenLeaf/Backup.swift` | Yedekleme ve geri yükleme |
-| `OpenLeaf-Info.plist` | PDF belge türü kaydı |
+| `OpenLeaf/OpenLeafApp.swift` | App entry point |
+| `OpenLeaf/Theme.swift` | Design tokens (colors, corners, motion, glass) |
+| `OpenLeaf/Models.swift` | Notebook and page model, library (UI state) |
+| `OpenLeaf/Storage.swift` | Local file store and migration of old saves |
+| `OpenLeaf/LibraryView.swift` | Library screen |
+| `OpenLeaf/NewNotebookSheet.swift` | New notebook sheet |
+| `OpenLeaf/DocumentView.swift` | Note-taking screen and toolbar |
+| `OpenLeaf/Canvas.swift` | PencilKit canvas and paper patterns |
+| `OpenLeaf/CoverView.swift` | Covers and logo |
+| `OpenLeaf/PDFSupport.swift` | PDF import, page rendering, thumbnails, export |
+| `OpenLeaf/Templates.swift` | Page templates (Cornell, planners, exam tables) |
+| `OpenLeaf/Tapes.swift` | Tapes: model, drawing, view |
+| `OpenLeaf/StickyNotes.swift` | Sticky notes (text and ink layer) |
+| `OpenLeaf/PageImages.swift` | Images on a page, selection, camera |
+| `OpenLeaf/PageOverview.swift` | Page overview and reordering |
+| `OpenLeaf/QuickPalette.swift` | Apple Pencil Pro squeeze menu |
+| `OpenLeaf/Backup.swift` | Backup and restore |
+| `OpenLeaf-Info.plist` | PDF document type registration |
 
-## Veri nasıl saklanır
+The code comments and the source strings are in Turkish; English and German come from the string catalog
+(`OpenLeaf/Localizable.xcstrings`).
 
-Her şey cihazda, uygulamanın Belgeler klasöründe durur; sunucu yoktur.
+## How data is stored
+
+Everything stays on the device, in the app's Documents folder; there is no server.
 
 ```
 OpenLeaf/
-  index.json                kütüphane dizini (defter bilgileri, sayfa listeleri, notlar, bantlar, resim yerleri)
-  folders.json              klasörler
-  Defterler/<defter-id>/
-    <sayfa-id>.drawing      her sayfanın mürekkebi (PencilKit)
-    source.pdf              içe aktarılan PDF
-    text.txt                PDF'in aranabilir metni
-    img-<id>.jpg            sayfalara eklenen resimler
-    thumb.png               mürekkepli küçük resim
+  index.json                library index (notebook info, page lists, notes, tapes, image positions)
+  folders.json              folders
+  Defterler/<notebook-id>/
+    <page-id>.drawing       each page's ink (PencilKit)
+    source.pdf              the imported PDF
+    text.txt                the PDF's searchable text
+    img-<id>.jpg            images added to pages
+    thumb.png               thumbnail with ink
 ```
 
-Bir çizgi çizildiğinde yalnızca o sayfanın dosyası yazılır. Yazmalar tek sıralı kuyrukta ve atomik
-yapılır; uygulama arka plana geçerken bekleyen kayıtlar tamamlanır. İlk sürümün tek dosyalık kaydı
-(`yaprak-kutuphane.json`) ilk açılışta otomatik taşınır ve `yaprak-kutuphane.eski.json` olarak saklanır.
+When you draw a stroke, only that page's file is written. Writes go through a single serial queue and are
+atomic; pending saves are flushed when the app moves to the background. The single-file save of the first
+version (`yaprak-kutuphane.json`) is migrated automatically on first launch and kept as
+`yaprak-kutuphane.eski.json`.
 
-## Lisans
+## Privacy
 
-OpenLeaf, [GNU Genel Kamu Lisansı sürüm 3](LICENSE) (GPL-3.0) ile yayınlanan özgür yazılımdır.
+OpenLeaf collects no data. See [PRIVACY.md](PRIVACY.md).
 
-Kodu kullanabilir, değiştirebilir ve paylaşabilirsiniz. Değiştirilmiş bir sürümü dağıtırsanız
-onun kaynak kodunu da aynı lisansla açmanız gerekir; böylece OpenLeaf'ten türeyen uygulamalar da
-öğrenciler için özgür kalır.
+## License
+
+OpenLeaf is free software released under the [GNU General Public License version 3](LICENSE) (GPL-3.0).
+
+You may use, modify and share the code. If you distribute a modified version, you must publish its
+source code under the same license, so that apps derived from OpenLeaf stay free for students too.
 
 Copyright (C) 2026 biggypanda
 
