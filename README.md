@@ -1,7 +1,8 @@
 # OpenLeaf
 
 A free and open-source handwriting note app for students, built for iPad and Apple Pencil.
-No ads, no subscription, no in-app purchases; your notes stay on your device. Available in English, Turkish and German.
+No ads, no subscription, no in-app purchases; your notes stay on your device, with an optional automatic backup to
+your own iCloud or to a folder you choose. Available in English, Turkish and German.
 
 <a href="https://apps.apple.com/app/id6832556915"><img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/en-us" alt="Download on the App Store" height="50"></a>
 
@@ -20,7 +21,10 @@ No ads, no subscription, no in-app purchases; your notes stay on your device. Av
 - **Photos and images:** take a photo or pick one from your library; move, resize, write on top
 - **Pages:** book-style page curl, overview (thumbnail grid), drag to reorder, duplicate
 - **PDF:** import, write on pages, "Open In → OpenLeaf", export any notebook as a PDF
-- **Backup:** the whole library as a single file to Files / iCloud Drive; restore from a backup
+- **Automatic backup** (off by default): to your own iCloud, or to any folder you pick in Files (Google Drive, Dropbox,
+  OneDrive, a USB drive…); only changed pages are uploaded, and a fresh install offers to restore
+- **Manual backup:** the whole library as a single file to Files / iCloud Drive; restore from a backup
+- **First-launch tour:** five short pages introducing the app, ending with the backup choice; can be reopened from the menu
 - Light and dark themes; English, Turkish and German interface; no ads, subscription or account
 
 ## Requirements
@@ -39,6 +43,16 @@ To build for the simulator from the command line:
 ```bash
 xcodebuild -project OpenLeaf.xcodeproj -scheme OpenLeaf -destination 'platform=iOS Simulator,name=iPad Air 11-inch (M4)' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
 ```
+
+The backup engine has its own checks, which run on the Mac without Xcode's test runner:
+
+```bash
+swiftc OpenLeaf/BackupEngine.swift Tests/BackupEngineCheck/main.swift -o /tmp/backup-check && /tmp/backup-check
+```
+
+Building for a device needs your own Apple developer team and iCloud container: change the bundle identifier and the
+container name in `OpenLeaf.entitlements`, or drop the file together with the `CODE_SIGN_ENTITLEMENTS` build setting to
+build without iCloud (backup to a chosen folder still works).
 
 ## Project structure
 
@@ -60,15 +74,21 @@ xcodebuild -project OpenLeaf.xcodeproj -scheme OpenLeaf -destination 'platform=i
 | `OpenLeaf/PageImages.swift` | Images on a page, selection, camera |
 | `OpenLeaf/PageOverview.swift` | Page overview and reordering |
 | `OpenLeaf/QuickPalette.swift` | Apple Pencil Pro squeeze menu |
-| `OpenLeaf/Backup.swift` | Backup and restore |
+| `OpenLeaf/Backup.swift` | Manual backup and restore |
+| `OpenLeaf/BackupEngine.swift` | Mirrors the library to a backup folder and copies it back (Foundation only) |
+| `OpenLeaf/AutoBackup.swift` | Automatic backup: destination (iCloud or a chosen folder), triggers, status, restore |
+| `OpenLeaf/AutoBackupView.swift` | Automatic backup settings sheet |
+| `OpenLeaf/Onboarding.swift` | First-launch tour |
 | `OpenLeaf-Info.plist` | PDF document type registration |
+| `OpenLeaf.entitlements` | iCloud container for automatic backup |
+| `Tests/BackupEngineCheck/main.swift` | Checks for the backup engine (run on the Mac, see below) |
 
 The code comments and the source strings are in Turkish; English and German come from the string catalog
 (`OpenLeaf/Localizable.xcstrings`).
 
 ## How data is stored
 
-Everything stays on the device, in the app's Documents folder; there is no server.
+Everything is kept on the device, in the app's Documents folder; there is no server.
 
 ```
 OpenLeaf/
@@ -87,9 +107,26 @@ atomic; pending saves are flushed when the app moves to the background. The sing
 version (`yaprak-kutuphane.json`) is migrated automatically on first launch and kept as
 `yaprak-kutuphane.eski.json`.
 
+### Automatic backup
+
+When the user turns it on, the same files are mirrored to a backup folder, one folder per device so that two iPads
+never overwrite each other:
+
+```
+<iCloud container>/Yedekler/<device-id>/          iCloud (not under Documents, so it is hidden from Files)
+<chosen folder>/OpenLeaf Yedekleri/<device-id>/   a folder picked in Files
+  cihaz.json                which device, when it last changed
+  index.json, folders.json
+  Defterler/<notebook-id>/  ink, PDF, text and images (no thumbnails)
+```
+
+The backup only reads the local store. A notebook is removed from the backup only after the user deletes it
+permanently; an empty or damaged local library never wipes the backup. The index is written last, so an interrupted
+backup leaves the previous one valid. Restoring adds the notebooks that are missing and never overwrites local files.
+
 ## Privacy
 
-OpenLeaf collects no data. See [PRIVACY.md](PRIVACY.md).
+OpenLeaf collects no data. Backups go only to the user's own iCloud account or chosen folder. See [PRIVACY.md](PRIVACY.md).
 
 ## License
 

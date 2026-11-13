@@ -221,6 +221,8 @@ final class Library {
     @ObservationIgnored private var drawingCache: [String: Data] = [:]
     @ObservationIgnored private var textCache: [UUID: String] = [:]
     @ObservationIgnored private var thumbWork: [UUID: DispatchWorkItem] = [:]
+    /// Kütüphanede kalıcı bir değişiklik olunca çağrılır (otomatik yedek bunu dinler)
+    @ObservationIgnored var onChange: (() -> Void)?
 
     init(store: NotebookStore = NotebookStore()) {
         self.store = store
@@ -317,7 +319,10 @@ final class Library {
         update(notebook) { $0.folder = folder }
     }
 
-    func saveFolders() { store.writeFolders(folders) }
+    func saveFolders() {
+        store.writeFolders(folders)
+        onChange?()
+    }
 
     private static func cleanName(_ s: String) -> String {
         let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -345,6 +350,8 @@ final class Library {
         drawingCache = drawingCache.filter { !$0.key.hasPrefix(id.uuidString) }
         textCache[id] = nil
         store.deleteDir(id)
+        // Yedekten de silinsin: yedek yalnızca bu listedeki defterleri siler
+        DeletedNotebooks.add(id)
         save()
     }
 
@@ -469,7 +476,10 @@ final class Library {
 
     // MARK: Kayıt
 
-    func save() { store.writeIndex(notebooks) }
+    func save() {
+        store.writeIndex(notebooks)
+        onChange?()
+    }
 
     /// Uygulama arka plana geçerken bekleyen tüm yazmaları bitirir.
     func flush() {

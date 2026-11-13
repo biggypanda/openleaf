@@ -23,6 +23,28 @@
         }
       }
     },
+    "%@ (bu iPad)": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (dieses iPad)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (this iPad)"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (bu iPad)"
+          }
+        }
+      }
+    },
     "%@ · %@ · %@": {
       "localizations": {
         "de": {
@@ -157,6 +179,52 @@
         }
       }
     },
+    "%lld defter": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Notizbuch"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Notizbücher"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld notebook"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld notebooks"
+                }
+              }
+            }
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld defter"
+          }
+        }
+      }
+    },
     "%lld defter geri yüklendi.": {
       "localizations": {
         "de": {
@@ -199,6 +267,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld defter geri yüklendi."
+          }
+        }
+      }
+    },
+    "%lld defter indirilemedi; internet bağlantını kontrol edip yeniden dene.": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Notizbuch konnte nicht geladen werden; prüfe deine Internetverbindung und versuche es erneut."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Notizbücher konnten nicht geladen werden; prüfe deine Internetverbindung und versuche es erneut."
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld notebook could not be downloaded; check your internet connection and try again."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld notebooks could not be downloaded; check your internet connection and try again."
+                }
+              }
+            }
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld defter indirilemedi; internet bağlantını kontrol edip yeniden dene."
           }
         }
       }
@@ -563,6 +677,94 @@
         }
       }
     },
+    "Apple Pencil ile yazarsın, parmağınla sayfayı kaydırıp çevirirsin; elin değdi diye sayfa karalanmaz. Silmek için kalemin yanına iki kez dokunman yeter.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schreib mit dem Apple Pencil, scrolle und blättere mit dem Finger; deine aufgelegte Hand hinterlässt keine Striche. Zum Radieren tippst du zweimal seitlich auf den Stift."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write with Apple Pencil, and use your finger to scroll and turn pages; resting your hand won't leave marks. To erase, double-tap the side of your pencil."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Pencil ile yazarsın, parmağınla sayfayı kaydırıp çevirirsin; elin değdi diye sayfa karalanmaz. Silmek için kalemin yanına iki kez dokunman yeter."
+          }
+        }
+      }
+    },
+    "Atla": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Überspringen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Atla"
+          }
+        }
+      }
+    },
+    "Aç": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einschalten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn On"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aç"
+          }
+        }
+      }
+    },
+    "Açarsan defterlerin kendi iCloud hesabına kendiliğinden yedeklenir; iPad'in bozulsa bile notların kaybolmaz. Notların yalnızca senin iCloud'unda durur, biz göremeyiz. İstediğin zaman kapatabilir ya da başka bir yedek yeri seçebilirsin.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wenn du das einschaltest, werden deine Notizbücher automatisch in deinem eigenen iCloud-Account gesichert; deine Notizen bleiben erhalten, selbst wenn dein iPad kaputtgeht. Sie liegen nur in deiner iCloud, wir können sie nicht sehen. Du kannst es jederzeit ausschalten oder einen anderen Backup-Ort wählen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If you turn this on, your notebooks are backed up to your own iCloud account automatically, so your notes survive even if your iPad breaks. Your notes stay only in your iCloud; we cannot see them. You can turn it off or choose another backup location at any time."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Açarsan defterlerin kendi iCloud hesabına kendiliğinden yedeklenir; iPad'in bozulsa bile notların kaybolmaz. Notların yalnızca senin iCloud'unda durur, biz göremeyiz. İstediğin zaman kapatabilir ya da başka bir yedek yeri seçebilirsin."
+          }
+        }
+      }
+    },
     "Açık": {
       "localizations": {
         "de": {
@@ -647,6 +849,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bant kalınlığı"
+          }
+        }
+      }
+    },
+    "Bantla kapat, kendini dene": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abkleben und abfragen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cover it, then quiz yourself"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bantla kapat, kendini dene"
+          }
+        }
+      }
+    },
+    "Başla": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los geht's"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get Started"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başla"
           }
         }
       }
@@ -739,6 +985,28 @@
         }
       }
     },
+    "Biyoloji": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Biologie"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Biology"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Biyoloji"
+          }
+        }
+      }
+    },
     "Bordo": {
       "localizations": {
         "de": {
@@ -779,6 +1047,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Boş"
+          }
+        }
+      }
+    },
+    "Boş sayfayla uğraşma": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kein leeres Blatt mehr"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip the blank page"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boş sayfayla uğraşma"
           }
         }
       }
@@ -827,6 +1117,28 @@
         }
       }
     },
+    "Bu iPad'de iCloud oturumu açık değil": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses iPad ist nicht bei iCloud angemeldet"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This iPad is not signed in to iCloud"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu iPad'de iCloud oturumu açık değil"
+          }
+        }
+      }
+    },
     "Bu iPad'de kayıtlı": {
       "localizations": {
         "de": {
@@ -845,6 +1157,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bu iPad'de kayıtlı"
+          }
+        }
+      }
+    },
+    "Bu klasör kullanılamıyor": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieser Ordner kann nicht verwendet werden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This folder cannot be used"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu klasör kullanılamıyor"
+          }
+        }
+      }
+    },
+    "Bu klasöre kalıcı erişim alınamadı. Başka bir klasör seçmeyi dene.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Für diesen Ordner konnte kein dauerhafter Zugriff eingerichtet werden. Wähle einen anderen Ordner."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lasting access to this folder could not be obtained. Try choosing another folder."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu klasöre kalıcı erişim alınamadı. Başka bir klasör seçmeyi dene."
           }
         }
       }
@@ -893,6 +1249,72 @@
         }
       }
     },
+    "Bu yedek kalıcı olarak silinir. Bu iPad'deki defterlerine bir şey olmaz.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses Backup wird endgültig gelöscht. Die Notizbücher auf diesem iPad bleiben unberührt."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This backup is deleted permanently. The notebooks on this iPad are not affected."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu yedek kalıcı olarak silinir. Bu iPad'deki defterlerine bir şey olmaz."
+          }
+        }
+      }
+    },
+    "Bu yedek silinsin mi?": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses Backup löschen?"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete this backup?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu yedek silinsin mi?"
+          }
+        }
+      }
+    },
+    "Bu yerde yedek yok.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An diesem Ort gibt es keine Backups."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No backups in this location."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu yerde yedek yok."
+          }
+        }
+      }
+    },
     "Bugün": {
       "localizations": {
         "de": {
@@ -911,6 +1333,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bugün"
+          }
+        }
+      }
+    },
+    "Bulunan yedekler": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gefundene Backups"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backups found"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bulunan yedekler"
           }
         }
       }
@@ -981,6 +1425,28 @@
         }
       }
     },
+    "Cornell, haftalık plan, ders programı, deneme analizi gibi şablonlar hazır. Hocanın attığı PDF'i de açıp doğrudan üstüne yazabilirsin.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vorlagen wie Cornell, Wochenplan, Stundenplan und Probeklausur-Auswertung sind schon da. Auch das PDF von deiner Lehrkraft kannst du öffnen und direkt darauf schreiben."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Templates like Cornell, weekly plan, timetable and mock exam review are ready to go. You can also open the PDF your teacher sent and write right on it."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cornell, haftalık plan, ders programı, deneme analizi gibi şablonlar hazır. Hocanın attığı PDF'i de açıp doğrudan üstüne yazabilirsin."
+          }
+        }
+      }
+    },
     "Defter": {
       "localizations": {
         "de": {
@@ -1021,6 +1487,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "Defter adı"
+          }
+        }
+      }
+    },
+    "Defterlerin bu iPad'e geri yüklensin mi?": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notizbücher auf diesem iPad wiederherstellen?"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore your notebooks to this iPad?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Defterlerin bu iPad'e geri yüklensin mi?"
+          }
+        }
+      }
+    },
+    "Defterlerin sen bir şey yapmadan yedeklenir: uygulamayı açınca, kapatınca ve yazmaya ara verince. iPad'in bozulsa ya da uygulama silinse bile notların geri gelir.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Notizbücher werden gesichert, ohne dass du etwas tun musst: beim Öffnen der App, beim Verlassen und wenn du eine Schreibpause machst. Deine Notizen kommen zurück, selbst wenn dein iPad kaputtgeht oder die App gelöscht wird."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your notebooks are backed up without you doing anything: when you open the app, when you leave it, and when you pause writing. Your notes come back even if your iPad breaks or the app is deleted."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Defterlerin sen bir şey yapmadan yedeklenir: uygulamayı açınca, kapatınca ve yazmaya ara verince. iPad'in bozulsa ya da uygulama silinse bile notların geri gelir."
           }
         }
       }
@@ -1113,6 +1623,28 @@
         }
       }
     },
+    "Ders notlarını tutman için yapıldı. Tamamen ücretsiz; reklam çıkmaz, üyelik istemez.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gemacht für deine Mitschriften. Komplett kostenlos: keine Werbung, keine Anmeldung."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Made for taking notes in class. It's completely free: no ads, no sign-up."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ders notlarını tutman için yapıldı. Tamamen ücretsiz; reklam çıkmaz, üyelik istemez."
+          }
+        }
+      }
+    },
     "Ders programı": {
       "localizations": {
         "de": {
@@ -1131,6 +1663,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ders programı"
+          }
+        }
+      }
+    },
+    "Devam": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weiter"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Devam"
+          }
+        }
+      }
+    },
+    "Değiştir": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ändern"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Değiştir"
           }
         }
       }
@@ -1245,6 +1821,28 @@
         }
       }
     },
+    "Ezberlemen gereken yerin üstünü bantla kapat. Aklına gelmezse banta dokun, cevap altından çıksın.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kleb ab, was du auswendig lernen musst. Fällt es dir nicht ein? Tipp auf das Band und die Antwort kommt darunter zum Vorschein."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Put tape over what you need to memorize. Can't recall it? Tap the tape and the answer shows up underneath."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ezberlemen gereken yerin üstünü bantla kapat. Aklına gelmezse banta dokun, cevap altından çıksın."
+          }
+        }
+      }
+    },
     "Favori yok": {
       "localizations": {
         "de": {
@@ -1329,6 +1927,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Favorilere ekle"
+          }
+        }
+      }
+    },
+    "Fotosentez:": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotosynthese:"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photosynthesis:"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotosentez:"
           }
         }
       }
@@ -1509,6 +2129,28 @@
         }
       }
     },
+    "Geri yükleme yalnızca bu iPad'de olmayan defterleri ekler. Var olan defterlerine dokunmaz, hiçbir şeyi silmez.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beim Wiederherstellen werden nur Notizbücher hinzugefügt, die nicht auf diesem iPad sind. Vorhandene Notizbücher bleiben unberührt, nichts wird gelöscht."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restoring only adds notebooks that are not on this iPad. It does not touch your existing notebooks and deletes nothing."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geri yükleme yalnızca bu iPad'de olmayan defterleri ekler. Var olan defterlerine dokunmaz, hiçbir şeyi silmez."
+          }
+        }
+      }
+    },
     "Geri yüklenemedi": {
       "localizations": {
         "de": {
@@ -1527,6 +2169,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "Geri yüklenemedi"
+          }
+        }
+      }
+    },
+    "Geri yükleniyor…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird wiederhergestellt …"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restoring…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geri yükleniyor…"
+          }
+        }
+      }
+    },
+    "Google Drive, Dropbox, OneDrive, USB bellek…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Google Drive, Dropbox, OneDrive, USB-Stick …"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Google Drive, Dropbox, OneDrive, a USB drive…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Google Drive, Dropbox, OneDrive, USB bellek…"
           }
         }
       }
@@ -1597,6 +2283,28 @@
         }
       }
     },
+    "Henüz yedeklenmedi": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noch nicht gesichert"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not backed up yet"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Henüz yedeklenmedi"
+          }
+        }
+      }
+    },
     "Hepsini aç": {
       "localizations": {
         "de": {
@@ -1637,6 +2345,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hepsini kapat"
+          }
+        }
+      }
+    },
+    "Hücre": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zellen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cells"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hücre"
           }
         }
       }
@@ -1949,6 +2679,28 @@
         }
       }
     },
+    "Kendi iCloud hesabın": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein eigener iCloud-Account"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your own iCloud account"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kendi iCloud hesabın"
+          }
+        }
+      }
+    },
     "Kendini sınamak için yazının üstüne sürükleyerek bant çek. Banta dokununca altı görünür, yeniden dokununca kapanır. Silmek için silgiyle banta dokun.": {
       "localizations": {
         "de": {
@@ -2147,6 +2899,28 @@
         }
       }
     },
+    "Klasöre ulaşılamıyor": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Ordner ist nicht erreichbar"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The folder cannot be reached"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klasöre ulaşılamıyor"
+          }
+        }
+      }
+    },
     "Klasörler": {
       "localizations": {
         "de": {
@@ -2323,6 +3097,28 @@
         }
       }
     },
+    "Kâğıda yazar gibi": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schreiben wie auf Papier"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Just like writing on paper"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kâğıda yazar gibi"
+          }
+        }
+      }
+    },
     "Kâğıt": {
       "localizations": {
         "de": {
@@ -2473,6 +3269,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Milimetrik"
+          }
+        }
+      }
+    },
+    "Mitokondri:": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mitochondrium:"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mitochondria:"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mitokondri:"
           }
         }
       }
@@ -2671,6 +3489,94 @@
           "stringUnit": {
             "state": "translated",
             "value": "Notlarda ara"
+          }
+        }
+      }
+    },
+    "Notların başına bir şey gelmesin": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Damit deinen Notizen nichts passiert"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep your notes safe"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notların başına bir şey gelmesin"
+          }
+        }
+      }
+    },
+    "Notların otomatik yedeklensin mi?": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notizen automatisch sichern?"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back up your notes automatically?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notların otomatik yedeklensin mi?"
+          }
+        }
+      }
+    },
+    "Notların yalnızca senin iCloud hesabına gider. Biz göremeyiz; OpenLeaf hiçbir veri toplamaz.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Notizen gehen nur in deinen eigenen iCloud-Account. Wir können sie nicht sehen; OpenLeaf erfasst keine Daten."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your notes go only to your own iCloud account. We cannot see them; OpenLeaf collects no data."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notların yalnızca senin iCloud hesabına gider. Biz göremeyiz; OpenLeaf hiçbir veri toplamaz."
+          }
+        }
+      }
+    },
+    "Notların yalnızca seçtiğin klasöre yazılır. Biz göremeyiz; OpenLeaf hiçbir veri toplamaz. Klasörü Dosyalar penceresinden seçersin; Google Drive, Dropbox ya da OneDrive uygulaması kuruluysa orada görünür.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Notizen werden nur in den Ordner geschrieben, den du auswählst. Wir können sie nicht sehen; OpenLeaf erfasst keine Daten. Den Ordner wählst du im Dateien-Fenster; Google Drive, Dropbox oder OneDrive erscheinen dort, wenn die jeweilige App installiert ist."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your notes are written only to the folder you choose. We cannot see them; OpenLeaf collects no data. You pick the folder in the Files window; Google Drive, Dropbox or OneDrive appear there if their app is installed."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notların yalnızca seçtiğin klasöre yazılır. Biz göremeyiz; OpenLeaf hiçbir veri toplamaz. Klasörü Dosyalar penceresinden seçersin; Google Drive, Dropbox ya da OneDrive uygulaması kuruluysa orada görünür."
           }
         }
       }
@@ -2895,6 +3801,28 @@
         }
       }
     },
+    "OpenLeaf'e hoş geldin": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Willkommen bei OpenLeaf"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome to OpenLeaf"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenLeaf'e hoş geldin"
+          }
+        }
+      }
+    },
     "Orta": {
       "localizations": {
         "de": {
@@ -2913,6 +3841,94 @@
           "stringUnit": {
             "state": "translated",
             "value": "Orta"
+          }
+        }
+      }
+    },
+    "Otomatik yedek": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatisches Backup"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatic backup"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otomatik yedek"
+          }
+        }
+      }
+    },
+    "Otomatik yedekle": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatisch sichern"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back up automatically"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otomatik yedekle"
+          }
+        }
+      }
+    },
+    "Otomatik yedek…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatisches Backup …"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatic backup…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otomatik yedek…"
+          }
+        }
+      }
+    },
+    "Otomatik yedeği açarsan defterlerin kendi iCloud'una ya da seçtiğin bir klasöre yedeklenir; iPad bozulsa bile notların durur. Notlarını senden başka kimse göremez, biz de.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mit dem automatischen Backup werden deine Notizbücher in deiner eigenen iCloud oder in einem Ordner deiner Wahl gesichert; selbst wenn dein iPad kaputtgeht, sind deine Notizen noch da. Niemand außer dir kann sie sehen, auch wir nicht."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn on automatic backup and your notebooks are saved to your own iCloud or a folder you choose, so your notes are still there even if your iPad breaks. Nobody but you can see them, not even us."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otomatik yedeği açarsan defterlerin kendi iCloud'una ya da seçtiğin bir klasöre yedeklenir; iPad bozulsa bile notların durur. Notlarını senden başka kimse göremez, biz de."
           }
         }
       }
@@ -3199,6 +4215,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Resmi sil"
+          }
+        }
+      }
+    },
+    "Ribozom:": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ribosom:"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ribosome:"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ribozom:"
           }
         }
       }
@@ -3511,6 +4549,28 @@
         }
       }
     },
+    "Seç…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auswählen …"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seç…"
+          }
+        }
+      }
+    },
     "Silgi": {
       "localizations": {
         "de": {
@@ -3639,6 +4699,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Son düzenlenen"
+          }
+        }
+      }
+    },
+    "Son yedek: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Letztes Backup: %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last backup: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Son yedek: %@"
           }
         }
       }
@@ -3793,6 +4875,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tamam"
+          }
+        }
+      }
+    },
+    "Tanıtımı göster": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einführung anzeigen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show the tour"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tanıtımı göster"
           }
         }
       }
@@ -4149,6 +5253,28 @@
         }
       }
     },
+    "Yedek okunamadı. İnternet bağlantını kontrol edip yeniden dene.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Backup konnte nicht gelesen werden. Prüfe deine Internetverbindung und versuche es erneut."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The backup could not be read. Check your internet connection and try again."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yedek okunamadı. İnternet bağlantını kontrol edip yeniden dene."
+          }
+        }
+      }
+    },
     "Yedek oluşturulamadı": {
       "localizations": {
         "de": {
@@ -4171,6 +5297,50 @@
         }
       }
     },
+    "Yedek yeri": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup-Ort"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup location"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yedek yeri"
+          }
+        }
+      }
+    },
+    "Yedek yerine ulaşılamıyor.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Backup-Ort ist nicht erreichbar."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The backup location cannot be reached."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yedek yerine ulaşılamıyor."
+          }
+        }
+      }
+    },
     "Yedekleme": {
       "localizations": {
         "de": {
@@ -4189,6 +5359,94 @@
           "stringUnit": {
             "state": "translated",
             "value": "Yedekleme"
+          }
+        }
+      }
+    },
+    "Yedekleme kapalı": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup ist aus"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup is off"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yedekleme kapalı"
+          }
+        }
+      }
+    },
+    "Yedeklenemedi: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup fehlgeschlagen: %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup failed: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yedeklenemedi: %@"
+          }
+        }
+      }
+    },
+    "Yedekleniyor…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird gesichert …"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backing up…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yedekleniyor…"
+          }
+        }
+      }
+    },
+    "Yedekler aranıyor…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backups werden gesucht …"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Looking for backups…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yedekler aranıyor…"
           }
         }
       }
@@ -4255,6 +5513,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "Yedeği Dosyalar'a kaydet"
+          }
+        }
+      }
+    },
+    "Yedeği aç": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup einschalten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn On Backup"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yedeği aç"
+          }
+        }
+      }
+    },
+    "Yedeği sil": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup löschen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete backup"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yedeği sil"
           }
         }
       }
@@ -4453,6 +5755,160 @@
           "stringUnit": {
             "state": "translated",
             "value": "Yinele"
+          }
+        }
+      }
+    },
+    "iCloud": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud"
+          }
+        }
+      }
+    },
+    "iCloud'a ulaşılamıyor": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud ist nicht erreichbar"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud cannot be reached"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud'a ulaşılamıyor"
+          }
+        }
+      }
+    },
+    "iCloud'a yükleniyor…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird in iCloud geladen …"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uploading to iCloud…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud'a yükleniyor…"
+          }
+        }
+      }
+    },
+    "iCloud'da yedek bulundu": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup in iCloud gefunden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup found in iCloud"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud'da yedek bulundu"
+          }
+        }
+      }
+    },
+    "iPad ve iCloud'da": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPad und iCloud"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPad and iCloud"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPad ve iCloud'da"
+          }
+        }
+      }
+    },
+    "iPad ve klasörde": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPad und Ordner"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPad and folder"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPad ve klasörde"
+          }
+        }
+      }
+    },
+    "protein üretir": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bildet Proteine"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "makes protein"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "protein üretir"
           }
         }
       }
@@ -4805,6 +6261,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "Şarap"
+          }
+        }
+      }
+    },
+    "Şimdi değil": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jetzt nicht"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not Now"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şimdi değil"
+          }
+        }
+      }
+    },
+    "Şimdi yedekle": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jetzt sichern"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back up now"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şimdi yedekle"
           }
         }
       }

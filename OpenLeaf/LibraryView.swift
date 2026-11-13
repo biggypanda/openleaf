@@ -6,6 +6,7 @@ struct OpenDoc: Identifiable, Hashable { let id: UUID }
 
 struct LibraryView: View {
     @Environment(Library.self) private var library
+    @Environment(AutoBackup.self) private var backup
     @Environment(\.requestReview) private var requestReview
     @State private var selection: SidebarItem? = .section(.belgeler)
     /// Klasör adı penceresi: yeni klasör, yeniden adlandır ya da defteri yeni klasöre taşı
@@ -41,6 +42,15 @@ struct LibraryView: View {
     @State private var showBackupExport = false
     @State private var showRestore = false
     @State private var backupMessage: (title: String, text: String)?
+    /// Otomatik yedek: ayar penceresi, bir kerelik soru ve boş kütüphanede geri yükleme teklifi
+    @State private var showAutoBackup = false
+    @State private var showBackupAsk = false
+    @State private var restoreOffer: AutoBackup.Found?
+    @State private var restoreOnOpen: AutoBackup.Found?
+    @State private var restoreOffered = false
+    /// İlk açılış tanıtımı: yalnızca yeni kuranlara bir kez gösterilir, menüden yeniden açılabilir
+    @AppStorage("tanitim.goruldu") private var onboardingSeen = false
+    @State private var showOnboarding = false
     @State private var showAbout = false
     @AppStorage("siralama") private var sort: SortOrder = .modified
     @State private var columns = NavigationSplitViewVisibility.all
@@ -61,6 +71,7 @@ struct LibraryView: View {
                 DocumentView(id: doc.id, onClose: {
                     openDoc = nil
                     askForReviewIfDue()
+                    considerBackupPrompts()
                 })
                     .id(doc.id)
                     .transition(.asymmetric(
@@ -109,6 +120,40 @@ struct LibraryView: View {
         } message: {
             Text("İçindeki defterler silinmez, Belgeler'de kalır.")
         }
+        .sheet(isPresented: $showOnboarding, onDismiss: {
+            onboardingSeen = true
+            considerBackupPrompts()
+        }) {
+            OnboardingView()
+        }
+        .onAppear {
+            guard !onboardingSeen else { return }
+            // Kütüphanesinde defter olan kişi uygulamayı tanıyor: güncellemede tanıtım çıkmasın
+            if library.notebooks.isEmpty { showOnboarding = true } else { onboardingSeen = true }
+        }
+        .sheet(isPresented: $showAutoBackup, onDismiss: { restoreOnOpen = nil }) {
+            AutoBackupSheet(restoreOnAppear: restoreOnOpen)
+        }
+        .alert("Notların otomatik yedeklensin mi?", isPresented: $showBackupAsk) {
+            Button("Aç") { backup.setEnabled(true) }
+            Button("Şimdi değil", role: .cancel) { backup.markAsked() }
+        } message: {
+            Text("Açarsan defterlerin kendi iCloud hesabına kendiliğinden yedeklenir; iPad'in bozulsa bile notların kaybolmaz. Notların yalnızca senin iCloud'unda durur, biz göremeyiz. İstediğin zaman kapatabilir ya da başka bir yedek yeri seçebilirsin.")
+        }
+        .alert("iCloud'da yedek bulundu", isPresented: Binding(get: { restoreOffer != nil }, set: { if !$0 { restoreOffer = nil } }),
+               presenting: restoreOffer) { item in
+            Button("Geri yükle") {
+                restoreOnOpen = item
+                // Uyarı kapanırken pencere açılamıyor: bir an bekle
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { showAutoBackup = true }
+            }
+            Button("Şimdi değil", role: .cancel) {}
+        } message: { item in
+            Text(verbatim: item.summary + "\n\n" + String(localized: "Defterlerin bu iPad'e geri yüklensin mi?"))
+        }
+        .onChange(of: backup.searched) { considerBackupPrompts() }
+        .onChange(of: backup.found) { considerBackupPrompts() }
+        .onChange(of: backup.iCloudAvailable) { considerBackupPrompts() }
         .sheet(isPresented: $showNew) {
             NewNotebookSheet { nb in
                 var nb = nb
@@ -211,11 +256,18 @@ struct LibraryView: View {
                     .frame(width: 34, height: 34)
                     .background(Y.surface3, in: Circle())
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("Bu iPad'de kayıtlı").font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
+                    Text(!backup.enabled ? String(localized: "Bu iPad'de kayıtlı")
+                         : backup.destination == .icloud ? String(localized: "iPad ve iCloud'da")
+                         : String(localized: "iPad ve klasörde"))
+                        .font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
                     Text("\(library.items(for: .belgeler).count) belge").font(.caption).foregroundStyle(Y.ink3)
                 }
                 Spacer()
                 Menu {
+                    Button { showAutoBackup = true } label: {
+                        Label("Otomatik yedek…", systemImage: "arrow.triangle.2.circlepath")
+                    }
+                    Divider()
                     Button { exportBackup() } label: {
                         Label("Yedeği Dosyalar'a kaydet", systemImage: "square.and.arrow.down")
                     }
@@ -223,13 +275,16 @@ struct LibraryView: View {
                         Label("Yedekten geri yükle", systemImage: "arrow.counterclockwise")
                     }
                     Divider()
+                    Button { showOnboarding = true } label: {
+                        Label("Tanıtımı göster", systemImage: "sparkles")
+                    }
                     Button { showAbout = true } label: {
                         Label("OpenLeaf hakkında", systemImage: "info.circle")
                     }
                 } label: {
-                    Image(systemName: "externaldrive.badge.icloud")
+                    Image(systemName: backupNeedsAttention ? "externaldrive.badge.exclamationmark" : "externaldrive.badge.icloud")
                         .font(.system(size: 17))
-                        .foregroundStyle(Y.accent)
+                        .foregroundStyle(backupNeedsAttention ? Y.danger : Y.accent)
                         .frame(width: 40, height: 40)
                         .contentShape(Rectangle())
                 }
@@ -264,6 +319,34 @@ struct LibraryView: View {
             } message: {
                 Text(backupMessage?.text ?? "")
             }
+        }
+    }
+
+    /// Otomatik yedek açık ama çalışmıyor (yere ulaşılamıyor ya da hata verdi)
+    private var backupNeedsAttention: Bool {
+        guard backup.enabled else { return false }
+        switch backup.status {
+        case .unavailable, .failed: return true
+        default: return false
+        }
+    }
+
+    /// Kütüphane boşsa ve iCloud'da yedek varsa geri yüklemeyi teklif eder (oturum başına bir kez);
+    /// kütüphanede defter varsa otomatik yedeği açmayı bir kez sorar.
+    private func considerBackupPrompts() {
+        guard openDoc == nil, !showOnboarding, !showAutoBackup, !showBackupAsk, restoreOffer == nil else { return }
+        // Tanıtım birazdan açılacaksa (ilk açılış) sırayı ona bırak
+        if !onboardingSeen, library.notebooks.isEmpty { return }
+        if library.notebooks.isEmpty {
+            // Bu cihazın kendi yedeği yalnızca kullanıcı defterlerini kendisi silmediyse teklif edilir
+            let nothingDeleted = DeletedNotebooks.all.isEmpty
+            guard !restoreOffered,
+                  let item = backup.found.first(where: { $0.info.notebookCount > 0 && (!$0.isThisDevice || nothingDeleted) })
+            else { return }
+            restoreOffered = true
+            restoreOffer = item
+        } else if !backup.asked, !backup.enabled, backup.iCloudAvailable, backup.destination == .icloud {
+            showBackupAsk = true
         }
     }
 

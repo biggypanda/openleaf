@@ -222,3 +222,44 @@ Der Quellcode von OpenLeaf ist öffentlich auf GitHub (GPL-3.0). Melde Fehler, s
 • Lineal für gerade Linien
 • Große PDFs öffnen sich jetzt ohne Wartezeit
 ```
+
+---
+
+## Sonraki sürüm için hazırlık: otomatik yedek
+
+Bu bölüm 1.0.3'ten sonraki sürüm içindir; o sürüm gönderilirken yukarıdaki metinlere işlenir.
+
+**Uygulama Gizliliği:** değişmez, "Hayır, bu uygulamadan veri toplamıyoruz". Yedek yalnızca kullanıcının kendi iCloud hesabına ya da seçtiği klasöre gider; geliştirici erişemez.
+
+**App Review notu** ("No account, no network… stored locally on the device." cümlesinin yerine):
+> Free, open-source note-taking app. No account, no in-app purchases. Notes are stored locally on the device. Automatic backup is optional and off by default: if the user turns it on, notebooks are copied to the user's own iCloud container or to a folder the user picks in Files. The developer runs no server and collects no data. To try it: sidebar bottom-right menu → "Automatic backup…".
+
+**Açıklamaya eklenecek satır** (yedek satırının üstüne):
+
+```
+• Otomatik yedek: defterlerin kendi iCloud'una ya da seçtiğin klasöre (Google Drive, Dropbox, OneDrive…) kendiliğinden yedeklenir; iPad'in bozulsa bile notların kaybolmaz
+```
+```
+• Automatic backup: your notebooks are backed up to your own iCloud or to a folder you choose (Google Drive, Dropbox, OneDrive…), so your notes survive even if your iPad breaks
+```
+```
+• Automatisches Backup: Deine Notizbücher werden in deiner eigenen iCloud oder in einem Ordner deiner Wahl gesichert (Google Drive, Dropbox, OneDrive …), damit deine Notizen erhalten bleiben, selbst wenn dein iPad kaputtgeht
+```
+
+**Bu sürümdeki yenilikler:**
+
+```
+• Otomatik yedek: defterlerin kendi iCloud'una ya da seçtiğin bir klasöre (Google Drive, Dropbox, OneDrive…) kendiliğinden yedeklenir. Kapalı gelir, açmak sana kalmış
+• Yeni iPad'de ya da yeniden kurulumda yedeğin bulunur ve geri yüklemen için sorulur
+• Notların hâlâ yalnızca sende: OpenLeaf veri toplamaz
+```
+```
+• Automatic backup: your notebooks are backed up to your own iCloud or to a folder you choose (Google Drive, Dropbox, OneDrive…). It is off until you turn it on
+• On a new iPad or after reinstalling, your backup is found and you are asked whether to restore it
+• Your notes are still yours alone: OpenLeaf collects no data
+```
+```
+• Automatisches Backup: Deine Notizbücher werden in deiner eigenen iCloud oder in einem Ordner deiner Wahl gesichert (Google Drive, Dropbox, OneDrive …). Es bleibt aus, bis du es einschaltest
+• Auf einem neuen iPad oder nach einer Neuinstallation wird dein Backup gefunden und zur Wiederherstellung angeboten
+• Deine Notizen gehören weiterhin nur dir: OpenLeaf erfasst keine Daten
+```
