@@ -99,7 +99,8 @@ struct DocumentView: View {
     @State private var forward = true
     @State private var tool: ToolKind = .pen
     @State private var lastInkTool: ToolKind = .pen
-    @AppStorage("kalem.renk") private var color: PenColor = .ink
+    @AppStorage("kalem.renk.rgb") private var color: PenColor = .initial
+    @AppStorage(PenPalette.favoritesKey) private var favoritesRaw = ""
     @AppStorage("kalem.tur") private var penType: PenType = .tukenmez
     @AppStorage("kalem.kalinlik.pt") private var penWidth: Double = 3
     @AppStorage("silgi.tur") private var eraserMode: EraserMode = .kismi
@@ -243,7 +244,7 @@ struct DocumentView: View {
                     let c = quickPoint.map { CGPoint(x: $0.x - o.x, y: $0.y - o.y) }
                         ?? CGPoint(x: g.size.width / 2, y: g.size.height / 2)
                     QuickPalette(
-                        center: c, tool: tool, color: color,
+                        center: c, tool: tool, color: color, colors: PenPalette.favorites(favoritesRaw),
                         canUndo: controller.canUndo, canRedo: controller.canRedo,
                         onTool: { t in
                             withAnimation(Y.quick) { tool = t }
@@ -533,7 +534,20 @@ struct ToolbarCapsule: View {
     var pickPhoto: () -> Void
     var select: (ToolKind) -> Void
 
+    @AppStorage(PenPalette.favoritesKey) private var favoritesRaw = ""
+    /// Kalem menüsünde renk paneli açık mı; `editSlot` doluysa o sık kullanılan renk değiştiriliyor
+    @State private var colorPanel = false
+    @State private var editSlot: Int?
+
     var body: some View {
+        // Dar ekranda (iPad mini dikey, Split View) "Diğer renkler" düğmesi çubuktan çıkar; kalem menüsünde durur
+        ViewThatFits(in: .horizontal) {
+            bar(moreColors: true)
+            bar(moreColors: false)
+        }
+    }
+
+    private func bar(moreColors: Bool) -> some View {
         HStack(spacing: 2) {
             ForEach([ToolKind.pen, .highlighter, .tape, .eraser], id: \.self) { toolButton($0) }
 
@@ -579,7 +593,7 @@ struct ToolbarCapsule: View {
 
             sep
 
-            colorButtons
+            colorButtons(more: moreColors)
 
             sep
 
@@ -593,8 +607,21 @@ struct ToolbarCapsule: View {
         .animation(Y.quick, value: ruler)
     }
 
+    /// Kalem menüsünü renk panelinde açar
+    private func openColorPanel(slot: Int? = nil) {
+        if tool != .pen { select(.pen) }
+        editSlot = slot
+        colorPanel = true
+        showToolMenu = true
+    }
+
     private func toolButton(_ t: ToolKind) -> some View {
-                Button { select(t) } label: {
+                Button {
+                    // Araç düğmesinden açılan menü her zaman ana sayfasıyla açılır
+                    colorPanel = false
+                    editSlot = nil
+                    select(t)
+                } label: {
                     Image(systemName: t.icon)
                         .font(.system(size: 19, weight: .regular))
                         .frame(width: 46, height: 46)
@@ -606,14 +633,18 @@ struct ToolbarCapsule: View {
                 .accessibilityAddTraits(tool == t ? .isSelected : [])
                 .popover(isPresented: Binding(get: { showToolMenu && tool == t }, set: { if !$0 { showToolMenu = false } }),
                          arrowEdge: .bottom) {
-                    ToolMenu(tool: t, penType: $penType, penWidth: $penWidth, color: $color, eraser: $eraser,
+                    ToolMenu(tool: t, penType: $penType, penWidth: $penWidth, color: $color,
+                             colorPanel: $colorPanel, editSlot: $editSlot, eraser: $eraser,
                              tapeColor: $tapeColor, tapeSize: $tapeSize, revealTapes: revealTapes)
                         .presentationCompactAdaptation(.popover)
                 }
     }
 
-    private var colorButtons: some View {
-            ForEach(PenColor.allCases, id: \.self) { c in
+    private func colorButtons(more: Bool) -> some View {
+        let favorites = PenPalette.favorites(favoritesRaw)
+        let custom = !favorites.contains(color)
+        return Group {
+            ForEach(Array(favorites.enumerated()), id: \.offset) { i, c in
                 Button {
                     color = c
                     if tool != .pen { select(.pen) }
@@ -624,11 +655,37 @@ struct ToolbarCapsule: View {
                         .padding(4)
                         .overlay(Circle().strokeBorder(color == c && tool == .pen ? Y.accent : .clear, lineWidth: 2))
                         .frame(width: 38, height: 46)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .contextMenu {
+                    Button { openColorPanel(slot: i) } label: { Label("Bu rengi değiştir…", systemImage: "eyedropper") }
+                    Button { favoritesRaw = "" } label: { Label("Varsayılan renklere dön", systemImage: "arrow.counterclockwise") }
+                }
                 .accessibilityLabel(c.name)
                 .accessibilityAddTraits(color == c ? .isSelected : [])
             }
+            // Diğer renkler: seçili renk sık kullanılanlarda değilse onu gösterir
+            if more {
+                Button { openColorPanel() } label: {
+                    ZStack {
+                        Circle().fill(AngularGradient(colors: [.red, .yellow, .green, .cyan, .blue, .purple, .red], center: .center))
+                            .frame(width: 24, height: 24)
+                        if custom {
+                            Circle().fill(color.swatch).frame(width: 15, height: 15)
+                                .overlay(Circle().strokeBorder(.white.opacity(0.7), lineWidth: 1))
+                        }
+                    }
+                    .padding(4)
+                    .overlay(Circle().strokeBorder(custom && tool == .pen ? Y.accent : .clear, lineWidth: 2))
+                    .frame(width: 38, height: 46)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Diğer renkler")
+                .accessibilityValue(custom ? color.name : "")
+            }
+        }
     }
 
     @ViewBuilder
@@ -656,14 +713,23 @@ struct ToolMenu: View {
     @Binding var penType: PenType
     @Binding var penWidth: Double
     @Binding var color: PenColor
+    @Binding var colorPanel: Bool
+    @Binding var editSlot: Int?
     @Binding var eraser: EraserSettings
     @Binding var tapeColor: TapeColor
     @Binding var tapeSize: TapeSize
     var revealTapes: (Bool) -> Void
 
+    @AppStorage(PenPalette.favoritesKey) private var favoritesRaw = ""
+    @AppStorage(PenPalette.recentsKey) private var recentsRaw = ""
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            if tool == .pen {
+            if tool == .pen, colorPanel {
+                ColorPanel(color: $color, slot: editSlot) {
+                    withAnimation(Y.quick) { colorPanel = false; editSlot = nil }
+                }
+            } else if tool == .pen {
                 Picker("Kalem türü", selection: $penType) {
                     ForEach(PenType.allCases) { Text($0.name).tag($0) }
                 }
@@ -700,20 +766,7 @@ struct ToolMenu: View {
                     .accessibilityHidden(true)
                 }
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("RENKLER").font(Y.eyebrow).tracking(0.8).foregroundStyle(Y.ink3)
-                    HStack(spacing: 10) {
-                        ForEach(PenColor.allCases, id: \.self) { c in
-                            Button { color = c } label: {
-                                Circle().fill(c.swatch).frame(width: 30, height: 30)
-                                    .padding(3)
-                                    .overlay(Circle().strokeBorder(c == color ? Y.accent : .clear, lineWidth: 2))
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel(c.name)
-                        }
-                    }
-                }
+                penColors
             } else if tool == .eraser {
                 Picker("Silgi türü", selection: $eraser.mode) {
                     ForEach(EraserMode.allCases) { Text($0.name).tag($0) }
@@ -801,6 +854,64 @@ struct ToolMenu: View {
         }
         .padding(18)
         .frame(width: 350)
+    }
+}
+
+extension ToolMenu {
+    @ViewBuilder
+    var penColors: some View {
+        let favorites = PenPalette.favorites(favoritesRaw)
+        let recents = PenPalette.decode(recentsRaw).filter { !favorites.contains($0) }
+        VStack(alignment: .leading, spacing: 8) {
+            Text("SIK KULLANILANLAR").font(Y.eyebrow).tracking(0.8).foregroundStyle(Y.ink3)
+            HStack(spacing: 10) {
+                ForEach(Array(favorites.enumerated()), id: \.offset) { i, c in
+                    swatchButton(c, size: 30)
+                        .contextMenu {
+                            Button { editSlot = i; withAnimation(Y.quick) { colorPanel = true } } label: {
+                                Label("Bu rengi değiştir…", systemImage: "eyedropper")
+                            }
+                            Button { favoritesRaw = "" } label: {
+                                Label("Varsayılan renklere dön", systemImage: "arrow.counterclockwise")
+                            }
+                        }
+                }
+            }
+            Text("Bir renge basılı tutarak yerine başka bir renk koyabilirsin.")
+                .font(.caption).foregroundStyle(Y.ink3)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        if !recents.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("SON KULLANILANLAR").font(Y.eyebrow).tracking(0.8).foregroundStyle(Y.ink3)
+                HStack(spacing: 6) {
+                    ForEach(recents, id: \.self) { c in swatchButton(c, size: 26) }
+                }
+            }
+        }
+        Button { editSlot = nil; withAnimation(Y.quick) { colorPanel = true } } label: {
+            HStack(spacing: 8) {
+                Circle().fill(AngularGradient(colors: [.red, .yellow, .green, .cyan, .blue, .purple, .red], center: .center))
+                    .frame(width: 18, height: 18)
+                Text("Diğer renkler…")
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .tint(Y.accent)
+        .font(.subheadline)
+    }
+
+    private func swatchButton(_ c: PenColor, size: CGFloat) -> some View {
+        Button { color = c } label: {
+            Circle().fill(c.swatch).frame(width: size, height: size)
+                .overlay(Circle().strokeBorder(Y.line.opacity(0.6)))
+                .padding(3)
+                .overlay(Circle().strokeBorder(c == color ? Y.accent : .clear, lineWidth: 2))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(c.name)
+        .accessibilityAddTraits(c == color ? .isSelected : [])
     }
 }
 

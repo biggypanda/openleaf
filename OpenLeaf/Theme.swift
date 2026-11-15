@@ -65,42 +65,6 @@ enum Y {
     static let eyebrow = Font.system(size: 11.5, weight: .semibold)
 }
 
-/// Kalem renkleri (açık tema değerleri; PencilKit koyu temada kendisi uyarlar).
-enum PenColor: Int, CaseIterable, Codable {
-    case ink, indigo, green, wine, ochre
-
-    var ui: UIColor {
-        switch self {
-        case .ink: UIColor(hex: 0x1E2321)
-        case .indigo: UIColor(hex: 0x2E4A7A)
-        case .green: UIColor(hex: 0x2F6B4F)
-        case .wine: UIColor(hex: 0x7A2E42)
-        case .ochre: UIColor(hex: 0xB98A2E)
-        }
-    }
-
-    /// Arayüzde gösterilen renk (koyu temada açık eşdeğeri)
-    var swatch: Color {
-        switch self {
-        case .ink: Color(uiColor: .dyn(0x1E2321, 0xEDE8DB))
-        case .indigo: Color(uiColor: .dyn(0x2E4A7A, 0x8FAEE0))
-        case .green: Color(uiColor: .dyn(0x2F6B4F, 0x8CC9A5))
-        case .wine: Color(uiColor: .dyn(0x7A2E42, 0xE0899F))
-        case .ochre: Color(uiColor: .dyn(0xB98A2E, 0xE3BB5A))
-        }
-    }
-
-    var name: String {
-        switch self {
-        case .ink: String(localized: "Mürekkep")
-        case .indigo: String(localized: "Çivit")
-        case .green: String(localized: "Yeşil")
-        case .wine: String(localized: "Şarap")
-        case .ochre: String(localized: "Hardal")
-        }
-    }
-}
-
 /// Yüzen yüzeyler için cam: iOS 26+ Liquid Glass, öncesinde sistem malzemesi.
 struct GlassBackground<S: Shape>: ViewModifier {
     var shape: S

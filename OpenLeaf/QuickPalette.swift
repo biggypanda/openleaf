@@ -7,6 +7,8 @@ struct QuickPalette: View {
     var center: CGPoint
     var tool: ToolKind
     var color: PenColor
+    /// Dış halkadaki renkler (sık kullanılanlar)
+    var colors: [PenColor]
     var canUndo: Bool
     var canRedo: Bool
     var onTool: (ToolKind) -> Void
@@ -78,8 +80,8 @@ struct QuickPalette: View {
                 }
 
                 // Dış halka: renkler
-                ForEach(Array(PenColor.allCases.enumerated()), id: \.element) { i, pc in
-                    let a = angle(i, of: PenColor.allCases.count, start: -90 + 36)
+                ForEach(Array(colors.enumerated()), id: \.offset) { i, pc in
+                    let a = angle(i, of: colors.count, start: -90 + 36)
                     colorButton(pc)
                         .position(point(c, a, shown ? outerR : outerR * 0.3))
                         .opacity(shown ? 1 : 0)

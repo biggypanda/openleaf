@@ -2,7 +2,7 @@
 
 A free and open-source handwriting note app for students, built for iPad and Apple Pencil.
 No ads, no subscription, no in-app purchases; your notes stay on your device, with an optional automatic backup to
-your own iCloud or to a folder you choose. Available in English, Turkish and German.
+your own iCloud or to a folder you choose. Available in English, Turkish, German, Spanish, French, Italian and Brazilian Portuguese.
 
 <a href="https://apps.apple.com/app/id6832556915"><img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/en-us" alt="Download on the App Store" height="50"></a>
 
@@ -11,6 +11,7 @@ your own iCloud or to a folder you choose. Available in English, Turkish and Ger
 - **Library:** notebook covers with real materials (linen, leather, kraft…), folders, favorites, trash, search, sorting
 - **New notebook:** 8 covers, A4 / A5 / Letter; templates: lined, grid, dotted, blank, Cornell, graph paper, music staves, weekly plan, timetable, topic tracker, mock exam review
 - **Writing (PencilKit):** ballpoint, fountain, pencil and brush pens; adjustable thickness; highlighter; lasso
+- **Pen colors:** any of 16.7 million colors from a grid, a spectrum or a hex code; five favorite colors you can swap and a row of recent colors
 - **Eraser:** a partial eraser that removes only what the circle touches (adjustable size), or a whole-stroke eraser
 - **Tape:** covers your notes and reveals them on tap, for quizzing yourself; strip or box, four colors
 - **Ruler:** the PencilKit ruler for straight lines
@@ -25,7 +26,7 @@ your own iCloud or to a folder you choose. Available in English, Turkish and Ger
   OneDrive, a USB drive…); only changed pages are uploaded, and a fresh install offers to restore
 - **Manual backup:** the whole library as a single file to Files / iCloud Drive; restore from a backup
 - **First-launch tour:** five short pages introducing the app, ending with the backup choice; can be reopened from the menu
-- Light and dark themes; English, Turkish and German interface; no ads, subscription or account
+- Light and dark themes; interface in English, Turkish, German, Spanish, French, Italian and Brazilian Portuguese; no ads, subscription or account
 
 ## Requirements
 
@@ -83,7 +84,7 @@ build without iCloud (backup to a chosen folder still works).
 | `OpenLeaf.entitlements` | iCloud container for automatic backup |
 | `Tests/BackupEngineCheck/main.swift` | Checks for the backup engine (run on the Mac, see below) |
 
-The code comments and the source strings are in Turkish; English and German come from the string catalog
+The code comments and the source strings are in Turkish; the other languages come from the string catalog
 (`OpenLeaf/Localizable.xcstrings`).
 
 ## How data is stored

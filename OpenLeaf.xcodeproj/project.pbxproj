@@ -90,6 +90,10 @@
 				en,
 				tr,
 				de,
+				es,
+				fr,
+				it,
+				"pt-BR",
 				Base,
 			);
 			mainGroup = AA0000000000000000000003;
