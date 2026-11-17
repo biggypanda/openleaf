@@ -26,7 +26,7 @@ Kurallar:
 **Yaş derecelendirmesi:** Tüm sorulara "Hayır / Yok" → 4+ çıkar.
 
 **App Review bilgileri:** Giriş gerekmez, "Oturum açma gerekli" işaretini kaldır. Notlar alanına:
-> Free, open-source note-taking app. No account, no network, no in-app purchases. All notes are stored locally on the device. The library starts empty: tap "Create notebook" to make one, or "Import PDF" to annotate a PDF from Files. The interface is available in English, Turkish and German and follows the device language.
+> Free, open-source note-taking app. No account, no network, no in-app purchases. All notes are stored locally on the device. The library starts empty: tap "Create notebook" to make one, or "Import PDF" to annotate a PDF from Files. The interface is available in English, Turkish, German, Spanish, French, Italian and Brazilian Portuguese and follows the device language.
 
 ---
 
@@ -53,7 +53,7 @@ Tamamen ücretsiz: reklam yok, abonelik yok, kilitli özellik yok. Hesap açman 
 OpenLeaf, öğrenciler için yapılmış açık kaynak bir not alma uygulaması. Apple Pencil ile ders notu tut, slaytların ve PDF'lerin üstüne yaz, hepsini klasörlerde düzenle.
 
 DEFTERLER
-• 8 farklı kapak, çizgili, kareli, noktalı ya da boş sayfa
+• 14 farklı kapak (6'sı yılbaşına özel), çizgili, kareli, noktalı ya da boş sayfa
 • Hazır şablonlar: Cornell, milimetrik, nota, haftalık plan, ders programı, konu takip, deneme analizi
 • A4, A5 ve Mektup boyutları
 • Klasörler, favoriler, çöp kutusu, arama ve sıralama
@@ -75,11 +75,12 @@ SAYFALAR VE PDF
 • İki parmakla yakınlaştırma, her yakınlıkta net kâğıt
 
 DAHA FAZLASI
+• Otomatik yedek: defterlerin kendi iCloud'una ya da seçtiğin klasöre (Google Drive, Dropbox, OneDrive…) kendiliğinden yedeklenir; iPad'in bozulsa bile notların kaybolmaz
 • Yapışkan notlar: klavyeyle ya da kalemle yaz, taşı, boyutlandır
 • Fotoğraf çek ya da arşivden ekle, üstüne yaz
 • Tüm kütüphaneni tek dosya olarak Dosyalar'a ya da iCloud Drive'a yedekle
-• Açık ve koyu tema
-• Türkçe, İngilizce ve Almanca arayüz
+• Açık, koyu ya da sistemle aynı tema; iPad koyu moddayken bile beyaz sayfada yaz
+• Türkçe, İngilizce, Almanca, İspanyolca, Fransızca, İtalyanca ve Portekizce arayüz
 
 AÇIK KAYNAK
 OpenLeaf'in kaynak kodu GitHub'da herkese açık (GPL-3.0). Hata bildirebilir, öneri yapabilir ya da katkıda bulunabilirsin: github.com/biggypanda/openleaf
@@ -123,7 +124,7 @@ Completely free: no ads, no subscription, no locked features. You don't need an 
 OpenLeaf is an open-source note-taking app made for students. Take class notes with Apple Pencil, write on slides and PDFs, and keep everything organized in folders.
 
 NOTEBOOKS
-• 8 covers with lined, grid, dotted or blank paper
+• 14 covers (6 of them for the holidays) with lined, grid, dotted or blank paper
 • Ready-made templates: Cornell, graph paper, music staves, weekly plan, timetable, topic tracker, mock exam review
 • A4, A5 and Letter sizes
 • Folders, favorites, trash, search and sorting
@@ -145,11 +146,12 @@ PAGES AND PDF
 • Pinch to zoom with sharp paper at every zoom level
 
 AND MORE
+• Automatic backup: your notebooks are backed up to your own iCloud or to a folder you choose (Google Drive, Dropbox, OneDrive…), so your notes survive even if your iPad breaks
 • Sticky notes: type or handwrite, move and resize
 • Take a photo or add one from your library, then write on it
 • Back up your whole library as a single file to Files or iCloud Drive
-• Light and dark themes
-• English, Turkish and German interface
+• Light, dark or system theme: write on white pages even when your iPad is in dark mode
+• Available in English, Turkish, German, Spanish, French, Italian and Portuguese
 
 OPEN SOURCE
 OpenLeaf's source code is public on GitHub (GPL-3.0). Report bugs, suggest ideas or contribute: github.com/biggypanda/openleaf
@@ -193,7 +195,7 @@ Komplett kostenlos: keine Werbung, kein Abo, keine gesperrten Funktionen. Du bra
 OpenLeaf ist eine Open-Source-Notiz-App für Schüler und Studierende. Schreib Mitschriften mit dem Apple Pencil, mach Notizen direkt auf Folien und PDFs und ordne alles in Ordnern.
 
 NOTIZBÜCHER
-• 8 Einbände, liniertes, kariertes, gepunktetes oder leeres Papier
+• 14 Einbände (6 davon festlich), liniertes, kariertes, gepunktetes oder leeres Papier
 • Fertige Vorlagen: Cornell, Millimeterpapier, Notenlinien, Wochenplan, Stundenplan, Themenliste, Prüfungsanalyse
 • Formate A4, A5 und US-Letter
 • Ordner, Favoriten, Papierkorb, Suche und Sortierung
@@ -215,11 +217,12 @@ SEITEN UND PDF
 • Mit zwei Fingern zoomen, scharfes Papier in jeder Zoomstufe
 
 UND MEHR
+• Automatisches Backup: Deine Notizbücher werden in deiner eigenen iCloud oder in einem Ordner deiner Wahl gesichert (Google Drive, Dropbox, OneDrive …), damit deine Notizen erhalten bleiben, selbst wenn dein iPad kaputtgeht
 • Haftnotizen: tippen oder handschriftlich, verschieben und skalieren
 • Foto aufnehmen oder aus der Mediathek einfügen und darauf schreiben
 • Ganze Bibliothek als eine Datei in Dateien oder iCloud Drive sichern
-• Helles und dunkles Design
-• Oberfläche auf Deutsch, Englisch und Türkisch
+• Helles, dunkles oder System-Design: Schreibe auf weißen Seiten, auch wenn dein iPad im Dunkelmodus ist
+• Auf Deutsch, Englisch, Türkisch, Spanisch, Französisch, Italienisch und Portugiesisch
 
 OPEN SOURCE
 Der Quellcode von OpenLeaf ist öffentlich auf GitHub (GPL-3.0). Melde Fehler, schlag Ideen vor oder mach mit: github.com/biggypanda/openleaf
@@ -331,7 +334,7 @@ Totalmente gratis: sin anuncios, sin suscripción y sin funciones bloqueadas. No
 OpenLeaf es una app de notas de código abierto hecha para estudiantes. Toma apuntes en clase con el Apple Pencil, escribe sobre diapositivas y PDF, y organízalo todo en carpetas.
 
 CUADERNOS
-• 8 portadas con papel rayado, cuadriculado, punteado o en blanco
+• 14 portadas (6 navideñas) con papel rayado, cuadriculado, punteado o en blanco
 • Plantillas listas: Cornell, milimetrado, pentagrama, plan semanal, horario, seguimiento de temas, análisis de simulacro
 • Tamaños A4, A5 y Carta
 • Carpetas, favoritos, papelera, búsqueda y orden
@@ -357,7 +360,7 @@ Y MÁS
 • Notas adhesivas: escribe con teclado o a mano, muévelas y cambia su tamaño
 • Haz una foto o añade una de tu fototeca y escribe encima
 • Guarda toda tu biblioteca en un solo archivo en Archivos o iCloud Drive
-• Tema claro y oscuro
+• Tema claro, oscuro o del sistema: escribe en páginas blancas aunque tu iPad esté en modo oscuro
 • En español, inglés, turco, alemán, francés, italiano y portugués
 
 CÓDIGO ABIERTO
@@ -400,7 +403,7 @@ Entièrement gratuit : pas de pub, pas d’abonnement, aucune fonction verrouill
 OpenLeaf est une app de prise de notes open source conçue pour les étudiants. Prenez vos cours à l’Apple Pencil, écrivez sur les diapos et les PDF, et rangez tout dans des dossiers.
 
 CARNETS
-• 8 couvertures, papier ligné, quadrillé, pointillé ou vierge
+• 14 couvertures (dont 6 pour les fêtes), papier ligné, quadrillé, pointillé ou vierge
 • Modèles prêts à l’emploi : Cornell, millimétré, portée musicale, planning hebdo, emploi du temps, suivi des sujets, bilan d’examen blanc
 • Formats A4, A5 et Lettre US
 • Dossiers, favoris, corbeille, recherche et tri
@@ -426,7 +429,7 @@ ET AUSSI
 • Notes adhésives : au clavier ou à la main, à déplacer et redimensionner
 • Prenez une photo ou ajoutez-en une depuis votre photothèque, puis écrivez dessus
 • Sauvegardez toute votre bibliothèque dans un seul fichier dans Fichiers ou iCloud Drive
-• Thème clair et sombre
+• Thème clair, sombre ou du système : écrivez sur des pages blanches même si votre iPad est en mode sombre
 • En français, anglais, turc, allemand, espagnol, italien et portugais
 
 OPEN SOURCE
@@ -469,7 +472,7 @@ Completamente gratis: niente pubblicità, niente abbonamento, nessuna funzione b
 OpenLeaf è un’app per appunti open source pensata per gli studenti. Prendi appunti a lezione con Apple Pencil, scrivi su slide e PDF e organizza tutto in cartelle.
 
 QUADERNI
-• 8 copertine con carta a righe, a quadretti, a puntini o bianca
+• 14 copertine (6 natalizie) con carta a righe, a quadretti, a puntini o bianca
 • Modelli pronti: Cornell, millimetrata, pentagramma, piano settimanale, orario, monitoraggio argomenti, analisi della simulazione
 • Formati A4, A5 e Letter
 • Cartelle, preferiti, cestino, ricerca e ordinamento
@@ -495,7 +498,7 @@ E ANCORA
 • Post-it: scrivi con la tastiera o a mano, spostali e ridimensionali
 • Scatta una foto o aggiungine una dalla libreria, poi scrivici sopra
 • Salva tutta la libreria in un unico file in File o su iCloud Drive
-• Tema chiaro e scuro
+• Tema chiaro, scuro o di sistema: scrivi su pagine bianche anche se il tuo iPad è in modalità scura
 • In italiano, inglese, turco, tedesco, spagnolo, francese e portoghese
 
 OPEN SOURCE
@@ -538,7 +541,7 @@ Totalmente grátis: sem anúncios, sem assinatura e sem recursos bloqueados. Voc
 O OpenLeaf é um app de anotações de código aberto feito para estudantes. Anote as aulas com o Apple Pencil, escreva sobre slides e PDFs e organize tudo em pastas.
 
 CADERNOS
-• 8 capas com papel pautado, quadriculado, pontilhado ou em branco
+• 14 capas (6 de fim de ano) com papel pautado, quadriculado, pontilhado ou em branco
 • Modelos prontos: Cornell, milimetrado, pauta musical, agenda semanal, horário de aulas, controle de assuntos, análise de simulado
 • Tamanhos A4, A5 e Carta
 • Pastas, favoritos, lixeira, busca e ordenação
@@ -564,7 +567,7 @@ E MAIS
 • Notas adesivas: digite ou escreva à mão, mova e redimensione
 • Tire uma foto ou adicione uma da fototeca e escreva em cima
 • Salve toda a sua biblioteca num único arquivo no Arquivos ou no iCloud Drive
-• Tema claro e escuro
+• Tema claro, escuro ou do sistema: escreva em páginas brancas mesmo com o iPad no modo escuro
 • Em português, inglês, turco, alemão, espanhol, francês e italiano
 
 CÓDIGO ABERTO
