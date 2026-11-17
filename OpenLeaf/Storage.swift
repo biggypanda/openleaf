@@ -151,7 +151,11 @@ final class NotebookStore: @unchecked Sendable {
     // MARK: Ek dosyalar
 
     func writeFile(_ data: Data, to url: URL) {
-        queue.async { self.attempt { try data.write(to: url, options: .atomic) } }
+        queue.async {
+            // Defter bu arada silindiyse (klasörü yok) yazma; bu bir kayıt hatası değil
+            guard FileManager.default.fileExists(atPath: url.deletingLastPathComponent().path) else { return }
+            self.attempt { try data.write(to: url, options: .atomic) }
+        }
     }
 
     func readText(_ id: UUID) -> String {
