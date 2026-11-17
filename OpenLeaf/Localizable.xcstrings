@@ -6465,6 +6465,52 @@
         }
       }
     },
+    "Kaydedilemedi": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speichern fehlgeschlagen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't Save"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo guardar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrement impossible"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossibile salvare"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível salvar"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaydedilemedi"
+          }
+        }
+      }
+    },
     "Kaydet": {
       "localizations": {
         "de": {
@@ -11153,6 +11199,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sizinle paylaşılan belgeler burada görünür."
+          }
+        }
+      }
+    },
+    "Son değişiklikler kaydedilemedi. iPad'in depolama alanı dolmuş olabilir; biraz yer açıp tekrar dene.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine letzten Änderungen konnten nicht gespeichert werden. Der Speicher deines iPad ist möglicherweise voll. Gib etwas Speicher frei und versuche es erneut."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your latest changes couldn't be saved. Your iPad's storage may be full; free up some space and try again."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron guardar los últimos cambios. Es posible que el almacenamiento del iPad esté lleno; libera espacio e inténtalo de nuevo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos dernières modifications n'ont pas pu être enregistrées. Le stockage de votre iPad est peut-être plein ; libérez de l'espace et réessayez."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non è stato possibile salvare le ultime modifiche. Lo spazio di archiviazione dell'iPad potrebbe essere pieno; libera un po' di spazio e riprova."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível salvar as últimas alterações. O armazenamento do iPad pode estar cheio; libere espaço e tente novamente."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Son değişiklikler kaydedilemedi. iPad'in depolama alanı dolmuş olabilir; biraz yer açıp tekrar dene."
           }
         }
       }

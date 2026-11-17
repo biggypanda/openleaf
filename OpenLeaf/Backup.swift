@@ -13,6 +13,24 @@ struct LibraryBackup: Codable {
     var files: [String: Data]
 
     static let fileExtension = "openleafyedek"
+
+    enum CodingKeys: String, CodingKey { case version, created, notebooks, folders, files }
+
+    init(notebooks: [Notebook], folders: [Folder]? = nil, files: [String: Data]) {
+        self.notebooks = notebooks
+        self.folders = folders
+        self.files = files
+    }
+
+    /// Daha yeni sürümün yedeğindeki tanınmayan bir defter bütün yedeği okunamaz yapmasın; o defter atlanır.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        version = try c.decodeIfPresent(Int.self, forKey: .version) ?? 1
+        created = try c.decodeIfPresent(Date.self, forKey: .created) ?? Date()
+        notebooks = try c.decode(LossyList<Notebook>.self, forKey: .notebooks).items
+        folders = (try? c.decodeIfPresent(LossyList<Folder>.self, forKey: .folders))?.items
+        files = try c.decode([String: Data].self, forKey: .files)
+    }
 }
 
 extension Library {

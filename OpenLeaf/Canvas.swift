@@ -698,7 +698,11 @@ final class OpenLeafCanvas: PKCanvasView {
             let old = mapping
             mapping = newMap
             if !drawing.strokes.isEmpty {
+                // Yerleşim değişikliği kullanıcının çizimi değil: kayıt ve "değişti" tarihi tetiklenmesin
+                isApplyingLayout = true
                 drawing = drawing.transformed(using: old.inverted().concatenating(newMap))
+                isApplyingLayout = false
+                scheduleRenderRefresh()
             }
             paper.isWhiteboard = isWhiteboard
             paper.style = style
@@ -721,6 +725,33 @@ final class OpenLeafCanvas: PKCanvasView {
     func load(_ data: Data) {
         let d = (try? PKDrawing(data: data)) ?? PKDrawing()
         drawing = d.transformed(using: mapping)
+        if !d.strokes.isEmpty { scheduleRenderRefresh() }
+    }
+
+    /// Düzen kaynaklı çizim atamasında kaydı bastırmak için (bkz. Coordinator)
+    private(set) var isApplyingLayout = false
+    private var renderRefresh: DispatchWorkItem?
+
+    /// Açılış geçişi sürerken yapılan atamalarda PencilKit'in ilk çizimi yarım kalabiliyor
+    /// (çizgilerin son kısımları görünmüyor). Yerleşim oturduktan sonra çizimi bir kez yeniden atayıp
+    /// tam olarak yeniden çizdirir. Kullanıcı değişikliği sayılmaz.
+    private func scheduleRenderRefresh() {
+        renderRefresh?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            guard let self, self.window != nil, !self.drawing.strokes.isEmpty else { return }
+            // Kullanıcı tam o an çiziyorsa çizgisini kesme; biraz sonra yeniden dene
+            if self.drawingGestureRecognizer.state != .possible { self.scheduleRenderRefresh(); return }
+            let current = self.drawing
+            // Geri alma geçmişine adım eklenmesin
+            self.undoManager?.disableUndoRegistration()
+            self.isApplyingLayout = true
+            self.drawing = PKDrawing()
+            self.drawing = current
+            self.isApplyingLayout = false
+            self.undoManager?.enableUndoRegistration()
+        }
+        renderRefresh = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6, execute: item)
     }
 
     var canonicalData: Data { drawing.transformed(using: mapping.inverted()).dataRepresentation() }
@@ -959,7 +990,7 @@ struct CanvasRepresentable: UIViewRepresentable {
         func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
             // Geri al adımı çizgi bitince kaydedilir; durumu bir tur sonra oku
             DispatchQueue.main.async { [weak self] in self?.parent.controller.refresh() }
-            guard loaded, !suppress, let c = canvasView as? OpenLeafCanvas, let pid = pageID else { return }
+            guard loaded, !suppress, let c = canvasView as? OpenLeafCanvas, !c.isApplyingLayout, let pid = pageID else { return }
             work?.cancel()
             let item = DispatchWorkItem { [weak self, weak c] in
                 guard let self, let c else { return }

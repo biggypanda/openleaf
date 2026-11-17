@@ -126,7 +126,8 @@ enum Y {
     static func serif(_ style: Font.TextStyle, _ weight: Font.Weight = .semibold) -> Font {
         .system(style, design: .serif).weight(weight)
     }
-    static let eyebrow = Font.system(size: 11.5, weight: .semibold)
+    // Metin boyutu ayarına uyar (Dynamic Type)
+    static let eyebrow = Font.caption2.weight(.semibold)
 }
 
 /// Yüzen yüzeyler için cam: iOS 26+ Liquid Glass, öncesinde sistem malzemesi.

@@ -204,7 +204,7 @@ struct LibraryView: View {
         List(selection: $selection) {
             HStack(spacing: 10) {
                 LogoMark(size: 30)
-                Text("OpenLeaf").font(.system(size: 24, weight: .semibold, design: .serif))
+                Text("OpenLeaf").font(.system(.title2, design: .serif, weight: .semibold))
             }
             .padding(.vertical, 6)
             .listRowBackground(Color.clear)
@@ -260,7 +260,9 @@ struct LibraryView: View {
                     Text(!backup.enabled ? String(localized: "Bu iPad'de kayıtlı")
                          : backup.destination == .icloud ? String(localized: "iPad ve iCloud'da")
                          : String(localized: "iPad ve klasörde"))
-                        .font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
+                        .font(.subheadline.weight(.semibold)).lineLimit(2).minimumScaleFactor(0.9)
+                        // Uzun çevirilerde (fr/it/es) kesilmek yerine ikinci satıra insin
+                        .fixedSize(horizontal: false, vertical: true)
                     Text("\(library.items(for: .belgeler).count) belge").font(.caption).foregroundStyle(Y.ink3)
                 }
                 Spacer()
