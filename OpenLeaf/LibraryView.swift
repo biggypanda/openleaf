@@ -265,7 +265,8 @@ struct LibraryView: View {
                         .fixedSize(horizontal: false, vertical: true)
                     Text("\(library.items(for: .belgeler).count) belge").font(.caption).foregroundStyle(Y.ink3)
                 }
-                Spacer()
+                // Boş alanın tamamını yazı alsın; sığıyorsa tek satırda kalsın
+                .frame(maxWidth: .infinity, alignment: .leading)
                 Menu {
                     Button { showAutoBackup = true } label: {
                         Label("Otomatik yedek…", systemImage: "arrow.triangle.2.circlepath")
