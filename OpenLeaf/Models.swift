@@ -3,7 +3,13 @@ import Observation
 
 enum CoverStyle: String, Codable, CaseIterable, Identifiable {
     case ketenYesil, keten, ketenLacivert, deri, kraft, tas, kagit, bordo
+    // Yılbaşı kapakları
+    case ekose, karTanesi, camOrmani, kraftYildiz, altinPuantiye, sekerKamisi
     var id: String { rawValue }
+
+    static let festive: [CoverStyle] = [.ekose, .karTanesi, .camOrmani, .kraftYildiz, .altinPuantiye, .sekerKamisi]
+    static var classic: [CoverStyle] { allCases.filter { !festive.contains($0) } }
+    var isFestive: Bool { Self.festive.contains(self) }
 
     var name: String {
         switch self {
@@ -15,6 +21,12 @@ enum CoverStyle: String, Codable, CaseIterable, Identifiable {
         case .tas: String(localized: "Taş")
         case .kagit: String(localized: "Kâğıt")
         case .bordo: String(localized: "Bordo")
+        case .ekose: String(localized: "Ekose")
+        case .karTanesi: String(localized: "Kar tanesi")
+        case .camOrmani: String(localized: "Çam ormanı")
+        case .kraftYildiz: String(localized: "Kraft yıldız")
+        case .altinPuantiye: String(localized: "Altın puantiye")
+        case .sekerKamisi: String(localized: "Şeker kamışı")
         }
     }
 
@@ -29,10 +41,16 @@ enum CoverStyle: String, Codable, CaseIterable, Identifiable {
         case .tas: (0x8F918A, 0x75776F)
         case .kagit: (0xF7F3EA, 0xEAE4D6)
         case .bordo: (0x7A2E3A, 0x5A1F2A)
+        case .ekose: (0xA3262E, 0x8A1F27)
+        case .karTanesi: (0x26385F, 0x1C2A4A)
+        case .camOrmani: (0x1F4535, 0x16342A)
+        case .kraftYildiz: (0xC49A6C, 0xAD8357)
+        case .altinPuantiye: (0x8E2430, 0x761C27)
+        case .sekerKamisi: (0xF7F3EA, 0xEDE6D6)
         }
     }
 
-    var isLight: Bool { [.keten, .kraft, .kagit].contains(self) }
+    var isLight: Bool { [.keten, .kraft, .kagit, .kraftYildiz, .sekerKamisi].contains(self) }
     var linen: Bool { [.ketenYesil, .keten, .ketenLacivert].contains(self) }
 }
 
@@ -221,6 +239,8 @@ final class Library {
     @ObservationIgnored private var drawingCache: [String: Data] = [:]
     @ObservationIgnored private var textCache: [UUID: String] = [:]
     @ObservationIgnored private var thumbWork: [UUID: DispatchWorkItem] = [:]
+    /// Kütüphanede kalıcı bir değişiklik olunca çağrılır (otomatik yedek bunu dinler)
+    @ObservationIgnored var onChange: (() -> Void)?
 
     init(store: NotebookStore = NotebookStore()) {
         self.store = store
@@ -317,7 +337,10 @@ final class Library {
         update(notebook) { $0.folder = folder }
     }
 
-    func saveFolders() { store.writeFolders(folders) }
+    func saveFolders() {
+        store.writeFolders(folders)
+        onChange?()
+    }
 
     private static func cleanName(_ s: String) -> String {
         let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -345,6 +368,8 @@ final class Library {
         drawingCache = drawingCache.filter { !$0.key.hasPrefix(id.uuidString) }
         textCache[id] = nil
         store.deleteDir(id)
+        // Yedekten de silinsin: yedek yalnızca bu listedeki defterleri siler
+        DeletedNotebooks.add(id)
         save()
     }
 
@@ -469,7 +494,10 @@ final class Library {
 
     // MARK: Kayıt
 
-    func save() { store.writeIndex(notebooks) }
+    func save() {
+        store.writeIndex(notebooks)
+        onChange?()
+    }
 
     /// Uygulama arka plana geçerken bekleyen tüm yazmaları bitirir.
     func flush() {

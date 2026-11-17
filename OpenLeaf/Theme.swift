@@ -20,6 +20,70 @@ extension Color {
     init(hex: UInt32, alpha: Double = 1) { self.init(uiColor: UIColor(hex: hex, alpha: alpha)) }
 }
 
+/// Üst çubuklardaki güneş/ay düğmesi: dokununca üç tema seçeneği açılır.
+struct ThemeMenuButton: View {
+    @AppStorage(AppTheme.storageKey) private var theme: AppTheme = .system
+    var size: CGFloat = 40
+
+    var body: some View {
+        Menu {
+            Picker("Tema", selection: $theme) {
+                ForEach(AppTheme.allCases) { t in
+                    Label(t.title, systemImage: t.symbol).tag(t)
+                }
+            }
+        } label: {
+            Image(systemName: theme.symbol)
+                .font(.system(size: 17))
+                .frame(width: size, height: size)
+                .contentShape(Rectangle())
+        }
+        .foregroundStyle(Y.ink2)
+        .accessibilityLabel("Tema")
+        .help("Tema")
+    }
+}
+
+/// Kullanıcının seçtiği tema. Pencerenin tamamına (PencilKit tuvali ve sayfalar dahil) uygulanır.
+enum AppTheme: String, CaseIterable, Identifiable {
+    case system, light, dark
+    static let storageKey = "gorunum.tema"
+    var id: String { rawValue }
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .system: "Sistemle aynı"
+        case .light: "Açık tema"
+        case .dark: "Koyu tema"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .system: "circle.lefthalf.filled"
+        case .light: "sun.max"
+        case .dark: "moon"
+        }
+    }
+
+    var style: UIUserInterfaceStyle {
+        switch self {
+        case .system: .unspecified
+        case .light: .light
+        case .dark: .dark
+        }
+    }
+
+    /// Açık tüm pencerelere uygular. `preferredColorScheme(nil)` sistem temasına her zaman geri dönmediği için
+    /// UIKit üzerinden yapılıyor.
+    func apply() {
+        for scene in UIApplication.shared.connectedScenes {
+            guard let scene = scene as? UIWindowScene else { continue }
+            for window in scene.windows { window.overrideUserInterfaceStyle = style }
+        }
+    }
+}
+
 enum Y {
     // Yüzeyler
     static let bg = Color(uiColor: .dyn(0xEFEBE2, 0x141411))
@@ -63,42 +127,6 @@ enum Y {
         .system(style, design: .serif).weight(weight)
     }
     static let eyebrow = Font.system(size: 11.5, weight: .semibold)
-}
-
-/// Kalem renkleri (açık tema değerleri; PencilKit koyu temada kendisi uyarlar).
-enum PenColor: Int, CaseIterable, Codable {
-    case ink, indigo, green, wine, ochre
-
-    var ui: UIColor {
-        switch self {
-        case .ink: UIColor(hex: 0x1E2321)
-        case .indigo: UIColor(hex: 0x2E4A7A)
-        case .green: UIColor(hex: 0x2F6B4F)
-        case .wine: UIColor(hex: 0x7A2E42)
-        case .ochre: UIColor(hex: 0xB98A2E)
-        }
-    }
-
-    /// Arayüzde gösterilen renk (koyu temada açık eşdeğeri)
-    var swatch: Color {
-        switch self {
-        case .ink: Color(uiColor: .dyn(0x1E2321, 0xEDE8DB))
-        case .indigo: Color(uiColor: .dyn(0x2E4A7A, 0x8FAEE0))
-        case .green: Color(uiColor: .dyn(0x2F6B4F, 0x8CC9A5))
-        case .wine: Color(uiColor: .dyn(0x7A2E42, 0xE0899F))
-        case .ochre: Color(uiColor: .dyn(0xB98A2E, 0xE3BB5A))
-        }
-    }
-
-    var name: String {
-        switch self {
-        case .ink: String(localized: "Mürekkep")
-        case .indigo: String(localized: "Çivit")
-        case .green: String(localized: "Yeşil")
-        case .wine: String(localized: "Şarap")
-        case .ochre: String(localized: "Hardal")
-        }
-    }
 }
 
 /// Yüzen yüzeyler için cam: iOS 26+ Liquid Glass, öncesinde sistem malzemesi.

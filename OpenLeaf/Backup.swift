@@ -49,14 +49,9 @@ extension Library {
               let backup = try? PropertyListDecoder().decode(LibraryBackup.self, from: data) else {
             throw BackupError.unreadable
         }
-        // Eksik klasörleri ekle
-        let knownFolders = Set(folders.map(\.id))
-        for f in backup.folders ?? [] where !knownFolders.contains(f.id) { folders.append(f) }
-        saveFolders()
         let existing = Set(notebooks.map(\.id))
-        var added = 0, skipped = 0
-        for nb in backup.notebooks {
-            if existing.contains(nb.id) { skipped += 1; continue }
+        let fresh = backup.notebooks.filter { !existing.contains($0.id) }
+        for nb in fresh {
             store.createDir(nb.id)
             let prefix = nb.id.uuidString + "/"
             for (path, content) in backup.files where path.hasPrefix(prefix) {
@@ -65,13 +60,34 @@ extension Library {
                 guard !name.isEmpty, !name.contains("/"), !name.contains("..") else { continue }
                 store.writeFile(content, to: store.dir(nb.id).appendingPathComponent(name))
             }
-            notebooks.append(nb)
-            added += 1
         }
-        save()
         flush()
-        backup.notebooks.filter { !existing.contains($0.id) }.forEach { scheduleThumbnail($0.id, delay: 0.3) }
-        return (added, skipped)
+        let added = addMissing(fresh, folders: backup.folders ?? [])
+        return (added, backup.notebooks.count - fresh.count)
+    }
+
+    /// Bu iPad'de olmayan defterleri ve klasörleri kütüphaneye ekler; var olanlara dokunmaz.
+    /// Defterlerin dosyaları önceden klasörlerine konmuş olmalı. Eklenen defter sayısını döner.
+    @discardableResult
+    func addMissing(_ list: [Notebook], folders incoming: [Folder]) -> Int {
+        let knownFolders = Set(folders.map(\.id))
+        let newFolders = incoming.filter { !knownFolders.contains($0.id) }
+        if !newFolders.isEmpty {
+            folders.append(contentsOf: newFolders)
+            saveFolders()
+        }
+        let existing = Set(notebooks.map(\.id))
+        let fresh = list.filter { !existing.contains($0.id) }
+        guard !fresh.isEmpty else { return 0 }
+        for nb in fresh {
+            store.createDir(nb.id)
+            notebooks.append(nb)
+        }
+        // Geri gelen defter artık "silinmiş" sayılmaz
+        DeletedNotebooks.remove(fresh.map(\.id))
+        save()
+        fresh.forEach { scheduleThumbnail($0.id, delay: 0.3) }
+        return fresh.count
     }
 }
 

@@ -3,19 +3,43 @@
   "strings": {
     "CFBundleDisplayName": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenLeaf"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "OpenLeaf"
           }
         },
-        "tr": {
+        "es": {
           "stringUnit": {
             "state": "translated",
             "value": "OpenLeaf"
           }
         },
-        "de": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenLeaf"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenLeaf"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenLeaf"
+          }
+        },
+        "tr": {
           "stringUnit": {
             "state": "translated",
             "value": "OpenLeaf"
@@ -25,19 +49,43 @@
     },
     "CFBundleName": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenLeaf"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "OpenLeaf"
           }
         },
-        "tr": {
+        "es": {
           "stringUnit": {
             "state": "translated",
             "value": "OpenLeaf"
           }
         },
-        "de": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenLeaf"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenLeaf"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenLeaf"
+          }
+        },
+        "tr": {
           "stringUnit": {
             "state": "translated",
             "value": "OpenLeaf"
@@ -47,22 +95,46 @@
     },
     "NSCameraUsageDescription": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Um im Unterricht ein Foto der Tafel oder eines Buches aufzunehmen und es zu deiner Seite hinzuzufügen."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "To take a photo of the board or a book in class and add it to your page."
           }
         },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Para hacer una foto de la pizarra o de un libro en clase y añadirla a tu página."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour prendre en photo le tableau ou un livre en cours et l’ajouter à votre page."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Per scattare una foto della lavagna o di un libro a lezione e aggiungerla alla tua pagina."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Para tirar uma foto do quadro ou de um livro na aula e adicioná-la à sua página."
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
             "value": "Derste tahtanın ya da kitabın fotoğrafını çekip sayfaya eklemek için."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Um im Unterricht ein Foto der Tafel oder eines Buches aufzunehmen und es zu deiner Seite hinzuzufügen."
           }
         }
       }
