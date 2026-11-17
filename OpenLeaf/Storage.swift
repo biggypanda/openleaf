@@ -16,7 +16,8 @@ import Foundation
 /// Değişen durumu yoktur (kök klasör ve kuyruk sabit), bu yüzden iş parçacıkları arasında paylaşılabilir.
 final class NotebookStore: @unchecked Sendable {
     let root: URL
-    private let queue = DispatchQueue(label: "openleaf.depo", qos: .utility)
+    // Okumalar ana iş parçacığından eşzamanlı bekleniyor; düşük öncelik takılmaya yol açmasın
+    private let queue = DispatchQueue(label: "openleaf.depo", qos: .userInitiated)
     private let fm = FileManager.default
 
     init(root: URL? = nil) {
@@ -44,11 +45,27 @@ final class NotebookStore: @unchecked Sendable {
 
     // MARK: Dizin
 
+    /// Dizin dosyası yoksa nil döner. Dosya var ama okunamıyorsa ya da bazı defterler çözülemiyorsa
+    /// özgün dosya kenara kopyalanır (sonraki kayıt üstüne yazsa da kaybolmasın) ve okunabilenler döner.
     func loadIndex() -> [Notebook]? {
         queue.sync {
             guard let data = try? Data(contentsOf: indexURL) else { return nil }
-            return try? JSONDecoder().decode([Notebook].self, from: data)
+            guard let list = try? JSONDecoder().decode(LossyList<Notebook>.self, from: data) else {
+                keepAside(data)
+                return []
+            }
+            if list.skipped > 0 { keepAside(data) }
+            return list.items
         }
+    }
+
+    /// Okunamayan dizinin kopyası: index-kurtarma-<zaman>.json
+    private func keepAside(_ data: Data) {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyyMMdd-HHmmss"
+        let url = root.appendingPathComponent("index-kurtarma-\(f.string(from: Date())).json")
+        attempt { try data.write(to: url, options: .atomic) }
     }
 
     func writeIndex(_ list: [Notebook]) {
@@ -56,7 +73,18 @@ final class NotebookStore: @unchecked Sendable {
         queue.async {
             let enc = JSONEncoder()
             enc.outputFormatting = [.sortedKeys]
-            if let data = try? enc.encode(list) { try? data.write(to: url, options: .atomic) }
+            self.attempt { try enc.encode(list).write(to: url, options: .atomic) }
+        }
+    }
+
+    // MARK: Yazma hatası
+
+    /// Bir dosya yazılamadığında (ör. disk dolu) yayınlanır; arayüz kullanıcıyı uyarır.
+    static let writeFailed = Notification.Name("openleaf.yazmaHatasi")
+
+    private func attempt(_ work: () throws -> Void) {
+        do { try work() } catch {
+            NotificationCenter.default.post(name: Self.writeFailed, object: nil)
         }
     }
 
@@ -65,14 +93,14 @@ final class NotebookStore: @unchecked Sendable {
     func loadFolders() -> [Folder] {
         queue.sync {
             guard let data = try? Data(contentsOf: foldersURL) else { return [] }
-            return (try? JSONDecoder().decode([Folder].self, from: data)) ?? []
+            return (try? JSONDecoder().decode(LossyList<Folder>.self, from: data))?.items ?? []
         }
     }
 
     func writeFolders(_ list: [Folder]) {
         let url = foldersURL
         queue.async {
-            if let data = try? JSONEncoder().encode(list) { try? data.write(to: url, options: .atomic) }
+            self.attempt { try JSONEncoder().encode(list).write(to: url, options: .atomic) }
         }
     }
 
@@ -111,7 +139,7 @@ final class NotebookStore: @unchecked Sendable {
         queue.async {
             try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             if data.isEmpty { try? FileManager.default.removeItem(at: url) }
-            else { try? data.write(to: url, options: .atomic) }
+            else { self.attempt { try data.write(to: url, options: .atomic) } }
         }
     }
 
@@ -123,7 +151,7 @@ final class NotebookStore: @unchecked Sendable {
     // MARK: Ek dosyalar
 
     func writeFile(_ data: Data, to url: URL) {
-        queue.async { try? data.write(to: url, options: .atomic) }
+        queue.async { self.attempt { try data.write(to: url, options: .atomic) } }
     }
 
     func readText(_ id: UUID) -> String {

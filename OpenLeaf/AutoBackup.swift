@@ -205,6 +205,10 @@ final class AutoBackup {
             guard let data = target.bookmark,
                   let url = try? URL(resolvingBookmarkData: data, bookmarkDataIsStale: &stale),
                   url.startAccessingSecurityScopedResource() else { return nil }
+            // Klasör taşınmış ya da sağlayıcı güncellenmiş: imi yenile ki sonraki açılışlarda da çözülsün
+            if stale, let fresh = try? url.bookmarkData() {
+                UserDefaults.standard.set(fresh, forKey: Key.bookmark)
+            }
             // Klasör yerinde mi (USB çıkarılmış, sunucu kapalı, uygulama silinmiş olabilir)
             guard (try? url.checkResourceIsReachable()) == true else {
                 url.stopAccessingSecurityScopedResource()
@@ -486,10 +490,11 @@ final class AutoBackup {
             return try? BackupEngine.readIndex(at: root.url.appendingPathComponent(folder, isDirectory: true),
                                                coordinated: root.coordinated)
         }
-        guard let raw, let list = try? JSONDecoder().decode([Notebook].self, from: raw.index) else {
+        // Tanınmayan tek bir defter (daha yeni sürümün yedeği) bütün yedeği okunamaz yapmasın
+        guard let raw, let list = (try? JSONDecoder().decode(LossyList<Notebook>.self, from: raw.index))?.items else {
             throw BackupError.unreadable
         }
-        let folders = raw.folders.flatMap { try? JSONDecoder().decode([Folder].self, from: $0) } ?? []
+        let folders = raw.folders.flatMap { try? JSONDecoder().decode(LossyList<Folder>.self, from: $0) }?.items ?? []
 
         let existing = Set(library.notebooks.map(\.id))
         let missing = list.filter { !existing.contains($0.id) }

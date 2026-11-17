@@ -91,6 +91,7 @@ struct EraserSettings: Equatable {
 struct DocumentView: View {
     let id: UUID
     @Environment(Library.self) private var library
+    @Environment(\.scenePhase) private var scenePhase
     /// Belgeyi kapatıp kütüphaneye döner
     var onClose: () -> Void = {}
     private func dismiss() { onClose() }
@@ -244,6 +245,10 @@ struct DocumentView: View {
                 photoItem = nil
             }
         }
+        .onChange(of: scenePhase) { _, phase in
+            // Uygulama arka plana giderken bekleyen son çizgi diske yazılsın
+            if phase != .active { controller.flush() }
+        }
         .onChange(of: nb.pages.map(\.id)) { _, ids in
             // Genel görünümde sıralama/silme olunca açık sayfa kaymasın
             guard let pin = pinnedPage else { return }
@@ -310,7 +315,7 @@ struct DocumentView: View {
             Spacer(minLength: 12)
 
             VStack(spacing: 1) {
-                Text(nb.title).font(.system(size: 17, weight: .semibold, design: .serif)).lineLimit(1)
+                Text(nb.title).font(.system(.headline, design: .serif, weight: .semibold)).lineLimit(1)
                 Text(nb.kind == .whiteboard ? String(localized: "Whiteboard") : (nb.subtitle.isEmpty ? "" : nb.subtitle + " · ") + String(localized: "Sayfa \(p + 1) / \(nb.pages.count)"))
                     .font(.caption).foregroundStyle(Y.ink3).monospacedDigit()
                     .contentTransition(.numericText())

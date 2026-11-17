@@ -121,6 +121,48 @@ struct Page: Identifiable, Codable, Equatable {
     var stickyNotes: [StickyNote] { notes ?? [] }
     var pageImages: [PageImage] { images ?? [] }
     var pageTapes: [Tape] { tapes ?? [] }
+
+    init(id: UUID = UUID(), pdfPage: Int? = nil, notes: [StickyNote]? = nil, images: [PageImage]? = nil, tapes: [Tape]? = nil) {
+        self.id = id
+        self.pdfPage = pdfPage
+        self.notes = notes
+        self.images = images
+        self.tapes = tapes
+    }
+
+    enum CodingKeys: String, CodingKey { case id, pdfPage, notes, images, tapes }
+
+    /// Bilinmeyen bir not, resim ya da bant (ör. daha yeni sürümün kaydı) yalnızca o öğeyi atlatır; sayfa kaybolmaz.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        pdfPage = try? c.decodeIfPresent(Int.self, forKey: .pdfPage)
+        notes = (try? c.decodeIfPresent(LossyList<StickyNote>.self, forKey: .notes))?.items
+        images = (try? c.decodeIfPresent(LossyList<PageImage>.self, forKey: .images))?.items
+        tapes = (try? c.decodeIfPresent(LossyList<Tape>.self, forKey: .tapes))?.items
+    }
+}
+
+/// Öğeleri tek tek çözer; çözülemeyeni atlar ve sayar. Tek bozuk/bilinmeyen kayıt bütün listeyi düşürmesin diye.
+struct LossyList<Element: Decodable>: Decodable {
+    var items: [Element] = []
+    var skipped = 0
+
+    /// Her şeyi kabul eden boş tür: başarısız öğeyi atlayıp konteyneri ilerletir
+    private struct Skip: Decodable { init(from decoder: Decoder) throws {} }
+
+    init(from decoder: Decoder) throws {
+        var c = try decoder.unkeyedContainer()
+        while !c.isAtEnd {
+            if let item = try? c.decode(Element.self) {
+                items.append(item)
+            } else {
+                // Konteyner ilerlesin diye öğeyi boş bir türle tüket
+                _ = try? c.decode(Skip.self)
+                skipped += 1
+            }
+        }
+    }
 }
 
 struct Notebook: Identifiable, Codable, Equatable {
@@ -165,12 +207,13 @@ extension Notebook {
         id = try c.decode(UUID.self, forKey: .id)
         title = try c.decode(String.self, forKey: .title)
         subtitle = try c.decodeIfPresent(String.self, forKey: .subtitle) ?? ""
-        kind = try c.decodeIfPresent(DocKind.self, forKey: .kind) ?? .defter
-        cover = try c.decode(CoverStyle.self, forKey: .cover)
-        paper = try c.decode(PaperStyle.self, forKey: .paper)
-        size = try c.decodeIfPresent(PaperSize.self, forKey: .size) ?? .mektup
-        if let p = try? c.decode([Page].self, forKey: .pages) {
-            pages = p
+        // Bilinmeyen kapak, kâğıt ya da boyut (daha yeni sürümden) defteri düşürmesin; varsayılana dönsün
+        kind = (try? c.decodeIfPresent(DocKind.self, forKey: .kind)) ?? .defter
+        cover = (try? c.decode(CoverStyle.self, forKey: .cover)) ?? .ketenYesil
+        paper = (try? c.decode(PaperStyle.self, forKey: .paper)) ?? .cizgili
+        size = (try? c.decodeIfPresent(PaperSize.self, forKey: .size)) ?? .mektup
+        if let p = try? c.decode(LossyList<Page>.self, forKey: .pages), !(p.items.isEmpty && p.skipped > 0) {
+            pages = p.items
         } else {
             // Çok eski biçim: sayfalar düz veri dizisiydi (çizimler taşıma sırasında ayrıca okunur)
             pages = try c.decode([Data].self, forKey: .pages).map { _ in Page() }
@@ -435,7 +478,7 @@ final class Library {
         scheduleThumbnail(id)
     }
 
-    /// Sayfanın kopyasını hemen arkasına ekler (mürekkep, notlar, bantlar ve PDF sayfası dahil)
+    /// Sayfanın kopyasını hemen arkasına ekler (mürekkep, notlar, bantlar, resimler ve PDF sayfası dahil)
     @discardableResult
     func duplicatePage(_ id: UUID, at index: Int) -> Int? {
         guard let nb = notebooks.first(where: { $0.id == id }), nb.pages.indices.contains(index) else { return nil }
@@ -444,6 +487,8 @@ final class Library {
         copy.pdfPage = src.pdfPage
         copy.notes = src.notes?.map { n in var c = n; c.id = UUID(); return c }
         copy.tapes = src.tapes?.map { t in var c = t; c.id = UUID(); return c }
+        // Resim dosyası iki sayfa arasında paylaşılır; temizlik hiçbir sayfanın kullanmadığı dosyayı siler
+        copy.images = src.images?.map { m in var c = m; c.id = UUID(); return c }
         let data = drawing(id, src.id)
         if !data.isEmpty {
             drawingCache[key(id, copy.id)] = data
@@ -501,7 +546,8 @@ final class Library {
 
     /// Uygulama arka plana geçerken bekleyen tüm yazmaları bitirir.
     func flush() {
-        thumbWork.values.forEach { $0.perform() }
+        // Hemen çalıştır, sonra iptal et ki zamanlanmış kopyası ikinci kez çalışmasın
+        thumbWork.values.forEach { $0.perform(); $0.cancel() }
         thumbWork.removeAll()
         store.flush()
     }

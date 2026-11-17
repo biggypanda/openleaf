@@ -71,7 +71,7 @@ struct PageOverview: View {
 
             Spacer()
             VStack(spacing: 1) {
-                Text("Sayfalar").font(.system(size: 17, weight: .semibold, design: .serif))
+                Text("Sayfalar").font(.system(.headline, design: .serif, weight: .semibold))
                 Text("\(notebook.pages.count) sayfa · sıralamak için basılı tutup sürükleyin")
                     .font(.caption).foregroundStyle(Y.ink3)
             }
