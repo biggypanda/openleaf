@@ -85,12 +85,17 @@ AÇIK KAYNAK
 OpenLeaf'in kaynak kodu GitHub'da herkese açık (GPL-3.0). Hata bildirebilir, öneri yapabilir ya da katkıda bulunabilirsin: github.com/biggypanda/openleaf
 ```
 
-**Bu sürümdeki yenilikler** (1.0.3):
+**Bu sürümdeki yenilikler** (1.1):
 ```
-• Bant: yazının üstüne bant çek, dokununca altı görünsün. Kendini sınamanın en kolay yolu
-• Yeni şablonlar: Cornell, milimetrik, nota, haftalık plan, ders programı, konu takip ve deneme analizi
-• Cetvel: düz çizgiler için
-• Büyük PDF'ler artık beklemeden açılıyor
+• Tema seçimi: iPad'in koyu modda olsa bile not alırken beyaz sayfada yazabilirsin. Güneş/ay düğmesi kütüphanede ve sayfanın üstünde
+• Araç çubuğu artık sayfanın üstünde, yazan elinden uzakta. İstersen tek dokunuşla gizle, tek dokunuşla geri getir
+• Yılbaşı kapakları: ekose, kar tanesi, çam ormanı, kraft yıldız, altın puantiye ve şeker kamışı
+• Tam ekran: tek dokunuşla ekranda yalnızca sayfan kalsın
+• Otomatik yedek: defterlerin kendi iCloud'una ya da seçtiğin bir klasöre (Google Drive, Dropbox, OneDrive…) kendiliğinden yedeklenir. Kapalı gelir, açmak sana kalmış
+• Yeni iPad'de ya da yeniden kurulumda yedeğin bulunur ve geri yüklemen için sorulur
+• Kalem için istediğin rengi seç: ızgara, spektrum ya da renk kodu; sık kullandığın beş rengi kendin belirle
+• OpenLeaf artık İspanyolca, Fransızca, İtalyanca ve Portekizce de konuşuyor
+• Notların hâlâ yalnızca sende: OpenLeaf veri toplamaz
 ```
 
 ---
@@ -150,12 +155,17 @@ OPEN SOURCE
 OpenLeaf's source code is public on GitHub (GPL-3.0). Report bugs, suggest ideas or contribute: github.com/biggypanda/openleaf
 ```
 
-**What's New** (1.0.3):
+**What's New** (1.1):
 ```
-• Tape: cover parts of your notes and tap to reveal them. The easiest way to quiz yourself
-• New templates: Cornell, graph paper, music staves, weekly plan, timetable, topic tracker and mock exam review
-• Ruler for straight lines
-• Large PDFs now open without a wait
+• Theme setting: write on white pages even when your iPad is in dark mode. The sun/moon button is in the library and at the top of every page
+• The toolbar now sits at the top of the page, away from your writing hand. Hide it with one tap and bring it back with another
+• Holiday covers: tartan, snowflake, pine forest, kraft stars, gold polka dot and candy cane
+• Full screen: one tap and only your page is left on screen
+• Automatic backup: your notebooks are backed up to your own iCloud or to a folder you choose (Google Drive, Dropbox, OneDrive…). It is off until you turn it on
+• On a new iPad or after reinstalling, your backup is found and you are asked whether to restore it
+• Pick any pen color from a grid, a spectrum or a hex code, and choose your own five favorite colors
+• OpenLeaf is now available in Spanish, French, Italian and Portuguese
+• Your notes are still yours alone: OpenLeaf collects no data
 ```
 
 ---
@@ -215,12 +225,17 @@ OPEN SOURCE
 Der Quellcode von OpenLeaf ist öffentlich auf GitHub (GPL-3.0). Melde Fehler, schlag Ideen vor oder mach mit: github.com/biggypanda/openleaf
 ```
 
-**Neuerungen** (1.0.3):
+**Neuerungen** (1.1):
 ```
-• Abdeckband: Decke Teile deiner Notizen ab und tippe, um sie aufzudecken. Der einfachste Weg, dich selbst abzufragen
-• Neue Vorlagen: Cornell, Millimeterpapier, Notenlinien, Wochenplan, Stundenplan, Themenliste und Prüfungsanalyse
-• Lineal für gerade Linien
-• Große PDFs öffnen sich jetzt ohne Wartezeit
+• Erscheinungsbild wählen: Schreibe auf weißen Seiten, auch wenn dein iPad im Dunkelmodus ist. Die Sonne/Mond-Taste findest du in der Bibliothek und oben auf jeder Seite
+• Die Werkzeugleiste sitzt jetzt oben auf der Seite, weg von deiner Schreibhand. Mit einem Tipp ausblenden, mit einem Tipp zurückholen
+• Festtagscover: Schottenkaro, Schneeflocke, Tannenwald, Kraft mit Sternen, goldene Punkte und Zuckerstange
+• Vollbild: Ein Tipp und nur noch deine Seite ist zu sehen
+• Automatisches Backup: Deine Notizbücher werden in deiner eigenen iCloud oder in einem Ordner deiner Wahl gesichert (Google Drive, Dropbox, OneDrive …). Es bleibt aus, bis du es einschaltest
+• Auf einem neuen iPad oder nach einer Neuinstallation wird dein Backup gefunden und zur Wiederherstellung angeboten
+• Wähle jede beliebige Stiftfarbe aus einem Raster, einem Spektrum oder per Farbcode und lege deine fünf Lieblingsfarben selbst fest
+• OpenLeaf gibt es jetzt auch auf Spanisch, Französisch, Italienisch und Portugiesisch
+• Deine Notizen gehören weiterhin nur dir: OpenLeaf erfasst keine Daten
 ```
 
 ---
@@ -349,12 +364,16 @@ CÓDIGO ABIERTO
 El código de OpenLeaf es público en GitHub (GPL-3.0). Informa de errores, propón ideas o colabora: github.com/biggypanda/openleaf
 ```
 
-**Novedades:**
+**Novedades** (1.1):
 ```
 • OpenLeaf ya está en español
-• Elige cualquier color para el bolígrafo desde una cuadrícula, un espectro o un código hex, y decide tus cinco colores favoritos
+• Elige el aspecto: escribe en páginas blancas aunque tu iPad esté en modo oscuro. El botón de sol/luna está en la biblioteca y arriba de cada página
+• La barra de herramientas ahora está arriba de la página, lejos de la mano con la que escribes. Ocúltala con un toque y recupérala con otro
+• Portadas navideñas: tartán, copo de nieve, pinar, kraft con estrellas, lunares dorados y bastón de caramelo
+• Pantalla completa: un toque y solo queda tu página
 • Copia automática: tus cuadernos se guardan en tu propio iCloud o en una carpeta que elijas (Google Drive, Dropbox, OneDrive…). Está desactivada hasta que la actives
 • En un iPad nuevo o tras reinstalar, la app encuentra tu copia y te pregunta si quieres restaurarla
+• Elige cualquier color para el bolígrafo desde una cuadrícula, un espectro o un código hex, y decide tus cinco colores favoritos
 • Tus apuntes siguen siendo solo tuyos: OpenLeaf no recoge ningún dato
 ```
 
@@ -414,12 +433,16 @@ OPEN SOURCE
 Le code source d’OpenLeaf est public sur GitHub (GPL-3.0). Signalez un bug, proposez une idée ou contribuez : github.com/biggypanda/openleaf
 ```
 
-**Nouveautés :**
+**Nouveautés** (1.1) :
 ```
 • OpenLeaf est maintenant disponible en français
-• Choisissez n’importe quelle couleur de stylo dans une grille, un spectre ou par code hexadécimal, et définissez vos cinq couleurs favorites
+• Choix de l’apparence : écrivez sur des pages blanches même si votre iPad est en mode sombre. Le bouton soleil/lune se trouve dans la bibliothèque et en haut de chaque page
+• La barre d’outils est désormais en haut de la page, loin de la main qui écrit. Masquez-la d’un toucher, faites-la revenir d’un autre
+• Couvertures de fêtes : tartan, flocon, forêt de sapins, kraft étoilé, pois dorés et sucre d’orge
+• Plein écran : un toucher et il ne reste que votre page
 • Sauvegarde automatique : vos carnets sont enregistrés sur votre propre iCloud ou dans un dossier de votre choix (Google Drive, Dropbox, OneDrive…). Elle reste désactivée tant que vous ne l’activez pas
 • Sur un nouvel iPad ou après une réinstallation, votre sauvegarde est retrouvée et l’app vous propose de la restaurer
+• Choisissez n’importe quelle couleur de stylo dans une grille, un spectre ou par code hexadécimal, et définissez vos cinq couleurs favorites
 • Vos notes restent à vous seul : OpenLeaf ne collecte aucune donnée
 ```
 
@@ -479,12 +502,16 @@ OPEN SOURCE
 Il codice sorgente di OpenLeaf è pubblico su GitHub (GPL-3.0). Segnala bug, proponi idee o contribuisci: github.com/biggypanda/openleaf
 ```
 
-**Novità:**
+**Novità** (1.1):
 ```
 • OpenLeaf ora parla italiano
-• Scegli qualsiasi colore per la penna da una griglia, uno spettro o un codice hex, e decidi tu i tuoi cinque colori preferiti
+• Scegli l’aspetto: scrivi su pagine bianche anche se il tuo iPad è in modalità scura. Il pulsante sole/luna è nella libreria e in cima a ogni pagina
+• La barra degli strumenti ora sta in cima alla pagina, lontano dalla mano con cui scrivi. Nascondila con un tocco e riportala con un altro
+• Copertine delle feste: tartan, fiocco di neve, pineta, kraft stellato, pois dorati e bastoncino di zucchero
+• Schermo intero: un tocco e resta solo la tua pagina
 • Backup automatico: i tuoi quaderni vengono salvati sul tuo iCloud o in una cartella che scegli tu (Google Drive, Dropbox, OneDrive…). Resta spento finché non lo attivi
 • Su un nuovo iPad o dopo una reinstallazione, l’app trova il tuo backup e ti chiede se vuoi ripristinarlo
+• Scegli qualsiasi colore per la penna da una griglia, uno spettro o un codice hex, e decidi tu i tuoi cinque colori preferiti
 • I tuoi appunti restano solo tuoi: OpenLeaf non raccoglie alcun dato
 ```
 
@@ -544,11 +571,15 @@ CÓDIGO ABERTO
 O código-fonte do OpenLeaf é público no GitHub (GPL-3.0). Relate bugs, sugira ideias ou contribua: github.com/biggypanda/openleaf
 ```
 
-**Novidades:**
+**Novidades** (1.1):
 ```
 • O OpenLeaf agora está em português
-• Escolha qualquer cor de caneta numa grade, num espectro ou por código hex, e defina suas cinco cores favoritas
+• Escolha a aparência: escreva em páginas brancas mesmo com o iPad no modo escuro. O botão de sol/lua fica na biblioteca e no topo de cada página
+• A barra de ferramentas agora fica no topo da página, longe da mão que escreve. Esconda com um toque e traga de volta com outro
+• Capas de fim de ano: xadrez, floco de neve, pinheiral, kraft com estrelas, bolinhas douradas e bengala doce
+• Tela cheia: um toque e só a sua página fica na tela
 • Backup automático: seus cadernos são salvos no seu próprio iCloud ou numa pasta que você escolher (Google Drive, Dropbox, OneDrive…). Fica desativado até você ativar
 • Num iPad novo ou depois de reinstalar, o app encontra seu backup e pergunta se você quer restaurá-lo
+• Escolha qualquer cor de caneta numa grade, num espectro ou por código hex, e defina suas cinco cores favoritas
 • Suas anotações continuam só suas: o OpenLeaf não coleta nenhum dado
 ```
