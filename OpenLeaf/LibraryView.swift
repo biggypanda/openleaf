@@ -34,6 +34,8 @@ struct LibraryView: View {
     }
     @State private var search = ""
     @State private var openDoc: OpenDoc?
+    /// Menüden "PDF olarak paylaş" seçilince hazırlanan dosya
+    @State private var sharing: SharedFile?
     @State private var showNew = false
     @State private var showImporter = false
     @State private var importError: String?
@@ -155,6 +157,9 @@ struct LibraryView: View {
         .onChange(of: backup.searched) { considerBackupPrompts() }
         .onChange(of: backup.found) { considerBackupPrompts() }
         .onChange(of: backup.iCloudAvailable) { considerBackupPrompts() }
+        .sheet(item: $sharing) { file in
+            ActivityView(items: [file.url]).ignoresSafeArea()
+        }
         .sheet(isPresented: $showNew) {
             NewNotebookSheet { nb in
                 var nb = nb
@@ -237,8 +242,8 @@ struct LibraryView: View {
                         }
                     }
                     .contextMenu {
-                        Button("Yeniden adlandır", systemImage: "pencil") { askFolderName(.rename(f)) }
-                        Button("Klasörü sil", systemImage: "trash", role: .destructive) { deletingFolder = f }
+                        Button("Yeniden adlandır", systemImage: "pencil") { afterMenu { askFolderName(.rename(f)) } }
+                        Button("Klasörü sil", systemImage: "trash", role: .destructive) { afterMenu { deletingFolder = f } }
                     }
                 }
                 Button { askFolderName(.create) } label: {
@@ -467,37 +472,42 @@ struct LibraryView: View {
         }
     }
 
+    /// Bağlam menüsü kapanırken kütüphane değişirse kart, yerine dönemeden birkaç saniye havada asılı kalıyor.
+    /// Seçilen işi menünün kapanma animasyonu bittikten sonra yap.
+    private func afterMenu(_ work: @escaping () -> Void) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: work)
+    }
+
     @ViewBuilder
     private func menu(for nb: Notebook) -> some View {
         if nb.trashed {
-            Button("Geri yükle", systemImage: "arrow.uturn.backward") { library.update(nb.id) { $0.trashed = false } }
-            Button("Kalıcı olarak sil", systemImage: "trash", role: .destructive) { library.deleteForever(nb.id) }
+            Button("Geri yükle", systemImage: "arrow.uturn.backward") { afterMenu { library.update(nb.id) { $0.trashed = false } } }
+            Button("Kalıcı olarak sil", systemImage: "trash", role: .destructive) { afterMenu { library.deleteForever(nb.id) } }
         } else {
             Button(nb.favorite ? String(localized: "Favorilerden çıkar") : String(localized: "Favorilere ekle"), systemImage: nb.favorite ? "star.slash" : "star") {
-                library.update(nb.id) { $0.favorite.toggle() }
+                afterMenu { library.update(nb.id) { $0.favorite.toggle() } }
             }
-            Button("Çoğalt", systemImage: "plus.square.on.square") { library.duplicate(nb) }
+            Button("Çoğalt", systemImage: "plus.square.on.square") { afterMenu { library.duplicate(nb) } }
             Menu("Klasöre taşı", systemImage: "folder") {
                 ForEach(library.folders) { f in
                     Button(f.name, systemImage: nb.folder == f.id ? "checkmark" : "folder") {
-                        withAnimation(Y.spring) { library.move(nb.id, toFolder: f.id) }
+                        afterMenu { withAnimation(Y.spring) { library.move(nb.id, toFolder: f.id) } }
                     }
                 }
                 if nb.folder != nil {
                     Button("Klasörden çıkar", systemImage: "folder.badge.minus") {
-                        withAnimation(Y.spring) { library.move(nb.id, toFolder: nil) }
+                        afterMenu { withAnimation(Y.spring) { library.move(nb.id, toFolder: nil) } }
                     }
                 }
                 Divider()
-                Button("Yeni klasör…", systemImage: "folder.badge.plus") { askFolderName(.createAndMove(nb.id)) }
+                Button("Yeni klasör…", systemImage: "folder.badge.plus") { afterMenu { askFolderName(.createAndMove(nb.id)) } }
             }
-            ShareLink(item: NotebookPDF(notebook: nb, library: library),
-                      preview: SharePreview("\(nb.title).pdf", image: Image(systemName: "doc.richtext"))) {
-                Label("PDF olarak paylaş", systemImage: "square.and.arrow.up")
+            Button("PDF olarak paylaş", systemImage: "square.and.arrow.up") {
+                afterMenu { sharing = SharedFile(url: PDFExporter.render(nb, library: library)) }
             }
             Divider()
             Button("Çöpe taşı", systemImage: "trash", role: .destructive) {
-                withAnimation(Y.spring) { library.update(nb.id) { $0.trashed = true } }
+                afterMenu { withAnimation(Y.spring) { library.update(nb.id) { $0.trashed = true } } }
             }
         }
     }
@@ -582,4 +592,19 @@ struct DocCard: View {
             : nb.kind == .pdf ? "PDF · " + String(localized: "\(nb.pages.count) sayfa") + " · \(nb.modified.relativeText)"
             : String(localized: "\(nb.pages.count) sayfa") + " · \(nb.modified.relativeText)"
     }
+}
+
+/// Paylaşılacak hazır dosya
+struct SharedFile: Identifiable {
+    let id = UUID()
+    let url: URL
+}
+
+/// Sistem paylaşım sayfası
+struct ActivityView: UIViewControllerRepresentable {
+    let items: [Any]
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+    func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
 }
