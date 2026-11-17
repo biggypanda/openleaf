@@ -51,6 +51,7 @@ struct LibraryView: View {
     /// İlk açılış tanıtımı: yalnızca yeni kuranlara bir kez gösterilir, menüden yeniden açılabilir
     @AppStorage("tanitim.goruldu") private var onboardingSeen = false
     @State private var showOnboarding = false
+    @AppStorage(AppTheme.storageKey) private var theme: AppTheme = .system
     @State private var showAbout = false
     @AppStorage("siralama") private var sort: SortOrder = .modified
     @State private var columns = NavigationSplitViewVisibility.all
@@ -400,6 +401,14 @@ struct LibraryView: View {
         .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: "Notlarda ara")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
+                Menu {
+                    Picker("Tema", selection: $theme) {
+                        ForEach(AppTheme.allCases) { t in
+                            Label(t.title, systemImage: t.symbol).tag(t)
+                        }
+                    }
+                } label: { Image(systemName: theme.symbol) }
+                .accessibilityLabel("Tema")
                 Menu {
                     Picker("Sıralama", selection: $sort) {
                         Label("Son düzenlenen", systemImage: "clock").tag(SortOrder.modified)

@@ -116,8 +116,17 @@ struct DocumentView: View {
     @State private var ruler = false
     @State private var showToolMenu = false
     @State private var focus = false
+    /// Tam ekrana girince birkaç saniye görünen "Tam ekrandan çık" düğmesi
+    @State private var exitHint = false
+    @State private var exitHintID = 0
     /// Varsayılan: parmak çizmez (sayfayı kaydırır ve tek parmakla sayfa çevirir), yalnızca Pencil çizer
     @AppStorage("kalem.sadecePencil") private var pencilOnly = true
+    /// Araç çubuğu varsayılan olarak açık; üst çubuktaki düğmeyle gizlenip geri açılır ve tercih hatırlanır
+    // @AppStorage değişikliği withAnimation'ı taşımadığı için görünürlük @State'te tutulur, tercih ayrıca kaydedilir
+    @State private var toolbarHidden = UserDefaults.standard.bool(forKey: "aracCubugu.gizli")
+    /// Gizle/göster düğmesinin ve araç çubuğu şeridinin konumu: çubuk düğmeden çıkıp düğmeye girer gibi görünsün
+    @State private var toolbarButtonFrame: CGRect = .zero
+    @State private var topBarFrame: CGRect = .zero
     @State private var controller = CanvasController()
     @State private var tapRipple = false
     @State private var confirmDelete = false
@@ -160,7 +169,28 @@ struct DocumentView: View {
             VStack(spacing: 0) {
                 if !focus {
                     topBar(nb, page: p)
+                        .onGeometryChange(for: CGRect.self) { $0.frame(in: .named("belge")) } action: { topBarFrame = $0 }
                         .transition(.move(edge: .top).combined(with: .opacity))
+                }
+                if !focus && !toolbarHidden {
+                    // Araç çubuğu üstte: yazarken avuç içi alttaki düğmelere değmesin
+                    ToolbarCapsule(tool: $tool, color: $color, showToolMenu: $showToolMenu,
+                                   penType: $penType, penWidth: $penWidth, eraser: eraserBinding,
+                                   tapeColor: $tapeColor, tapeSize: $tapeSize, ruler: $ruler,
+                                   revealTapes: controller.revealTapes,
+                                   canUndo: controller.canUndo, canRedo: controller.canRedo,
+                                   undo: controller.undo, redo: controller.redo,
+                                   addNote: controller.addNote,
+                                   takePhoto: { showCamera = true },
+                                   pickPhoto: { showPhotos = true },
+                                   select: select)
+                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity)
+                        .background(Y.bg)
+                        .overlay(alignment: .bottom) { Rectangle().fill(Y.line2).frame(height: 1) }
+                        .zIndex(1)
+                        .transition(focus ? .move(edge: .top).combined(with: .opacity)
+                                    : .scale(scale: 0.03, anchor: toolbarAnchor).combined(with: .opacity))
                 }
                 ZStack {
                     canvas(nb, page: p)
@@ -168,21 +198,7 @@ struct DocumentView: View {
                 .clipped()
                 .ignoresSafeArea(edges: .bottom)
             }
-
-            if !focus {
-                ToolbarCapsule(tool: $tool, color: $color, showToolMenu: $showToolMenu,
-                               penType: $penType, penWidth: $penWidth, eraser: eraserBinding,
-                               tapeColor: $tapeColor, tapeSize: $tapeSize, ruler: $ruler,
-                               revealTapes: controller.revealTapes,
-                               canUndo: controller.canUndo, canRedo: controller.canRedo,
-                               undo: controller.undo, redo: controller.redo,
-                               addNote: controller.addNote,
-                               takePhoto: { showCamera = true },
-                               pickPhoto: { showPhotos = true },
-                               select: select)
-                    .padding(.bottom, 18)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
+            .coordinateSpace(.named("belge"))
 
             if focus {
                 focusHandle
@@ -194,7 +210,8 @@ struct DocumentView: View {
                     .padding(.horizontal, 16).padding(.vertical, 10)
                     .foregroundStyle(Color(hex: 0xF1ECDF))
                     .background(Color(hex: 0x2A2824).opacity(0.92), in: Capsule())
-                    .padding(.bottom, 100)
+                    .frame(maxHeight: .infinity, alignment: .top)
+                    .padding(.top, 140)
                     .transition(.scale(scale: 0.8).combined(with: .opacity))
             }
         }
@@ -314,8 +331,23 @@ struct DocumentView: View {
                 }
                 .foregroundStyle(Y.ink2)
                 .accessibilityLabel("PDF olarak paylaş")
-                iconButton("arrow.up.left.and.arrow.down.right", "Odak modu") {
-                    withAnimation(Y.springSoft) { focus = true }
+                ThemeMenuButton()
+                Button {
+                    withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) { toolbarHidden.toggle() }
+                    UserDefaults.standard.set(toolbarHidden, forKey: "aracCubugu.gizli")
+                } label: {
+                    Image(systemName: toolbarHidden ? "rectangle" : "rectangle.topthird.inset.filled")
+                        .font(.system(size: 17)).frame(width: 40, height: 40)
+                        .contentShape(Rectangle())
+                        .contentTransition(.symbolEffect(.replace))
+                }
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .named("belge")) } action: { toolbarButtonFrame = $0 }
+                .buttonStyle(.plain)
+                .foregroundStyle(toolbarHidden ? Y.ink2 : Y.accent)
+                .accessibilityLabel(toolbarHidden ? "Araç çubuğunu göster" : "Araç çubuğunu gizle")
+                .help(toolbarHidden ? "Araç çubuğunu göster" : "Araç çubuğunu gizle")
+                iconButton("arrow.up.left.and.arrow.down.right", "Tam ekran") {
+                    setFullScreen(true)
                 }
                 Button { showMore = true } label: {
                     Image(systemName: "ellipsis.circle").font(.system(size: 19))
@@ -345,6 +377,16 @@ struct DocumentView: View {
         .overlay(alignment: .bottom) { Rectangle().fill(Y.line2).frame(height: 1) }
     }
 
+    /// Araç çubuğunun büyüyüp küçüldüğü nokta: gizle/göster düğmesinin ortası, şeride göre (şeridin üstünde kalır).
+    /// Şerit animasyon sırasında ölçülmez; ölçülürse her kare başlangıç noktası değişip geçiş yeniden başlar.
+    /// Şerit üst çubuğun hemen altında, onunla aynı genişlikte ve yaklaşık 72 pt yüksekliğinde.
+    private var toolbarAnchor: UnitPoint {
+        let b = toolbarButtonFrame, bar = topBarFrame
+        let stripHeight: CGFloat = 72
+        guard bar.width > 0, b != .zero else { return .topTrailing }
+        return UnitPoint(x: (b.midX - bar.minX) / bar.width, y: (b.midY - bar.maxY) / stripHeight)
+    }
+
     private func iconButton(_ icon: String, _ label: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon).font(.system(size: 17)).frame(width: 40, height: 40)
@@ -352,21 +394,60 @@ struct DocumentView: View {
         .buttonStyle(.plain)
         .foregroundStyle(Y.ink2)
         .accessibilityLabel(label)
+        .help(label)
+    }
+
+    private func setFullScreen(_ on: Bool) {
+        withAnimation(Y.springSoft) {
+            focus = on
+            exitHint = on
+        }
+        guard on else { return }
+        // Çıkış yolu ilk anda görünsün, sonra sayfayı kapatmasın.
+        // Hızlıca çıkıp yeniden girilirse eski zamanlayıcı yeni ipucunu kapatmasın diye sayaç tutulur.
+        exitHintID += 1
+        let id = exitHintID
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+            guard id == exitHintID else { return }
+            withAnimation(.easeOut(duration: 0.4)) { exitHint = false }
+        }
     }
 
     private var focusHandle: some View {
-        HStack {
-            Button {
-                withAnimation(Y.springSoft) { focus = false }
-            } label: {
-                Capsule().fill(Y.ink3.opacity(0.5)).frame(width: 5, height: 64)
-                    .padding(.horizontal, 10).padding(.vertical, 20)
-                    .contentShape(Rectangle())
+        ZStack {
+            // Sol kenardaki kalıcı çıkış tutamacı
+            HStack {
+                Button { setFullScreen(false) } label: {
+                    Capsule().fill(Y.ink2.opacity(0.55)).frame(width: 6, height: 72)
+                        .padding(.horizontal, 5).padding(.vertical, 8)
+                        .background(Y.surface.opacity(0.85), in: Capsule())
+                        .shadow(color: .black.opacity(0.12), radius: 4, y: 1)
+                        .padding(.horizontal, 6).padding(.vertical, 20)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Tam ekrandan çık")
+                .help("Tam ekrandan çık")
+                Spacer()
             }
-            .accessibilityLabel("Odak modundan çık")
-            Spacer()
+            .frame(maxHeight: .infinity)
+
+            if exitHint {
+                VStack {
+                    Button { setFullScreen(false) } label: {
+                        Label("Tam ekrandan çık", systemImage: "arrow.down.right.and.arrow.up.left")
+                            .font(.subheadline.weight(.semibold))
+                            .padding(.horizontal, 16).padding(.vertical, 10)
+                            .foregroundStyle(Color(hex: 0xF1ECDF))
+                            .background(Color(hex: 0x2A2824).opacity(0.92), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 16)
+                    Spacer()
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
         }
-        .frame(maxHeight: .infinity)
     }
 
     // MARK: Eylemler
@@ -502,7 +583,7 @@ struct DocumentView: View {
                 Button(t.name) { select(t) }.keyboardShortcut(t.key, modifiers: [])
             }
             Button("Yeni sayfa") { addPage(after: min(page, nb.pages.count - 1)) }.keyboardShortcut("n")
-            Button("Odak modu") { withAnimation(Y.springSoft) { focus.toggle() } }.keyboardShortcut("f", modifiers: [.command, .shift])
+            Button("Tam ekran") { setFullScreen(!focus) }.keyboardShortcut("f", modifiers: [.command, .shift])
             Button("Geri al") { controller.undo() }.keyboardShortcut("z")
             Button("Yinele") { controller.redo() }.keyboardShortcut("z", modifiers: [.command, .shift])
             Button("Kütüphane") { dismiss() }.keyboardShortcut(.escape, modifiers: [])
@@ -632,7 +713,7 @@ struct ToolbarCapsule: View {
                 .accessibilityLabel(t.name)
                 .accessibilityAddTraits(tool == t ? .isSelected : [])
                 .popover(isPresented: Binding(get: { showToolMenu && tool == t }, set: { if !$0 { showToolMenu = false } }),
-                         arrowEdge: .bottom) {
+                         arrowEdge: .top) {
                     ToolMenu(tool: t, penType: $penType, penWidth: $penWidth, color: $color,
                              colorPanel: $colorPanel, editSlot: $editSlot, eraser: $eraser,
                              tapeColor: $tapeColor, tapeSize: $tapeSize, revealTapes: revealTapes)
@@ -922,7 +1003,6 @@ struct MoreMenu: View {
     var canDeletePage: Bool
     var toggleFavorite: () -> Void
     var deletePage: () -> Void
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Toggle(isOn: $pencilOnly) {

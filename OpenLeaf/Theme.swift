@@ -20,6 +20,70 @@ extension Color {
     init(hex: UInt32, alpha: Double = 1) { self.init(uiColor: UIColor(hex: hex, alpha: alpha)) }
 }
 
+/// Üst çubuklardaki güneş/ay düğmesi: dokununca üç tema seçeneği açılır.
+struct ThemeMenuButton: View {
+    @AppStorage(AppTheme.storageKey) private var theme: AppTheme = .system
+    var size: CGFloat = 40
+
+    var body: some View {
+        Menu {
+            Picker("Tema", selection: $theme) {
+                ForEach(AppTheme.allCases) { t in
+                    Label(t.title, systemImage: t.symbol).tag(t)
+                }
+            }
+        } label: {
+            Image(systemName: theme.symbol)
+                .font(.system(size: 17))
+                .frame(width: size, height: size)
+                .contentShape(Rectangle())
+        }
+        .foregroundStyle(Y.ink2)
+        .accessibilityLabel("Tema")
+        .help("Tema")
+    }
+}
+
+/// Kullanıcının seçtiği tema. Pencerenin tamamına (PencilKit tuvali ve sayfalar dahil) uygulanır.
+enum AppTheme: String, CaseIterable, Identifiable {
+    case system, light, dark
+    static let storageKey = "gorunum.tema"
+    var id: String { rawValue }
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .system: "Sistemle aynı"
+        case .light: "Açık tema"
+        case .dark: "Koyu tema"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .system: "circle.lefthalf.filled"
+        case .light: "sun.max"
+        case .dark: "moon"
+        }
+    }
+
+    var style: UIUserInterfaceStyle {
+        switch self {
+        case .system: .unspecified
+        case .light: .light
+        case .dark: .dark
+        }
+    }
+
+    /// Açık tüm pencerelere uygular. `preferredColorScheme(nil)` sistem temasına her zaman geri dönmediği için
+    /// UIKit üzerinden yapılıyor.
+    func apply() {
+        for scene in UIApplication.shared.connectedScenes {
+            guard let scene = scene as? UIWindowScene else { continue }
+            for window in scene.windows { window.overrideUserInterfaceStyle = style }
+        }
+    }
+}
+
 enum Y {
     // Yüzeyler
     static let bg = Color(uiColor: .dyn(0xEFEBE2, 0x141411))

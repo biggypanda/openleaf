@@ -20,7 +20,7 @@ struct NewNotebookSheet: View {
                 }
                 .padding(.top, 8)
 
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 16) {
                     TextField("Defter adı", text: $title)
                         .font(.system(.title3, design: .serif).weight(.semibold))
                         .padding(.horizontal, 14).frame(height: 46)
@@ -29,20 +29,18 @@ struct NewNotebookSheet: View {
 
                     group("KAPAK") {
                         LazyVGrid(columns: Array(repeating: GridItem(.fixed(58), spacing: 12), count: 4), spacing: 12) {
-                            ForEach(CoverStyle.allCases) { c in
-                                CoverView(style: c, title: "", compact: true)
-                                    .frame(width: 58)
-                                    .overlay {
-                                        if c == cover {
-                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                                .strokeBorder(Y.accent, lineWidth: 2.5).padding(-5)
-                                        }
-                                    }
-                                    .onTapGesture { cover = c }
-                                    .accessibilityLabel(c.name)
-                                    .accessibilityAddTraits(c == cover ? [.isButton, .isSelected] : .isButton)
-                            }
+                            ForEach(CoverStyle.classic) { coverSwatch($0) }
                         }
+                    }
+
+                    group("YILBAŞI") {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                ForEach(CoverStyle.festive) { coverSwatch($0) }
+                            }
+                            .padding(6)
+                        }
+                        .padding(-6)
                     }
 
                     group("ŞABLON") {
@@ -95,7 +93,21 @@ struct NewNotebookSheet: View {
                 }
             }
         }
-        .presentationSizing(.form)
+        .presentationSizing(TallFormSizing())
+    }
+
+    private func coverSwatch(_ c: CoverStyle) -> some View {
+        CoverView(style: c, title: "", compact: true)
+            .frame(width: 58, height: 58 * 4 / 3)
+            .overlay {
+                if c == cover {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(Y.accent, lineWidth: 2.5).padding(-5)
+                }
+            }
+            .onTapGesture { cover = c }
+            .accessibilityLabel(c.name)
+            .accessibilityAddTraits(c == cover ? [.isButton, .isSelected] : .isButton)
     }
 
     private func group<C: View>(_ label: LocalizedStringKey, @ViewBuilder _ content: () -> C) -> some View {
@@ -103,6 +115,14 @@ struct NewNotebookSheet: View {
             Text(label).font(Y.eyebrow).tracking(0.8).foregroundStyle(Y.ink3)
             content()
         }
+    }
+}
+
+/// Form penceresi, yılbaşı kapak satırı da kesilmeden sığsın diye biraz daha uzun
+struct TallFormSizing: PresentationSizing {
+    func proposedSize(for root: PresentationSizingRoot, context: PresentationSizingContext) -> ProposedViewSize {
+        let form = FormPresentationSizing.form.proposedSize(for: root, context: context)
+        return ProposedViewSize(width: form.width, height: max(form.height ?? 0, 700))
     }
 }
 

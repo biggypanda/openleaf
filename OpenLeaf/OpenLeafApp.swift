@@ -5,6 +5,7 @@ struct OpenLeafApp: App {
     @State private var library: Library
     @State private var backup: AutoBackup
     @Environment(\.scenePhase) private var scenePhase
+    @AppStorage(AppTheme.storageKey) private var theme: AppTheme = .system
 
     init() {
         let library = Library()
@@ -18,6 +19,9 @@ struct OpenLeafApp: App {
                 .environment(library)
                 .environment(backup)
                 .task { backup.start() }
+                // Yeni açılan pencereler (iPad'de birden fazla olabilir) de seçili temayla başlasın
+                .onAppear { theme.apply() }
+                .onChange(of: theme) { _, new in new.apply() }
                 .tint(Y.accent)
                 // Başka uygulamadan gelen PDF yeni pencere açmasın, açık pencerede içe aktarılsın
                 .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
