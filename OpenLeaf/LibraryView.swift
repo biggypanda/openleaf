@@ -287,6 +287,16 @@ struct LibraryView: View {
                     Button { showOnboarding = true } label: {
                         Label("Tanıtımı göster", systemImage: "sparkles")
                     }
+                    Menu {
+                        Link(destination: URL(string: "https://www.reddit.com/r/openleafnotes")!) {
+                            Label("Reddit topluluğu", systemImage: "bubble.left.and.bubble.right")
+                        }
+                        Link(destination: URL(string: "https://github.com/biggypanda/openleaf/issues/new")!) {
+                            Label("GitHub'da hata bildir", systemImage: "ladybug")
+                        }
+                    } label: {
+                        Label("Geri bildirim gönder", systemImage: "envelope")
+                    }
                     Button { showAbout = true } label: {
                         Label("OpenLeaf hakkında", systemImage: "info.circle")
                     }
