@@ -23,5 +23,7 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Derste tahtanın ya da kitabın fotoğrafını çekip sayfaya eklemek için.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Uygulama kilidi açıkken notlarını Face ID ile açmak için.</string>
 </dict>
 </plist>

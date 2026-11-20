@@ -57,6 +57,54 @@ extension Library {
     }
 
     func pdfURL(_ nb: Notebook) -> URL? { nb.pdfFile != nil ? store.pdfURL(nb.id) : nil }
+
+    /// Başka bir PDF'in sayfalarını deftere, `index` konumuna ekler ve eklenen sayfa sayısını döndürür.
+    /// Yeni sayfalar defterin PDF dosyasının sonuna yazılır; böylece mevcut sayfaların numaraları değişmez.
+    /// Defterin PDF'i yoksa (düz defter) oluşturulur. Birleştirme arka planda yapılır.
+    func insertPDF(_ id: UUID, from source: URL, at index: Int) async throws -> Int {
+        guard let nb = notebooks.first(where: { $0.id == id }) else { return 0 }
+        let dest = store.pdfURL(id)
+        let hasPDF = nb.pdfFile != nil
+        let added: (base: Int, count: Int) = try await Task.detached(priority: .userInitiated) {
+            let scoped = source.startAccessingSecurityScopedResource()
+            defer { if scoped { source.stopAccessingSecurityScopedResource() } }
+            guard let incoming = PDFDocument(url: source), !incoming.isLocked, incoming.pageCount > 0 else {
+                throw ImportError.unreadable
+            }
+            let merged = (hasPDF ? PDFDocument(url: dest) : nil) ?? PDFDocument()
+            let base = merged.pageCount
+            for i in 0..<incoming.pageCount {
+                if let page = incoming.page(at: i)?.copy() as? PDFPage { merged.insert(page, at: merged.pageCount) }
+            }
+            let count = merged.pageCount - base
+            guard count > 0 else { throw ImportError.unreadable }
+            // Önce yan dosyaya yaz, sonra yerine koy: yarıda kalırsa eski PDF bozulmaz
+            let fm = FileManager.default
+            try fm.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
+            let temp = dest.deletingLastPathComponent().appendingPathComponent("source-yeni.pdf")
+            try? fm.removeItem(at: temp)
+            guard merged.write(to: temp) else { throw ImportError.unreadable }
+            if fm.fileExists(atPath: dest.path) {
+                _ = try fm.replaceItemAt(dest, withItemAt: temp)
+            } else {
+                try fm.moveItem(at: temp, to: dest)
+            }
+            return (base, count)
+        }.value
+
+        PageThumbRenderer.shared.forget(dest)
+        // Aranabilir metin yeniden çıkarılsın
+        textCache[id] = nil
+        try? FileManager.default.removeItem(at: store.textURL(id))
+        update(id) { nb in
+            nb.pdfFile = "source.pdf"
+            let pages = (0..<added.count).map { Page(pdfPage: added.base + $0) }
+            nb.pages.insert(contentsOf: pages, at: min(max(index, 0), nb.pages.count))
+            nb.modified = Date()
+        }
+        scheduleThumbnail(id)
+        return added.count
+    }
 }
 
 // MARK: - Çizim yardımcıları
@@ -118,7 +166,7 @@ enum PDFRender {
 
 enum PageRenderer {
     /// Bir sayfayı (PDF sayfası veya kâğıt deseni + resimler, mürekkep, bantlar, notlar) kanonik boyutta `cg` bağlamına çizer.
-    @MainActor
+    /// Arka planda da çağrılabilir; o zaman `source` yalnızca o iş parçacığının kullandığı bir belge olmalı.
     static func draw(_ nb: Notebook, page: Page, drawing: Data, source: PDFDocument?, in cg: CGContext,
                      exporting: Bool = false) {
         let bounds = CGRect(origin: .zero, size: nb.canonicalSize)
@@ -161,7 +209,7 @@ enum PageRenderer {
     }
 
     /// Kütüphane için küçük resim (genişlik 360 piksel). Whiteboard'da çizimin bulunduğu bölge gösterilir.
-    @MainActor
+    /// PDF'i kendisi açar, bu yüzden arka planda çağrılabilir.
     static func thumbnail(_ nb: Notebook, page: Page, drawing: Data, pdfURL: URL?) -> UIImage? {
         let source = pdfURL.flatMap { PDFDocument(url: $0) }
         let canonical = nb.canonicalSize
@@ -188,6 +236,49 @@ enum PageRenderer {
             draw(nb, page: page, drawing: drawing, source: source, in: ctx.cgContext)
         }
         return withExtendedLifetime(source) { image }
+    }
+}
+
+/// Sayfa küçük resimlerini arayüzü bekletmeden, tek bir arka plan kuyruğunda sırayla çizer.
+/// PDFKit belgeleri iş parçacıkları arasında paylaşılmaya uygun olmadığından kuyruk kendi kopyasını açar.
+final class PageThumbRenderer: @unchecked Sendable {
+    static let shared = PageThumbRenderer()
+    private let queue = DispatchQueue(label: "openleaf.kucukresim", qos: .userInitiated)
+    /// Yalnızca kuyrukta kullanılır: son açılan PDF
+    private var openURL: URL?
+    private var openDoc: PDFDocument?
+
+    func render(_ nb: Notebook, page: Page, drawing: Data, pdfURL: URL?, width: CGFloat) async -> UIImage {
+        await withCheckedContinuation { done in
+            queue.async {
+                let source = self.document(pdfURL)
+                let canonical = nb.canonicalSize
+                let size = CGSize(width: width, height: width * canonical.height / canonical.width)
+                let format = UIGraphicsImageRendererFormat()
+                format.scale = 2
+                format.opaque = true
+                let image = UIGraphicsImageRenderer(size: size, format: format).image { ctx in
+                    let s = width / canonical.width
+                    ctx.cgContext.scaleBy(x: s, y: s)
+                    PageRenderer.draw(nb, page: page, drawing: drawing, source: source, in: ctx.cgContext)
+                }
+                done.resume(returning: image)
+            }
+        }
+    }
+
+    private func document(_ url: URL?) -> PDFDocument? {
+        guard let url else { return nil }
+        if url != openURL {
+            openURL = url
+            openDoc = PDFDocument(url: url)
+        }
+        return openDoc
+    }
+
+    /// Defterin PDF'i değişince (sayfa eklenince) eski kopya bırakılsın
+    func forget(_ url: URL) {
+        queue.async { if self.openURL == url { self.openURL = nil; self.openDoc = nil } }
     }
 }
 
@@ -246,21 +337,27 @@ struct NotebookThumb: View {
 // MARK: - PDF olarak dışa aktarma
 
 enum PDFExporter {
-    /// Defteri (kâğıt deseni veya PDF sayfası + mürekkep) tek bir PDF dosyasına yazar.
-    @MainActor
-    static func render(_ nb: Notebook, library: Library) -> URL {
-        let bounds = CGRect(origin: .zero, size: nb.canonicalSize)
-        let source = library.pdfURL(nb).flatMap { PDFDocument(url: $0) }
+    /// Paylaşılacak dosyanın yeri: her dışa aktarma kendi geçici klasörüne, defter adıyla
+    static func exportURL(_ nb: Notebook, suffix: String = "", ext: String) -> URL {
         let safe = nb.title.components(separatedBy: CharacterSet(charactersIn: "/\\:?%*|\"<>")).joined(separator: "-")
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let url = dir.appendingPathComponent((safe.isEmpty ? "OpenLeaf" : safe) + ".pdf")
+        return dir.appendingPathComponent((safe.isEmpty ? "OpenLeaf" : safe) + suffix + "." + ext)
+    }
+
+    /// Defteri (kâğıt deseni veya PDF sayfası + mürekkep) tek bir PDF dosyasına yazar.
+    /// `only` verilirse yalnızca o sayfa yazılır.
+    @MainActor
+    static func render(_ nb: Notebook, library: Library, only: Page? = nil) -> URL {
+        let bounds = CGRect(origin: .zero, size: nb.canonicalSize)
+        let source = library.pdfURL(nb).flatMap { PDFDocument(url: $0) }
+        let url = exportURL(nb, suffix: only.map { pageSuffix(nb, $0) } ?? "", ext: "pdf")
 
         let format = UIGraphicsPDFRendererFormat()
         format.documentInfo = [kCGPDFContextCreator as String: "OpenLeaf", kCGPDFContextTitle as String: nb.title]
         let renderer = UIGraphicsPDFRenderer(bounds: bounds, format: format)
         try? renderer.writePDF(to: url) { ctx in
-            for page in nb.pages {
+            for page in only.map({ [$0] }) ?? nb.pages {
                 ctx.beginPage()
                 PageRenderer.draw(nb, page: page, drawing: library.drawing(nb.id, page.id), source: source,
                                   in: ctx.cgContext, exporting: true)
@@ -270,15 +367,39 @@ enum PDFExporter {
     }
 }
 
-/// Paylaş menüsüne verilen öğe: PDF, paylaşım seçildiği anda üretilir.
-struct NotebookPDF: Transferable {
-    let notebook: Notebook
-    let library: Library
+extension PDFExporter {
+    /// Dosya adı eki: " - Sayfa 3"
+    static func pageSuffix(_ nb: Notebook, _ page: Page) -> String {
+        guard nb.isPaged, let i = nb.pages.firstIndex(where: { $0.id == page.id }) else { return "" }
+        return " - " + String(localized: "Sayfa \(i + 1)")
+    }
 
-    static var transferRepresentation: some TransferRepresentation {
-        FileRepresentation(exportedContentType: .pdf) { item in
-            let url = await MainActor.run { PDFExporter.render(item.notebook, library: item.library) }
-            return SentTransferredFile(url)
+    /// Tek sayfayı PNG resmi olarak yazar (kanonik boyutun 2 katı)
+    @MainActor
+    static func renderImage(_ nb: Notebook, page: Page, library: Library) -> URL {
+        let bounds = CGRect(origin: .zero, size: nb.canonicalSize)
+        let source = library.pdfURL(nb).flatMap { PDFDocument(url: $0) }
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 2
+        format.opaque = true
+        let image = UIGraphicsImageRenderer(bounds: bounds, format: format).image { ctx in
+            PageRenderer.draw(nb, page: page, drawing: library.drawing(nb.id, page.id), source: source,
+                              in: ctx.cgContext, exporting: true)
         }
+        let url = exportURL(nb, suffix: pageSuffix(nb, page), ext: "png")
+        try? image.pngData()?.write(to: url)
+        return withExtendedLifetime(source) { url }
+    }
+
+    /// Sistem yazdırma penceresini açar
+    @MainActor
+    static func print(_ url: URL, title: String) {
+        let info = UIPrintInfo(dictionary: nil)
+        info.outputType = .general
+        info.jobName = title
+        let controller = UIPrintInteractionController.shared
+        controller.printInfo = info
+        controller.printingItem = url
+        controller.present(animated: true)
     }
 }

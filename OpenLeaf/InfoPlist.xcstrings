@@ -138,6 +138,52 @@
           }
         }
       }
+    },
+    "NSFaceIDUsageDescription": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Um deine Notizen mit Face ID zu öffnen, wenn die App-Sperre eingeschaltet ist."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To open your notes with Face ID when App Lock is on."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Para abrir tus notas con Face ID cuando el bloqueo de la app está activado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour ouvrir tes notes avec Face ID quand le verrouillage de l’app est activé."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Per aprire le tue note con Face ID quando il blocco dell’app è attivo."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Para abrir suas notas com o Face ID quando o bloqueio do app está ativado."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uygulama kilidi açıkken notlarını Face ID ile açmak için."
+          }
+        }
+      }
     }
   },
   "version": "1.0"
