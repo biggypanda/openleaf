@@ -96,6 +96,13 @@ struct DocumentView: View {
     var onClose: () -> Void = {}
     private func dismiss() { onClose() }
 
+    init(id: UUID, onClose: @escaping () -> Void = {}) {
+        self.id = id
+        self.onClose = onClose
+        // Defter, en son kalınan sayfadan açılır
+        _page = State(initialValue: LastOpened.page(id))
+    }
+
     @State private var page = 0
     @State private var forward = true
     @State private var tool: ToolKind = .pen
@@ -141,7 +148,17 @@ struct DocumentView: View {
     @State private var showCamera = false
     @State private var photoItem: PhotosPickerItem?
     @State private var showPhotos = false
+    @State private var sharing: SharedFile?
+    @State private var dropTargeted = false
+    @State private var pasteboardHasImage = UIPasteboard.general.hasImages
     @State private var pinnedPage: UUID?
+    /// "Sayfaya git" kutusu
+    @State private var goToShown = false
+    /// PDF'den sayfa ekleme
+    @State private var showPDFPicker = false
+    @State private var insertingPDF = false
+    @State private var pdfError: String?
+    @State private var goToText = ""
     @State private var quickPoint: CGPoint?
 
     /// Kalem kalınlığı aralığı (nokta); çubukla serbestçe ayarlanır
@@ -149,7 +166,7 @@ struct DocumentView: View {
 
     var body: some View {
         if let nb = library.notebooks.first(where: { $0.id == id }) {
-            if nb.kind == .pdf && pdfDoc == nil {
+            if nb.pdfFile != nil && pdfDoc == nil {
                 // PDF açılmadan tuvali kurma; yoksa ilk sayfa boş görünür
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity).background(Y.bg)
                     .task { pdfDoc = library.pdfURL(nb).flatMap { PDFDocument(url: $0) } ?? PDFDocument() }
@@ -184,6 +201,7 @@ struct DocumentView: View {
                                    addNote: controller.addNote,
                                    takePhoto: { showCamera = true },
                                    pickPhoto: { showPhotos = true },
+                                   pastePhoto: pasteImage,
                                    select: select)
                         .padding(.vertical, 8)
                         .frame(maxWidth: .infinity)
@@ -195,6 +213,18 @@ struct DocumentView: View {
                 }
                 ZStack {
                     canvas(nb, page: p)
+                }
+                // Dosyalar'dan, Safari'den ya da Fotoğraflar'dan sürüklenen resim sayfaya eklenir
+                .onDrop(of: [.image], isTargeted: $dropTargeted) { providers in
+                    dropImages(providers)
+                }
+                .overlay {
+                    if dropTargeted {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(Y.accent, style: StrokeStyle(lineWidth: 3, dash: [10, 6]))
+                            .padding(8)
+                            .allowsHitTesting(false)
+                    }
                 }
                 .clipped()
                 .ignoresSafeArea(edges: .bottom)
@@ -233,6 +263,7 @@ struct DocumentView: View {
             }
         }
         .photosPicker(isPresented: $showPhotos, selection: $photoItem, matching: .images)
+        .sheet(item: $sharing) { file in ActivityView(items: [file.url]).ignoresSafeArea() }
         .fullScreenCover(isPresented: $showCamera) {
             CameraPicker { insertImage($0) }.ignoresSafeArea()
         }
@@ -245,7 +276,44 @@ struct DocumentView: View {
                 photoItem = nil
             }
         }
+        .fileImporter(isPresented: $showPDFPicker, allowedContentTypes: [.pdf]) { result in
+            switch result {
+            case .success(let url): insertPDF(url, after: p)
+            case .failure(let error): pdfError = error.localizedDescription
+            }
+        }
+        .alert("PDF eklenemedi", isPresented: Binding(get: { pdfError != nil }, set: { if !$0 { pdfError = nil } })) {
+            Button("Tamam", role: .cancel) {}
+        } message: {
+            Text(pdfError ?? "")
+        }
+        .overlay {
+            if insertingPDF {
+                ProgressView("PDF ekleniyor…")
+                    .padding(24)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: Y.rM, style: .continuous))
+                    .transition(.opacity)
+            }
+        }
+        .onAppear {
+            LastOpened.notebook = id
+            // Kayıtlı sayfa artık yoksa (sayfalar silinmiş) son sayfaya düş
+            if page >= nb.pages.count { page = max(0, nb.pages.count - 1) }
+        }
+        .onChange(of: page) { _, new in LastOpened.setPage(new, for: id) }
+        .alert("Sayfaya git", isPresented: $goToShown) {
+            TextField("Sayfa numarası", text: $goToText)
+                .keyboardType(.numberPad)
+            Button("Git") { goTo(goToText, nb) }
+            Button("Vazgeç", role: .cancel) {}
+        } message: {
+            Text("1 ile \(nb.pages.count) arasında bir sayfa numarası yaz.")
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
+            pasteboardHasImage = UIPasteboard.general.hasImages
+        }
         .onChange(of: scenePhase) { _, phase in
+            if phase == .active { pasteboardHasImage = UIPasteboard.general.hasImages }
             // Uygulama arka plana giderken bekleyen son çizgi diske yazılsın
             if phase != .active { controller.flush() }
         }
@@ -314,12 +382,24 @@ struct DocumentView: View {
 
             Spacer(minLength: 12)
 
-            VStack(spacing: 1) {
-                Text(nb.title).font(.system(.headline, design: .serif, weight: .semibold)).lineLimit(1)
-                Text(nb.kind == .whiteboard ? String(localized: "Whiteboard") : (nb.subtitle.isEmpty ? "" : nb.subtitle + " · ") + String(localized: "Sayfa \(p + 1) / \(nb.pages.count)"))
+            // Sayfa numarasına dokununca "Sayfaya git" açılır
+            Button { askGoTo() } label: {
+                VStack(spacing: 1) {
+                    Text(nb.title).font(.system(.headline, design: .serif, weight: .semibold)).lineLimit(1)
+                        .foregroundStyle(Y.ink)
+                    HStack(spacing: 3) {
+                        Text(nb.kind == .whiteboard ? String(localized: "Whiteboard") : (nb.subtitle.isEmpty ? "" : nb.subtitle + " · ") + String(localized: "Sayfa \(p + 1) / \(nb.pages.count)"))
+                            .contentTransition(.numericText())
+                        if nb.isPaged && nb.pages.count > 1 {
+                            Image(systemName: "chevron.down").font(.system(size: 8, weight: .bold))
+                        }
+                    }
                     .font(.caption).foregroundStyle(Y.ink3).monospacedDigit()
-                    .contentTransition(.numericText())
+                }
             }
+            .buttonStyle(.plain)
+            .allowsHitTesting(nb.isPaged && nb.pages.count > 1)
+            .accessibilityHint(nb.isPaged && nb.pages.count > 1 ? Text("Sayfaya git") : Text(""))
 
             Spacer(minLength: 12)
 
@@ -328,14 +408,29 @@ struct DocumentView: View {
                     iconButton("square.grid.2x2", "Tüm sayfalar") { openPages(nb, current: p) }
                     iconButton("chevron.up", "Önceki sayfa") { go(p - 1, nb) }.disabled(p == 0)
                     iconButton("chevron.down", "Sonraki sayfa") { go(p + 1, nb) }.disabled(p >= nb.pages.count - 1)
-                    iconButton("doc.badge.plus", "Sayfa ekle") { addPage(after: p) }
+                    Menu {
+                        Button("Boş sayfa", systemImage: "doc") { addPage(after: p) }
+                        Button("PDF'den sayfa ekle…", systemImage: "doc.richtext") { showPDFPicker = true }
+                    } label: {
+                        Image(systemName: "doc.badge.plus").font(.system(size: 17)).frame(width: 40, height: 40)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Y.ink2)
+                    .accessibilityLabel("Sayfa ekle")
+                    .help("Sayfa ekle")
+                    let marked = nb.pages[p].isBookmarked
+                    Button { library.toggleBookmark(id, nb.pages[p].id) } label: {
+                        Image(systemName: marked ? "bookmark.fill" : "bookmark")
+                            .font(.system(size: 17)).frame(width: 40, height: 40)
+                            .contentShape(Rectangle())
+                            .contentTransition(.symbolEffect(.replace))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(marked ? Y.accent : Y.ink2)
+                    .accessibilityLabel(marked ? "Yer imini kaldır" : "Yer imi koy")
+                    .help(marked ? "Yer imini kaldır" : "Yer imi koy")
                 }
-                ShareLink(item: NotebookPDF(notebook: nb, library: library),
-                          preview: SharePreview("\(nb.title).pdf", image: Image(systemName: "doc.richtext"))) {
-                    Image(systemName: "square.and.arrow.up").font(.system(size: 17)).frame(width: 40, height: 40)
-                }
-                .foregroundStyle(Y.ink2)
-                .accessibilityLabel("PDF olarak paylaş")
+                shareMenu(nb, page: nb.pages[p])
                 ThemeMenuButton()
                 Button {
                     withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) { toolbarHidden.toggle() }
@@ -549,6 +644,71 @@ struct DocumentView: View {
         controller.addImage(file: file, pixelSize: prepared.size)
     }
 
+    // MARK: Paylaş ve yazdır
+
+    private func shareMenu(_ nb: Notebook, page: Page) -> some View {
+        Menu {
+            Section(nb.isPaged ? String(localized: "Bu sayfa") : "") {
+                Button { share { PDFExporter.renderImage(nb, page: page, library: library) } } label: {
+                    Label("Resim olarak paylaş", systemImage: "photo")
+                }
+                if nb.isPaged {
+                    Button { share { PDFExporter.render(nb, library: library, only: page) } } label: {
+                        Label("PDF olarak paylaş", systemImage: "doc")
+                    }
+                }
+                Button { printPDF(nb) { PDFExporter.render(nb, library: library, only: page) } } label: {
+                    Label(nb.isPaged ? "Bu sayfayı yazdır" : "Yazdır", systemImage: "printer")
+                }
+            }
+            if nb.isPaged {
+                Section("Tüm defter") {
+                    Button { share { PDFExporter.render(nb, library: library) } } label: {
+                        Label("Defteri PDF olarak paylaş", systemImage: "doc.richtext")
+                    }
+                    Button { printPDF(nb) { PDFExporter.render(nb, library: library) } } label: {
+                        Label("Defteri yazdır", systemImage: "printer.fill")
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "square.and.arrow.up").font(.system(size: 17)).frame(width: 40, height: 40)
+                .contentShape(Rectangle())
+        }
+        .foregroundStyle(Y.ink2)
+        .accessibilityLabel("Paylaş ve yazdır")
+    }
+
+    /// Son çizgiyi kaydeder, dosyayı üretir, menü kapandıktan sonra paylaşım sayfasını açar
+    private func share(_ make: @escaping () -> URL) {
+        controller.flush()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { sharing = SharedFile(url: make()) }
+    }
+
+    private func printPDF(_ nb: Notebook, _ make: @escaping () -> URL) {
+        controller.flush()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { PDFExporter.print(make(), title: nb.title) }
+    }
+
+    // MARK: Yapıştır ve sürükle-bırak
+
+    private func pasteImage() {
+        guard let img = UIPasteboard.general.image else { return }
+        insertImage(img)
+    }
+
+    private func dropImages(_ providers: [NSItemProvider]) -> Bool {
+        let items = providers.filter { $0.canLoadObject(ofClass: UIImage.self) }
+        guard !items.isEmpty else { return false }
+        for provider in items {
+            _ = provider.loadObject(ofClass: UIImage.self) { object, _ in
+                guard let img = object as? UIImage else { return }
+                DispatchQueue.main.async { insertImage(img) }
+            }
+        }
+        return true
+    }
+
     private func openPages(_ nb: Notebook, current p: Int) {
         controller.flush()
         pinnedPage = nb.pages[p].id
@@ -559,6 +719,36 @@ struct DocumentView: View {
         guard target >= 0, target < nb.pages.count else { return }
         forward = target > page
         turn(to: target)
+    }
+
+    /// Seçilen PDF'in sayfalarını açık sayfanın arkasına ekler ve ilk eklenen sayfaya gider
+    private func insertPDF(_ url: URL, after p: Int) {
+        controller.flush()
+        withAnimation(Y.quick) { insertingPDF = true }
+        Task {
+            defer { withAnimation(Y.quick) { insertingPDF = false } }
+            do {
+                let count = try await library.insertPDF(id, from: url, at: p + 1)
+                guard count > 0, let nb = library.notebooks.first(where: { $0.id == id }) else { return }
+                // Defterin PDF'i değişti: yeni sayfaları görmek için yeniden aç
+                pdfDoc = library.pdfURL(nb).flatMap { PDFDocument(url: $0) }
+                forward = true
+                turn(to: p + 1)
+            } catch {
+                pdfError = error.localizedDescription
+            }
+        }
+    }
+
+    private func askGoTo() {
+        goToText = ""
+        goToShown = true
+    }
+
+    /// Yazılan numaraya gider; aralık dışıysa ilk ya da son sayfaya
+    private func goTo(_ text: String, _ nb: Notebook) {
+        guard let n = Int(text.trimmingCharacters(in: .whitespaces)) else { return }
+        go(min(max(n, 1), nb.pages.count) - 1, nb)
     }
 
     private func addPage(after p: Int) {
@@ -588,9 +778,16 @@ struct DocumentView: View {
                 Button(t.name) { select(t) }.keyboardShortcut(t.key, modifiers: [])
             }
             Button("Yeni sayfa") { addPage(after: min(page, nb.pages.count - 1)) }.keyboardShortcut("n")
+            if nb.isPaged && nb.pages.count > 1 {
+                Button("Sayfaya git") { askGoTo() }.keyboardShortcut("g")
+            }
             Button("Tam ekran") { setFullScreen(!focus) }.keyboardShortcut("f", modifiers: [.command, .shift])
             Button("Geri al") { controller.undo() }.keyboardShortcut("z")
             Button("Yinele") { controller.redo() }.keyboardShortcut("z", modifiers: [.command, .shift])
+            // ⌘V: panoda resim varsa sayfaya yapıştırır (yazı yapıştırmayı engellememek için yalnızca resimde)
+            if pasteboardHasImage {
+                Button("Resmi yapıştır") { pasteImage() }.keyboardShortcut("v")
+            }
             Button("Kütüphane") { dismiss() }.keyboardShortcut(.escape, modifiers: [])
         }
         .opacity(0)
@@ -618,6 +815,7 @@ struct ToolbarCapsule: View {
     var addNote: () -> Void
     var takePhoto: () -> Void
     var pickPhoto: () -> Void
+    var pastePhoto: () -> Void
     var select: (ToolKind) -> Void
 
     @AppStorage(PenPalette.favoritesKey) private var favoritesRaw = ""
@@ -653,6 +851,7 @@ struct ToolbarCapsule: View {
                 Button(action: takePhoto) { Label("Fotoğraf çek", systemImage: "camera") }
                     .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
                 Button(action: pickPhoto) { Label("Fotoğraflardan seç", systemImage: "photo.on.rectangle") }
+                Button(action: pastePhoto) { Label("Kopyalanan resmi yapıştır", systemImage: "doc.on.clipboard") }
             } label: {
                 Image(systemName: "photo.badge.plus")
                     .font(.system(size: 19, weight: .regular))

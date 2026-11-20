@@ -117,7 +117,10 @@ struct Page: Identifiable, Codable, Equatable {
     var images: [PageImage]?
     /// Sayfadaki bantlar (eski kayıtlarda alan yok)
     var tapes: [Tape]?
+    /// Yer imi konmuş sayfa (eski kayıtlarda alan yok)
+    var bookmarked: Bool?
 
+    var isBookmarked: Bool { bookmarked == true }
     var stickyNotes: [StickyNote] { notes ?? [] }
     var pageImages: [PageImage] { images ?? [] }
     var pageTapes: [Tape] { tapes ?? [] }
@@ -130,7 +133,7 @@ struct Page: Identifiable, Codable, Equatable {
         self.tapes = tapes
     }
 
-    enum CodingKeys: String, CodingKey { case id, pdfPage, notes, images, tapes }
+    enum CodingKeys: String, CodingKey { case id, pdfPage, notes, images, tapes, bookmarked }
 
     /// Bilinmeyen bir not, resim ya da bant (ör. daha yeni sürümün kaydı) yalnızca o öğeyi atlatır; sayfa kaybolmaz.
     init(from decoder: Decoder) throws {
@@ -140,6 +143,7 @@ struct Page: Identifiable, Codable, Equatable {
         notes = (try? c.decodeIfPresent(LossyList<StickyNote>.self, forKey: .notes))?.items
         images = (try? c.decodeIfPresent(LossyList<PageImage>.self, forKey: .images))?.items
         tapes = (try? c.decodeIfPresent(LossyList<Tape>.self, forKey: .tapes))?.items
+        bookmarked = try? c.decodeIfPresent(Bool.self, forKey: .bookmarked)
     }
 }
 
@@ -279,8 +283,8 @@ final class Library {
     var thumbVersion: [UUID: Int] = [:]
 
     @ObservationIgnored let store: NotebookStore
-    @ObservationIgnored private var drawingCache: [String: Data] = [:]
-    @ObservationIgnored private var textCache: [UUID: String] = [:]
+    @ObservationIgnored private var drawingCache = DrawingCache()
+    @ObservationIgnored var textCache: [UUID: String] = [:]
     @ObservationIgnored private var thumbWork: [UUID: DispatchWorkItem] = [:]
     /// Kütüphanede kalıcı bir değişiklik olunca çağrılır (otomatik yedek bunu dinler)
     @ObservationIgnored var onChange: (() -> Void)?
@@ -408,7 +412,7 @@ final class Library {
 
     func deleteForever(_ id: UUID) {
         notebooks.removeAll { $0.id == id }
-        drawingCache = drawingCache.filter { !$0.key.hasPrefix(id.uuidString) }
+        drawingCache.removeAll(prefix: id.uuidString)
         textCache[id] = nil
         store.deleteDir(id)
         // Yedekten de silinsin: yedek yalnızca bu listedeki defterleri siler
@@ -436,17 +440,21 @@ final class Library {
 
     func drawing(_ id: UUID, _ page: UUID) -> Data {
         let k = key(id, page)
-        if let d = drawingCache[k] { return d }
+        if let d = drawingCache.get(k) { return d }
         let d = store.readDrawing(id, page)
-        drawingCache[k] = d
+        drawingCache.fill(k, d)
         return d
     }
+
+    /// Sayfanın mürekkebi bu oturumda her değiştiğinde artar; küçük resimler bunu anahtar yapar
+    /// (mürekkep verisinin tamamını her seferinde özetlemek büyük sayfalarda pahalıydı).
+    func drawingVersion(_ id: UUID, _ page: UUID) -> Int { drawingCache.version(key(id, page)) }
 
     /// Yalnızca o sayfanın dosyasını yazar; kütüphane dizini sadece tarih için güncellenir.
     func saveDrawing(_ id: UUID, _ page: UUID, _ data: Data) {
         // Silinmiş bir sayfanın gecikmeli kaydı dosyayı geri yaratmasın
         guard let nb = notebooks.first(where: { $0.id == id }), nb.pages.contains(where: { $0.id == page }) else { return }
-        drawingCache[key(id, page)] = data
+        drawingCache.set(key(id, page), data)
         store.writeDrawing(id, page, data)
         update(id) { $0.modified = Date() }
         scheduleThumbnail(id)
@@ -458,6 +466,15 @@ final class Library {
             nb.modified = Date()
         }
         scheduleThumbnail(id)
+    }
+
+    /// Sayfanın yer imini açar/kapatır (içerik değişmediği için düzenlenme tarihi değişmez)
+    func toggleBookmark(_ id: UUID, _ page: UUID) {
+        update(id) { nb in
+            if let i = nb.pages.firstIndex(where: { $0.id == page }) {
+                nb.pages[i].bookmarked = nb.pages[i].isBookmarked ? nil : true
+            }
+        }
     }
 
     func insertPage(_ id: UUID, at index: Int) {
@@ -491,7 +508,7 @@ final class Library {
         copy.images = src.images?.map { m in var c = m; c.id = UUID(); return c }
         let data = drawing(id, src.id)
         if !data.isEmpty {
-            drawingCache[key(id, copy.id)] = data
+            drawingCache.set(key(id, copy.id), data)
             store.writeDrawing(id, copy.id, data)
         }
         update(id) { nb in
@@ -507,7 +524,7 @@ final class Library {
             if nb.pages.isEmpty { nb.pages = [Page()] }
             nb.modified = Date()
         }
-        drawingCache[key(id, page)] = nil
+        drawingCache.set(key(id, page), nil)
         store.deleteDrawing(id, page)
         cleanupImages(id)
         scheduleThumbnail(id)
@@ -527,15 +544,21 @@ final class Library {
         DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
     }
 
+    /// Kapak resmini arka planda çizer; yazarken ana iş parçacığı takılmasın
     private func renderThumbnail(_ id: UUID) {
         guard let nb = notebooks.first(where: { $0.id == id }), let first = nb.pages.first else { return }
-        let image = PageRenderer.thumbnail(nb, page: first, drawing: drawing(id, first.id),
-                                           pdfURL: nb.pdfFile != nil ? store.pdfURL(id) : nil)
-        if let png = image?.pngData() {
+        let data = drawing(id, first.id)
+        let pdfURL = nb.pdfFile != nil ? store.pdfURL(id) : nil
+        let store = self.store
+        Self.thumbQueue.async { [weak self] in
+            guard let png = PageRenderer.thumbnail(nb, page: first, drawing: data, pdfURL: pdfURL)?.pngData() else { return }
             store.writeFile(png, to: store.thumbURL(id))
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in MainActor.assumeIsolated { self?.bumpThumb(id) } }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { MainActor.assumeIsolated { self?.bumpThumb(id) } }
         }
     }
+
+    /// Kapak resimleri sırayla çizilsin (aynı dosyaya iki çizim yarışmasın)
+    private nonisolated static let thumbQueue = DispatchQueue(label: "openleaf.kapak", qos: .utility)
 
     // MARK: Kayıt
 
@@ -549,6 +572,8 @@ final class Library {
         // Hemen çalıştır, sonra iptal et ki zamanlanmış kopyası ikinci kez çalışmasın
         thumbWork.values.forEach { $0.perform(); $0.cancel() }
         thumbWork.removeAll()
+        // Kapak çizimi bitsin ki dosyası da aşağıdaki kayıtla birlikte diske yazılsın
+        Self.thumbQueue.sync {}
         store.flush()
     }
 }
@@ -561,5 +586,61 @@ extension Date {
         if Calendar.current.isDateInToday(self) { return String(localized: "Bugün") }
         if Calendar.current.isDateInYesterday(self) { return String(localized: "Dün") }
         return f.localizedString(for: self, relativeTo: Date())
+    }
+}
+
+/// Sayfa mürekkeplerinin bellekteki kopyası. Toplam boyut sınırı aşılınca en uzun süredir kullanılmayan
+/// sayfa çıkarılır; dosyası diskte durduğu için gerekince yeniden okunur. Büyük PDF defterlerinde gezindikçe
+/// belleğin sınırsız büyüyüp uygulamanın kapanmasını önler.
+struct DrawingCache {
+    private var items: [String: Data] = [:]
+    /// En uzun süredir kullanılmayan başta
+    private var order: [String] = []
+    private var bytes = 0
+    private var versions: [String: Int] = [:]
+    let limit: Int
+
+    init(limit: Int = 48 * 1024 * 1024) { self.limit = limit }
+
+    mutating func get(_ key: String) -> Data? {
+        guard let d = items[key] else { return nil }
+        touch(key)
+        return d
+    }
+
+    /// Diskten okunan veriyi koyar (sayfa değişmediği için sürüm artmaz)
+    mutating func fill(_ key: String, _ data: Data) { put(key, data) }
+
+    /// Sayfanın yeni mürekkebi (nil: sayfa silindi); sürümü artırır
+    mutating func set(_ key: String, _ data: Data?) {
+        versions[key, default: 0] += 1
+        if let data { put(key, data) } else { remove(key) }
+    }
+
+    func version(_ key: String) -> Int { versions[key] ?? 0 }
+
+    mutating func removeAll(prefix: String) {
+        for key in items.keys where key.hasPrefix(prefix) { remove(key) }
+        for key in versions.keys where key.hasPrefix(prefix) { versions[key, default: 0] += 1 }
+    }
+
+    private mutating func put(_ key: String, _ data: Data) {
+        remove(key)
+        items[key] = data
+        order.append(key)
+        bytes += data.count
+        // En son eklenen her zaman kalır (açık sayfa)
+        while bytes > limit, order.count > 1 { remove(order[0]) }
+    }
+
+    private mutating func touch(_ key: String) {
+        if let i = order.firstIndex(of: key) { order.remove(at: i) }
+        order.append(key)
+    }
+
+    private mutating func remove(_ key: String) {
+        guard let d = items.removeValue(forKey: key) else { return }
+        bytes -= d.count
+        if let i = order.firstIndex(of: key) { order.remove(at: i) }
     }
 }

@@ -4,6 +4,9 @@ import SwiftUI
 struct OpenLeafApp: App {
     @State private var library: Library
     @State private var backup: AutoBackup
+    @State private var appLock = AppLock()
+    /// Ana ekran kısayolları sahne temsilcisinden gelir
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage(AppTheme.storageKey) private var theme: AppTheme = .system
 
@@ -18,6 +21,8 @@ struct OpenLeafApp: App {
             LibraryView()
                 .environment(library)
                 .environment(backup)
+                .environment(appLock)
+                .overlay { LockCover().environment(appLock) }
                 .task { backup.start() }
                 // Yeni açılan pencereler (iPad'de birden fazla olabilir) de seçili temayla başlasın
                 .onAppear { theme.apply() }
@@ -33,6 +38,10 @@ struct OpenLeafApp: App {
                 // Arka plana geçerken bekleyen tüm kayıtları diske yaz, sonra yedeğe gönder
                 library.flush()
                 backup.backUpIfNeeded(inBackground: true)
+                appLock.lock()
+                QuickAction.refresh(lastNotebook: LastOpened.notebook.flatMap { id in
+                    library.notebooks.first { $0.id == id && !$0.trashed }
+                })
             case .active:
                 // iCloud oturumu bu arada açılmış ya da kapanmış olabilir
                 backup.refresh()

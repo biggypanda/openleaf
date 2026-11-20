@@ -14,6 +14,15 @@ struct PageOverview: View {
     @Environment(Library.self) private var library
     @State private var dragging: UUID?
     @State private var confirmDelete: Page?
+    @State private var onlyBookmarks = false
+
+    private var hasBookmarks: Bool { notebook.pages.contains(where: \.isBookmarked) }
+    /// Gösterilen sayfalar, gerçek sıra numaralarıyla (filtrede numara değişmesin)
+    private var shown: [(index: Int, page: Page)] {
+        notebook.pages.enumerated()
+            .filter { !(onlyBookmarks && hasBookmarks) || $0.element.isBookmarked }
+            .map { ($0.offset, $0.element) }
+    }
 
     private let columns = [GridItem(.adaptive(minimum: 150, maximum: 200), spacing: 22)]
 
@@ -23,9 +32,9 @@ struct PageOverview: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: 26) {
-                        ForEach(Array(notebook.pages.enumerated()), id: \.element.id) { i, page in
-                            cell(page, index: i)
-                                .id(page.id)
+                        ForEach(shown, id: \.page.id) { item in
+                            cell(item.page, index: item.index)
+                                .id(item.page.id)
                         }
                     }
                     .padding(.horizontal, 28)
@@ -77,6 +86,22 @@ struct PageOverview: View {
             }
             Spacer()
 
+            if hasBookmarks {
+                Button {
+                    withAnimation(Y.spring) { onlyBookmarks.toggle() }
+                } label: {
+                    Label("Yer imleri", systemImage: onlyBookmarks ? "bookmark.fill" : "bookmark")
+                        .padding(.horizontal, 12).frame(height: 34)
+                        .background(Capsule().fill(onlyBookmarks ? Y.accent.opacity(0.14) : Color.clear))
+                        .overlay(Capsule().strokeBorder(onlyBookmarks ? Y.accent : Y.line, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(onlyBookmarks ? Y.accent : Y.ink2)
+                .accessibilityAddTraits(onlyBookmarks ? .isSelected : [])
+                .accessibilityHint("Yalnızca yer imi konmuş sayfaları gösterir")
+                .padding(.trailing, 14)
+            }
+
             Button("Bitti", action: onClose)
                 .fontWeight(.semibold)
                 .buttonStyle(.plain)
@@ -108,9 +133,20 @@ struct PageOverview: View {
                 }
                 .onDrop(of: [UTType.text], delegate: PageDrop(target: page.id, notebookID: notebook.id,
                                                                library: library, dragging: $dragging))
-                .accessibilityLabel(isCurrent ? String(localized: "Sayfa \(i + 1), açık sayfa") : String(localized: "Sayfa \(i + 1)"))
+                .accessibilityLabel((isCurrent ? String(localized: "Sayfa \(i + 1), açık sayfa") : String(localized: "Sayfa \(i + 1)"))
+                                    + (page.isBookmarked ? ", " + String(localized: "yer imi var") : ""))
                 .accessibilityAddTraits(.isButton)
                 .overlay(alignment: .topTrailing) { actions(page, index: i) }
+                .overlay(alignment: .topLeading) {
+                    if page.isBookmarked {
+                        Image(systemName: "bookmark.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(Y.accent)
+                            .padding(.leading, 10)
+                            .offset(y: -2)
+                            .accessibilityHidden(true)
+                    }
+                }
             Text("\(i + 1)")
                 .font(.footnote.weight(isCurrent ? .bold : .regular).monospacedDigit())
                 .foregroundStyle(isCurrent ? Y.accent : Y.ink2)
@@ -126,6 +162,10 @@ struct PageOverview: View {
             }
             Button { library.duplicatePage(notebook.id, at: i) } label: {
                 Label("Çoğalt", systemImage: "plus.square.on.square")
+            }
+            Button { library.toggleBookmark(notebook.id, page.id) } label: {
+                page.isBookmarked ? Label("Yer imini kaldır", systemImage: "bookmark.slash")
+                                  : Label("Yer imi koy", systemImage: "bookmark")
             }
             Divider()
             Button(role: .destructive) { confirmDelete = page } label: {
@@ -185,11 +225,11 @@ struct PageThumbnail: View {
 
     var body: some View {
         let size = notebook.canonicalSize
-        let data = library.drawing(notebook.id, page.id)
-        let notesHash = (try? JSONEncoder().encode(page.stickyNotes))?.hashValue ?? 0
-            ^ ((try? JSONEncoder().encode(page.pageImages))?.hashValue ?? 0)
-            ^ ((try? JSONEncoder().encode(page.pageTapes))?.hashValue ?? 0)
-        let key = "\(page.id)-\(data.hashValue)-\(notesHash)-\(notebook.paper.rawValue)" as NSString
+        let pdfURL = pdf?.documentURL
+        // Ucuz anahtar: mürekkebin sürüm sayacı + notlar/resimler/bantlar (küçük listeler)
+        let version = library.drawingVersion(notebook.id, page.id)
+        let extras = (try? JSONEncoder().encode(Extras(notes: page.stickyNotes, images: page.pageImages, tapes: page.pageTapes)))?.hashValue ?? 0
+        let key = "\(page.id)-\(version)-\(extras)-\(page.pdfPage ?? -1)-\(notebook.paper.rawValue)-\(pdfURL?.path ?? "")" as NSString
         ZStack {
             RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(uiColor: Y.paperUI))
             if let image {
@@ -200,26 +240,17 @@ struct PageThumbnail: View {
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .task(id: key) {
             if let cached = Self.cache.object(forKey: key) { image = cached; return }
-            // Izgara açılırken arayüz takılmasın: sırayla, kısa aralarla çiz
-            await Task.yield()
-            let img = Self.render(notebook, page: page, drawing: data, pdf: pdf)
+            // Çizim arka plan kuyruğunda: ızgara açılırken ve kaydırırken arayüz takılmaz
+            let data = library.drawing(notebook.id, page.id)
+            let img = await PageThumbRenderer.shared.render(notebook, page: page, drawing: data, pdfURL: pdfURL, width: 260)
             Self.cache.setObject(img, forKey: key)
             image = img
         }
     }
 
-    @MainActor
-    static func render(_ nb: Notebook, page: Page, drawing: Data, pdf: PDFDocument?) -> UIImage {
-        let canonical = nb.canonicalSize
-        let width: CGFloat = 260
-        let size = CGSize(width: width, height: width * canonical.height / canonical.width)
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 2
-        format.opaque = true
-        return UIGraphicsImageRenderer(size: size, format: format).image { ctx in
-            let s = width / canonical.width
-            ctx.cgContext.scaleBy(x: s, y: s)
-            PageRenderer.draw(nb, page: page, drawing: drawing, source: pdf, in: ctx.cgContext)
-        }
+    private struct Extras: Encodable {
+        let notes: [StickyNote]
+        let images: [PageImage]
+        let tapes: [Tape]
     }
 }

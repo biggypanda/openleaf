@@ -7,6 +7,8 @@ struct OpenDoc: Identifiable, Hashable { let id: UUID }
 struct LibraryView: View {
     @Environment(Library.self) private var library
     @Environment(AutoBackup.self) private var backup
+    @Environment(AppLock.self) private var appLock
+    @State private var lockError: String?
     @Environment(\.requestReview) private var requestReview
     @State private var selection: SidebarItem? = .section(.belgeler)
     /// Klasör adı penceresi: yeni klasör, yeniden adlandır ya da defteri yeni klasöre taşı
@@ -99,6 +101,14 @@ struct LibraryView: View {
         }
         // Başka uygulamadan "OpenLeaf'te aç" / Paylaş > OpenLeaf ile gelen PDF
         .onOpenURL { url in openIncoming(url) }
+        // Ana ekran kısayolu: uygulama açıkken gelen ya da uygulamayı başlatan
+        .onReceive(NotificationCenter.default.publisher(for: QuickAction.received)) { _ in handleQuickAction() }
+        .task { handleQuickAction() }
+        .alert("Kilit kurulamadı", isPresented: Binding(get: { lockError != nil }, set: { if !$0 { lockError = nil } })) {
+            Button("Tamam", role: .cancel) {}
+        } message: {
+            Text(lockError ?? "")
+        }
         .alert("PDF içe aktarılamadı", isPresented: Binding(get: { importError != nil }, set: { if !$0 { importError = nil } })) {
             Button("Tamam", role: .cancel) {}
         } message: {
@@ -282,6 +292,11 @@ struct LibraryView: View {
                     }
                     Button { showRestore = true } label: {
                         Label("Yedekten geri yükle", systemImage: "arrow.counterclockwise")
+                    }
+                    Divider()
+                    Toggle(isOn: Binding(get: { appLock.enabled },
+                                         set: { on in appLock.setEnabled(on) { lockError = $0 } })) {
+                        Label("\(AppLock.methodName) ile kilitle", systemImage: "lock")
                     }
                     Divider()
                     Button { showOnboarding = true } label: {
@@ -555,6 +570,29 @@ struct LibraryView: View {
             }
         } catch {
             importError = error.localizedDescription
+        }
+    }
+
+    private func handleQuickAction() {
+        guard let action = QuickAction.pending else { return }
+        QuickAction.pending = nil
+        let show: (UUID) -> Void = { id in
+            if openDoc != nil {
+                // Açık bir belge varsa önce kapat, sonra yenisini aç
+                openDoc = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { openDoc = OpenDoc(id: id) }
+            } else {
+                openDoc = OpenDoc(id: id)
+            }
+        }
+        switch action {
+        case .newNote:
+            let nb = Notebook(title: String(localized: "Hızlı not"), subtitle: Date().formatted(.dateTime.day().month(.wide)),
+                              cover: .tas, paper: .cizgili)
+            show(library.create(nb))
+        case .open(let id):
+            guard openDoc?.id != id, library.notebooks.contains(where: { $0.id == id && !$0.trashed }) else { return }
+            show(id)
         }
     }
 

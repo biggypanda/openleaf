@@ -850,7 +850,8 @@ struct CanvasRepresentable: UIViewRepresentable {
         c.paper.pdfPage = pdfPage
         c.isWhiteboard = isWhiteboard
         // PDF'ler beyaz kâğıttır: koyu temada mürekkep tersine dönüp kaybolmasın
-        if isPDF { c.overrideUserInterfaceStyle = .light }
+        // (düz deftere eklenmiş PDF sayfaları da)
+        if isPDF || pdfPage != nil { c.overrideUserInterfaceStyle = .light }
         c.canonical = canonical
         c.backgroundColor = .clear
         c.isOpaque = false
@@ -949,11 +950,13 @@ struct CanvasRepresentable: UIViewRepresentable {
             c.endEditing(true)
             coord.flush(c)
             let newData = data, newNotes = notes, newImages = images, newTapes = tapes, newPDF = pdfPage, pid = pageID
+            let lightOnly = isPDF || newPDF != nil
             c.animatePageTurn(forward: turnForward) {
                 coord.pageID = pid
                 // Yeni sayfa sayfaya sığar halde açılsın
                 c.setZoomScale(1, animated: false)
                 c.paper.pdfPage = newPDF
+                c.overrideUserInterfaceStyle = lightOnly ? .light : .unspecified
                 coord.suppress = true
                 c.load(newData)
                 c.setImages(newImages)
