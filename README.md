@@ -6,6 +6,13 @@ your own iCloud or to a folder you choose. Available in English, Turkish, German
 
 <a href="https://apps.apple.com/app/id6832556915"><img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/en-us" alt="Download on the App Store" height="50"></a>
 
+<p>
+  <img src="docs/screenshots/library.jpg" alt="Library with notebook covers and folders" width="24%">
+  <img src="docs/screenshots/handwriting.jpg" alt="Handwritten notes on lined paper with sticky notes" width="24%">
+  <img src="docs/screenshots/pdf.jpg" alt="Writing on an imported PDF lecture slide" width="24%">
+  <img src="docs/screenshots/colors.jpg" alt="Choosing any pen color from a grid" width="24%">
+</p>
+
 ## Features
 
 - **Library:** notebook covers with real materials (linen, leather, kraft…), folders, favorites, trash, search, sorting
