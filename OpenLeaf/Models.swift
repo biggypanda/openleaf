@@ -119,6 +119,8 @@ struct Page: Identifiable, Codable, Equatable {
     var tapes: [Tape]?
     /// Yer imi konmuş sayfa (eski kayıtlarda alan yok)
     var bookmarked: Bool?
+    /// İCloud eşitlemenin işaretlediği sayfa (çakışma kopyası ya da kurtarılan sayfa); eski kayıtlarda alan yok
+    var syncMark: SyncMark?
 
     var isBookmarked: Bool { bookmarked == true }
     var stickyNotes: [StickyNote] { notes ?? [] }
@@ -133,7 +135,7 @@ struct Page: Identifiable, Codable, Equatable {
         self.tapes = tapes
     }
 
-    enum CodingKeys: String, CodingKey { case id, pdfPage, notes, images, tapes, bookmarked }
+    enum CodingKeys: String, CodingKey { case id, pdfPage, notes, images, tapes, bookmarked, syncMark }
 
     /// Bilinmeyen bir not, resim ya da bant (ör. daha yeni sürümün kaydı) yalnızca o öğeyi atlatır; sayfa kaybolmaz.
     init(from decoder: Decoder) throws {
@@ -144,7 +146,17 @@ struct Page: Identifiable, Codable, Equatable {
         images = (try? c.decodeIfPresent(LossyList<PageImage>.self, forKey: .images))?.items
         tapes = (try? c.decodeIfPresent(LossyList<Tape>.self, forKey: .tapes))?.items
         bookmarked = try? c.decodeIfPresent(Bool.self, forKey: .bookmarked)
+        // Bilinmeyen işaret (daha yeni sürümden) sayfayı düşürmesin
+        syncMark = try? c.decodeIfPresent(SyncMark.self, forKey: .syncMark)
     }
+}
+
+/// Eşitleme sırasında sayfaya konan işaret
+enum SyncMark: String, Codable {
+    /// Aynı sayfa iki cihazda çakışarak değişti; yerel hâli bu kopyada
+    case conflict
+    /// Başka cihazda silinen defterin yerelde değişmiş sayfası kurtarıldı
+    case rescued
 }
 
 /// Öğeleri tek tek çözer; çözülemeyeni atlar ve sayar. Tek bozuk/bilinmeyen kayıt bütün listeyi düşürmesin diye.
@@ -283,11 +295,25 @@ final class Library {
     var thumbVersion: [UUID: Int] = [:]
 
     @ObservationIgnored let store: NotebookStore
-    @ObservationIgnored private var drawingCache = DrawingCache()
+    @ObservationIgnored var drawingCache = DrawingCache()
     @ObservationIgnored var textCache: [UUID: String] = [:]
     @ObservationIgnored private var thumbWork: [UUID: DispatchWorkItem] = [:]
     /// Kütüphanede kalıcı bir değişiklik olunca çağrılır (otomatik yedek bunu dinler)
     @ObservationIgnored var onChange: (() -> Void)?
+    /// İCloud eşitleme açıkken atanır; yerel değişiklikler kaydedilince fark kümesiyle çağrılır.
+    /// Atanmamışken anlık görüntü alınmaz (eşitleme kapalıyken maliyet yok).
+    @ObservationIgnored var onSyncChanges: ((Set<SyncChange>) -> Void)? {
+        // Kapalıyken eskiyen görüntü, açılınca sahte fark üretmesin
+        didSet { lastSnapshot = nil }
+    }
+    /// Farkın karşılaştırılacağı son bilinen eşitleme durumu (LibrarySync.swift)
+    @ObservationIgnored var lastSnapshot: SyncSnapshot?
+    /// Dosya özeti önbelleği: (yol, boyut, değişiklik tarihi) aynıysa yeniden özetlenmez
+    @ObservationIgnored var fileHashCache: [String: (size: Int, date: Date, hash: String)] = [:]
+    /// Sayfa mürekkep özeti önbelleği: mürekkep sürümü aynıysa yeniden okunmaz/özetlenmez
+    @ObservationIgnored var inkHashCache: [String: (version: Int, hash: String?)] = [:]
+    /// Uzaktan mürekkep gelince artar; sayfa görünümleri bunu izleyip çizimi yeniler
+    var remoteInkVersion: [UUID: Int] = [:]
 
     init(store: NotebookStore = NotebookStore()) {
         self.store = store
@@ -387,6 +413,7 @@ final class Library {
     func saveFolders() {
         store.writeFolders(folders)
         onChange?()
+        notifySync()
     }
 
     private static func cleanName(_ s: String) -> String {
@@ -436,7 +463,7 @@ final class Library {
 
     // MARK: Sayfalar
 
-    private func key(_ id: UUID, _ page: UUID) -> String { id.uuidString + "/" + page.uuidString }
+    func key(_ id: UUID, _ page: UUID) -> String { id.uuidString + "/" + page.uuidString }
 
     func drawing(_ id: UUID, _ page: UUID) -> Data {
         let k = key(id, page)
@@ -565,6 +592,7 @@ final class Library {
     func save() {
         store.writeIndex(notebooks)
         onChange?()
+        notifySync()
     }
 
     /// Uygulama arka plana geçerken bekleyen tüm yazmaları bitirir.
