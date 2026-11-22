@@ -35,6 +35,14 @@ final class SyncStateStore: @unchecked Sendable {
     private var folders: [UUID: SyncFolderMeta] = [:]
     private var fields: [String: Data] = [:]
     private var engine: Data?
+    /// Kimliğiyle yeniden istenecek kayıt adları: bekletilip bırakılan ya da okunamayan kayıtlar (I1),
+    /// kurtarılan sayfaların resim ve PDF dosyaları (I6)
+    private var refetch: Set<String> = []
+    /// İçeriği henüz gelmemiş yer tutucu sayfalar (defter sırasında görüldü, sayfa kaydı gelmedi). Boş hâlleri
+    /// gönderilmez ve silmeleri buluta gitmez: gerçek içeriği ezmesin (I1)
+    private var placeholders: Set<UUID> = []
+    /// Yerelde silinmiş defterden kurtarılan sayfaların toplandığı defter (eski → yeni); dosyaları sonra gelebilir (I6)
+    private var redirects: [UUID: UUID] = [:]
     /// Bir durum dosyası yazılamadı ya da uygulanan değişiklik diske yazılamadı: bu oturumda motor durumu
     /// (değişiklik belirteci) artık diske yazılmaz. Uygulama yeniden açılınca kayıtlar eski belirteçten yeniden alınır;
     /// tabanı yazılamamış bir değişiklik böylece "alındı" sayılıp atlanmaz.
@@ -43,6 +51,7 @@ final class SyncStateStore: @unchecked Sendable {
     private enum Dosya {
         static let meta = "meta.json", notebooks = "notebooks.json", pages = "pages.json"
         static let folders = "folders.json", fields = "fields.json", engine = "engine.json"
+        static let refetch = "refetch.json", placeholders = "placeholders.json", redirects = "redirects.json"
     }
 
     /// Varsayılan konum: Application Support/OpenLeaf-Esitleme/
@@ -61,6 +70,9 @@ final class SyncStateStore: @unchecked Sendable {
         folders = oku(Dosya.folders) ?? [:]
         fields = oku(Dosya.fields) ?? [:]
         engine = oku(Dosya.engine)
+        refetch = oku(Dosya.refetch) ?? []
+        placeholders = oku(Dosya.placeholders) ?? []
+        redirects = oku(Dosya.redirects) ?? [:]
     }
 
     // MARK: - Dosya yardımcıları (kuyruk içinden ya da init'ten çağrılır)
@@ -189,6 +201,50 @@ final class SyncStateStore: @unchecked Sendable {
         }
     }
 
+    // MARK: - Yeniden istenecek kayıtlar, yer tutucular, kurtarma yönlendirmeleri
+
+    func refetchNames() -> Set<String> { queue.sync { refetch } }
+
+    func addRefetch<S: Sequence>(_ names: S) where S.Element == String {
+        queue.sync {
+            let before = refetch.count
+            refetch.formUnion(names)
+            if refetch.count != before { yaz(refetch, Dosya.refetch) }
+        }
+    }
+
+    func removeRefetch<S: Sequence>(_ names: S) where S.Element == String {
+        queue.sync {
+            let before = refetch.count
+            refetch.subtract(names)
+            if refetch.count != before { yaz(refetch, Dosya.refetch) }
+        }
+    }
+
+    func isPlaceholder(_ id: UUID) -> Bool { queue.sync { placeholders.contains(id) } }
+
+    func addPlaceholders<S: Sequence>(_ ids: S) where S.Element == UUID {
+        queue.sync {
+            let before = placeholders.count
+            placeholders.formUnion(ids)
+            if placeholders.count != before { yaz(placeholders, Dosya.placeholders) }
+        }
+    }
+
+    func removePlaceholders<S: Sequence>(_ ids: S) where S.Element == UUID {
+        queue.sync {
+            let before = placeholders.count
+            placeholders.subtract(ids)
+            if placeholders.count != before { yaz(placeholders, Dosya.placeholders) }
+        }
+    }
+
+    func redirect(_ old: UUID) -> UUID? { queue.sync { redirects[old] } }
+
+    func setRedirect(_ old: UUID, to new: UUID) {
+        queue.sync { redirects[old] = new; yaz(redirects, Dosya.redirects) }
+    }
+
     // MARK: - Sıfırlama
 
     /// Her şeyi siler; `enabled` kalır.
@@ -197,7 +253,9 @@ final class SyncStateStore: @unchecked Sendable {
             engine = nil; notebooks = [:]; pages = [:]; folders = [:]; fields = [:]
             meta.accountID = nil
             frozen = false
-            for ad in [Dosya.engine, Dosya.notebooks, Dosya.pages, Dosya.folders, Dosya.fields] { sil(ad) }
+            refetch = []; placeholders = []; redirects = [:]
+            for ad in [Dosya.engine, Dosya.notebooks, Dosya.pages, Dosya.folders, Dosya.fields,
+                       Dosya.refetch, Dosya.placeholders, Dosya.redirects] { sil(ad) }
             yaz(meta, Dosya.meta)
         }
     }

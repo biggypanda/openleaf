@@ -326,6 +326,26 @@ enum SyncMerge {
         return baseNotebooks >= 4 && deletedNotebooks * 2 > baseNotebooks
     }
 
+    // MARK: Silme kapısı ve yer tutucular (I1, I2)
+
+    /// Bekleyen bir silme gönderilebilir mi: sıraya girdikten sonra en az bir alım başarıyla bitmiş olmalı.
+    /// Böylece başka cihazda bu arada yapılmış bir düzenleme önce alınır, silme–düzenleme kuralına girer
+    /// (silme sunucudaki yeni düzenlemeyi körlemesine ezmez). Sırası bilinmeyen silme (önceki oturumdan
+    /// kalan) oturum başında sıraya girmiş sayılır.
+    static func deleteReady(queuedAt: Int?, completedFetches: Int) -> Bool {
+        completedFetches > (queuedAt ?? 0)
+    }
+
+    /// Önceki sürümlerde açılmış, izlenmeyen boş yer tutucular: tabanı ve içeriği olmayan, ama defterinin
+    /// tabanındaki sırada (buluttan gelen sırada) görünen sayfalar
+    static func untrackedPlaceholders(local: SyncSnapshot, bases: SyncSnapshot) -> Set<UUID> {
+        var out = Set<UUID>()
+        for (id, p) in local.pages where bases.pages[id] == nil && !hasContent(p) {
+            if bases.notebooks[p.notebook]?.pageOrder.contains(id) == true { out.insert(id) }
+        }
+        return out
+    }
+
     // MARK: Yinelenen sayfa kimlikleri (C1)
 
     /// Yeniden kimlik alması gereken sayfa: defter, defterdeki sırası, eski ve yeni kimlik

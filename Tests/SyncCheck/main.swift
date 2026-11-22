@@ -447,6 +447,43 @@ check("stateFreezeKeepsOldEngineState") {
     try FileManager.default.removeItem(at: bad)
 }
 
+check("deleteGateWaitsForFetch") {
+    // I2: silme, sıraya girdikten sonra bir alım bitmeden gönderilmez
+    try expect(!SyncMerge.deleteReady(queuedAt: nil, completedFetches: 0), "oturum başı, alım yok")
+    try expect(SyncMerge.deleteReady(queuedAt: nil, completedFetches: 1), "ilk alımdan sonra")
+    try expect(!SyncMerge.deleteReady(queuedAt: 3, completedFetches: 3), "alımdan sonra sıraya girdi")
+    try expect(SyncMerge.deleteReady(queuedAt: 3, completedFetches: 4), "sonraki alım bitti")
+}
+
+check("stateRefetchPlaceholdersRedirects") {
+    // I1/I6: yeniden istenecek kayıtlar, yer tutucular ve kurtarma yönlendirmeleri uygulama kapansa da kalır
+    let root = geciciKok()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let ph = UUID(), old = UUID(), new = UUID()
+    let s = SyncStateStore(root: root)
+    s.addRefetch(["a", "b"])
+    s.removeRefetch(["a"])
+    s.addPlaceholders([ph, UUID()])
+    s.setRedirect(old, to: new)
+    let s2 = SyncStateStore(root: root)
+    try expect(s2.refetchNames() == ["b"], "yeniden istenecekler: \(s2.refetchNames())")
+    try expect(s2.isPlaceholder(ph), "yer tutucu kalıcı")
+    s2.removePlaceholders([ph])
+    try expect(!SyncStateStore(root: root).isPlaceholder(ph), "yer tutucu çıkarıldı")
+    try expect(s2.redirect(old) == new, "yönlendirme kalıcı")
+    s2.reset()
+    let s3 = SyncStateStore(root: root)
+    try expect(s3.refetchNames().isEmpty && s3.redirect(old) == nil, "sıfırlama temizler")
+}
+
+check("untrackedPlaceholders") {
+    // I1: buluttan gelen sırada olup kaydı gelmemiş boş sayfa yer tutucudur; yerelde yeni boş sayfa değildir
+    let n = UUID(), ph = UUID(), fresh = UUID(), real = UUID(), inked = UUID()
+    let bases = snap([nb(n, order: [real, ph, inked])], [pg(real, n)])
+    let local = snap([nb(n, order: [real, ph, inked, fresh])], [pg(real, n), pg(ph, n), pg(fresh, n), pg(inked, n, ink: "h")])
+    try expect(SyncMerge.untrackedPlaceholders(local: local, bases: bases) == [ph], "yalnız ph")
+}
+
 check("resumeMassDeleteGuard") {
     // Yerel kütüphane boş görünüyorsa (ör. dizin okunamadı) devam farkı buluttaki her şeyi silmesin
     try expect(SyncMerge.holdResumeDeletes(baseNotebooks: 3, localNotebooks: 0, deletedNotebooks: 3), "yerel boş")

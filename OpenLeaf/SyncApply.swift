@@ -67,15 +67,52 @@ struct SyncRecordIn: Sendable {
 struct SyncFetched: Sendable {
     var records: [SyncRecordIn] = []
     var deletions: [(name: String, type: String)] = []
+    /// Okunamayan kayıtların adları; atlanmaz, alımdan sonra kimlikle yeniden istenir (I1)
+    var unreadable: [String] = []
+
+    /// Kimlikle yeniden alınan kayıtlar için
+    init(records: [SyncRecordIn]) { self.records = records }
 
     init(_ e: CKSyncEngine.Event.FetchedRecordZoneChanges) {
         for m in e.modifications where m.record.recordID.zoneID == SyncRecords.zoneID {
             if let r = SyncRecordIn.parse(m.record) { records.append(r) }
-            else { syncLog.error("Gelen kayıt okunamadı: \(m.record.recordType, privacy: .public)") }
+            else {
+                syncLog.error("Gelen kayıt okunamadı: \(m.record.recordType, privacy: .public)")
+                unreadable.append(m.record.recordID.recordName)
+            }
         }
         for d in e.deletions where d.recordID.zoneID == SyncRecords.zoneID {
             deletions.append((d.recordID.recordName, d.recordType))
         }
+    }
+}
+
+/// Kimlikle yeniden istenen kayıtların sonucu (I1, I6)
+struct SyncRefetched: Sendable {
+    var records: [SyncRecordIn] = []
+    /// Sunucuda yok (`unknownItem`)
+    var gone: [String] = []
+    /// Geldi ama okunamadı; listede kalır, sonraki alımdan sonra yeniden denenir
+    var unreadable: [String] = []
+
+    /// Ağ işlemi; ana iş parçacığı dışında da çalışabilir. Ağ hatasında fırlatır (adlar listede kalır).
+    static func fetch(_ db: CKDatabase, names: [String]) async throws -> SyncRefetched {
+        var out = SyncRefetched()
+        var rest = names[...]
+        while !rest.isEmpty {
+            let chunk = rest.prefix(200)
+            rest = rest.dropFirst(chunk.count)
+            let ids = chunk.map { CKRecord.ID(recordName: $0, zoneID: SyncRecords.zoneID) }
+            for (id, result) in try await db.records(for: ids) {
+                switch result {
+                case .success(let r):
+                    if let parsed = SyncRecordIn.parse(r) { out.records.append(parsed) } else { out.unreadable.append(id.recordName) }
+                case .failure(let e):
+                    if (e as? CKError)?.code == .unknownItem { out.gone.append(id.recordName) }
+                }
+            }
+        }
+        return out
     }
 }
 
@@ -179,6 +216,8 @@ extension SyncController {
         // Açık sayfanın bekleyen çizgisi önce kaydedilsin: sessizce ezilmesin, çakışma kuralına girsin
         library.flushOpenEditors?()
         var ctx = SyncApplyContext(diskFailures: library.store.failureCount)
+        // I1: okunamayan kayıt bırakılmaz; belirteç ilerlemeden önce adı kalıcı olarak saklanır
+        if !f.unreadable.isEmpty { state.addRefetch(f.unreadable) }
 
         // 1) Silmeler, üst verilerden önce (R-b): defter sırası uygulanınca silinen sayfa geri bildirilmesin
         let deletedNotebooks = Set(f.deletions.filter { $0.type == SyncRecords.notebookType }
@@ -307,7 +346,10 @@ extension SyncController {
             ctx.batch.fields[r.name] = r.fields
             // Yerelde silinmiş defter: silme kazanır (uzakta yazılmış sayfalar ayrıca kurtarılır)
             if local == nil, base != nil { return }
-            library.applyRemote(notebook: local.map { SyncMerge.mergeNotebook(base: base, local: $0, server: server) } ?? server)
+            let placeholders = library.applyRemote(
+                notebook: local.map { SyncMerge.mergeNotebook(base: base, local: $0, server: server) } ?? server)
+            // I1: içeriği gelene kadar boş yer tutucular gönderilmez, silmeleri buluta gitmez
+            if !placeholders.isEmpty { state.addPlaceholders(placeholders) }
             ctx.batch.notebooks.append(server)
             ctx.touched.append(r.content)
             // Daha önce defteri beklenen sayfa ve dosyalar artık uygulanabilir
@@ -321,6 +363,8 @@ extension SyncController {
             let action = SyncMerge.remotePageAction(
                 localExists: local != nil, notebookExists: library.index(of: server.notebook) != nil,
                 base: base, notebookBaseKnown: state.base(notebook: server.notebook) != nil, server: server)
+            // Sayfanın kaydı geldi: artık yer tutucu değil (bekletilen kayıt henüz uygulanmadı)
+            if action != .hold { state.removePlaceholders([id]) }
             switch action {
             case .hold:
                 heldRecords[server.notebook, default: []].append(r)
@@ -439,6 +483,7 @@ extension SyncController {
 
     /// Tabanları ve sistem alanlarını unutur
     private func forget(_ ids: [UUID], names: [String] = []) {
+        state.removePlaceholders(ids)
         var b = SyncStateBatch()
         b.removed = ids
         for id in ids { b.clearFields(id.uuidString) }

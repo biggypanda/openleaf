@@ -195,19 +195,22 @@ extension Library {
 
     // MARK: Uzaktan uygulama
 
-    func applyRemote(notebook m: SyncNotebookMeta) {
+    /// Sırada olup yerelde olmayan sayfalar için açılan boş yer tutucuların kimliklerini döndürür (içerikleri sonra gelir)
+    @discardableResult
+    func applyRemote(notebook m: SyncNotebookMeta) -> [UUID] {
         var keptLocal = false
+        let placeholders: [UUID]
         if let i = index(of: m.id) {
             var nb = notebooks[i]
             fill(&nb, from: m)
-            keptLocal = reorderPages(&nb, order: m.pageOrder)
+            (keptLocal, placeholders) = reorderPages(&nb, order: m.pageOrder)
             notebooks[i] = nb
         } else {
             store.createDir(m.id)
             var nb = Notebook(id: m.id, title: m.title, cover: .ketenYesil, paper: .cizgili)
             fill(&nb, from: m)
             nb.pages = []
-            reorderPages(&nb, order: m.pageOrder)
+            placeholders = reorderPages(&nb, order: m.pageOrder).placeholders
             notebooks.append(nb)
         }
         persistRemote()
@@ -219,6 +222,7 @@ extension Library {
             lastSnapshot?.notebooks[m.id]?.pageOrder = m.pageOrder
             notifySync()
         }
+        return placeholders
     }
 
     /// `ink == nil` mürekkebe dokunmaz
@@ -435,12 +439,13 @@ extension Library {
 
     /// Sayfaları verilen sıraya dizer; bilinmeyen kimlik boş sayfa olur (içeriği sonra gelir).
     /// Listede olmayan yerel sayfalar SİLİNMEZ: sona, mevcut göreli sırayla eklenir ve mürekkepleri dokunulmaz kalır.
-    /// Gerçek silme yalnızca `removeRemote(page:)` ile olur. Böyle bir sayfa korunduysa true döner.
-    @discardableResult
-    private func reorderPages(_ nb: inout Notebook, order: [UUID]) -> Bool {
+    /// Gerçek silme yalnızca `removeRemote(page:)` ile olur. Böyle bir sayfa korunduysa `keptLocal` true olur;
+    /// `placeholders` açılan boş yer tutucuların kimlikleridir.
+    private func reorderPages(_ nb: inout Notebook, order: [UUID]) -> (keptLocal: Bool, placeholders: [UUID]) {
         let byID = Dictionary(nb.pages.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         var seen = Set<UUID>()
         var result: [Page] = []
+        var created: [UUID] = []
         for id in order where seen.insert(id).inserted {
             if let p = byID[id] { result.append(p); continue }
             // C1: başka defterdeki bir sayfanın kimliği (eski sürümün çoğalttığı defter); boş yer tutucusu
@@ -450,11 +455,12 @@ extension Library {
                 continue
             }
             result.append(Page(id: id))
+            created.append(id)
         }
         let kept = nb.pages.filter { !seen.contains($0.id) }
         result.append(contentsOf: kept)
         nb.pages = result.isEmpty ? [Page()] : result
-        return !kept.isEmpty
+        return (!kept.isEmpty, created)
     }
 
     private func page(from m: SyncPageMeta, base: Page?) -> Page {

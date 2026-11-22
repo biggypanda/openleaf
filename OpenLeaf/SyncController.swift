@@ -56,6 +56,15 @@ final class SyncController {
     @ObservationIgnored var rescueRedirect: [UUID: UUID] = [:]
     /// Motor başlarken kütüphane deposunun yazma hatası sayısı; artarsa motor durumu artık diske yazılmaz (I3)
     @ObservationIgnored var diskFailuresAtStart = 0
+    /// I2: bu motorla başarıyla biten alım sayısı; silmeler sıraya girdikten sonra bir alım bitmeden gönderilmez
+    @ObservationIgnored var completedFetches = 0
+    /// I2: bekleyen silmenin sıraya girdiği andaki `completedFetches` (kayıt adına göre)
+    @ObservationIgnored var deleteQueuedAt: [String: Int] = [:]
+    /// I2: silme bekliyor; kapıyı açacak alım sürüyor mu
+    @ObservationIgnored var deletesWaiting = false
+    @ObservationIgnored var gateFetchRunning = false
+    /// I1: kimlikle yeniden alma sürüyor
+    @ObservationIgnored var refetching = false
 
     private var container: CKContainer { CKContainer(identifier: Self.containerID) }
 
@@ -170,6 +179,8 @@ final class SyncController {
         let snapshot = library.seedSyncBaseline()
         // Tabanlara göre gönderilmemiş her şey (ilk açılışta tüm kütüphane; kapalıyken yapılanlar dahil)
         let bases = state.allBases()
+        // I1: önceki sürümün açtığı, izlenmeyen boş yer tutucular da korunur
+        state.addPlaceholders(SyncMerge.untrackedPlaceholders(local: snapshot, bases: bases))
         var resume = SyncMerge.resumeChanges(bases: bases, knownFiles: state.recordNames(), local: snapshot)
         let deletedNotebooks = resume.filter { if case .deleteNotebook = $0 { true } else { false } }.count
         if SyncMerge.holdResumeDeletes(baseNotebooks: bases.notebooks.count, localNotebooks: snapshot.notebooks.count,
@@ -184,9 +195,37 @@ final class SyncController {
         }
         enqueue(resume)
 
-        // Ağ hatası durum satırında görünsün (motor kendi de yeniden dener)
+        // Ağ hatası durum satırında görünsün (motor kendi de yeniden dener). Bu alım bitene kadar silmeler bekler (I2).
+        gateFetchRunning = true
         Task { [weak self] in
-            do { try await engine.fetchChanges() } catch { self?.noteError(error) }
+            do {
+                try await engine.fetchChanges()
+                self?.fetchSucceeded(ObjectIdentifier(engine))
+            } catch { self?.noteError(error) }
+            if let self, self.engine === engine { self.gateFetchRunning = false }
+        }
+    }
+
+    /// I2: silmeleri bekleten kapıyı açacak bir alım başlatır (biri sürmüyorsa)
+    private func startGateFetch() {
+        guard let engine, !gateFetchRunning else { return }
+        gateFetchRunning = true
+        Task { [weak self] in
+            do {
+                try await engine.fetchChanges()
+                self?.fetchSucceeded(ObjectIdentifier(engine))
+            } catch { self?.noteError(error) }
+            if let self, self.engine === engine { self.gateFetchRunning = false }
+        }
+    }
+
+    /// Açıkça istenen alım hatasız bitti: o ana kadar sıraya girmiş silmeler artık gönderilebilir
+    private func fetchSucceeded(_ engineID: ObjectIdentifier) {
+        guard let engine, ObjectIdentifier(engine) == engineID else { return }
+        completedFetches += 1
+        if deletesWaiting {
+            deletesWaiting = false
+            Task { try? await engine.sendChanges() }
         }
     }
 
@@ -214,6 +253,11 @@ final class SyncController {
         skippedThisRound = []
         sendProblem = nil
         rescueRedirect = [:]
+        completedFetches = 0
+        deleteQueuedAt = [:]
+        deletesWaiting = false
+        gateFetchRunning = false
+        refetching = false
     }
 
     // MARK: Yerel değişiklikler
@@ -229,7 +273,10 @@ final class SyncController {
         guard let engine, !changes.isEmpty else { return }
         var pending: [CKSyncEngine.PendingRecordZoneChange] = []
         func save(_ n: String) { pending.append(.saveRecord(Self.recordID(n))) }
-        func delete(_ n: String) { pending.append(.deleteRecord(Self.recordID(n))) }
+        func delete(_ n: String) {
+            pending.append(.deleteRecord(Self.recordID(n)))
+            deleteQueuedAt[n] = completedFetches
+        }
         var names: Set<String>?
         for change in changes {
             switch change {
@@ -265,13 +312,29 @@ final class SyncController {
         library.store.flush()
         var saves: [CKRecord] = [], deletes: [CKRecord.ID] = [], gone: [CKSyncEngine.PendingRecordZoneChange] = []
         var bytes = 0
+        var heldDelete = false
         for change in pending {
             if saves.count + deletes.count >= 200 || bytes >= batchByteLimit { break }
             switch change {
             case .deleteRecord(let id):
+                // I1: içeriği gelmemiş yer tutucunun silmesi buluta gitmez (gerçek sayfayı silerdi); içerik
+                // gelince sayfa geri gelir
+                if let pid = UUID(uuidString: id.recordName), state.isPlaceholder(pid) { gone.append(change); continue }
+                // I2: sıraya girdikten sonra bir alım bitmeden silme gönderilmez; başka cihazdaki düzenleme
+                // önce alınıp silme–düzenleme kuralına girsin
+                guard SyncMerge.deleteReady(queuedAt: deleteQueuedAt[id.recordName], completedFetches: completedFetches) else {
+                    heldDelete = true
+                    continue
+                }
                 deletes.append(id)
             case .saveRecord(let id):
                 if skippedThisRound.contains(id) { continue }
+                // I1: boş yer tutucu gönderilmez (sunucudaki içeriği boşla ezmesin); kullanıcı içerik eklerse gider
+                if let pid = UUID(uuidString: id.recordName), state.isPlaceholder(pid),
+                   let m = library.syncPage(pid), !SyncMerge.hasContent(m) {
+                    gone.append(change)
+                    continue
+                }
                 switch buildRecord(id) {
                 case .record(let r, let size): saves.append(r); bytes += size
                 case .gone: gone.append(change)          // yerelde artık yok; silmesi ayrıca bekliyor
@@ -282,6 +345,10 @@ final class SyncController {
             }
         }
         if !gone.isEmpty { engine.state.remove(pendingRecordZoneChanges: gone) }
+        if heldDelete {
+            deletesWaiting = true
+            startGateFetch()
+        }
         guard !saves.isEmpty || !deletes.isEmpty else { return nil }
         return CKSyncEngine.RecordZoneChangeBatch(recordsToSave: saves, recordIDsToDelete: deletes, atomicByZone: false)
     }
@@ -370,19 +437,67 @@ final class SyncController {
             sendProblem = nil
             if status != .noAccount { status = .syncing }
         case .didFetch:
-            if !heldRecords.isEmpty {
-                // Defteri hiç gelmedi: defter bulutta yok (silinmiş); sayfaları da silinmiş olmalı
-                syncLog.error("Defteri gelmeyen \(self.heldRecords.count) defter için kayıtlar bırakıldı")
-                heldRecords = [:]
-            }
+            // I1: defteri bu alımda gelmeyen kayıtlar bırakılmaz; belirteç yazılmadan önce adları saklanır
+            releaseHeld()
             if let d = deferredEngineState { persistEngineState(d); deferredEngineState = nil }
             updateIdleStatus(engine)
+            runRefetch()
+            // I2: bekleyen silmeler için (önceki kapı alımı başarısız olduysa) yeniden dene
+            if deletesWaiting { startGateFetch() }
         case .didSend:
             // R-h: geçici kopyalar yalnızca gönderim turu bütünüyle bitince silinir
             SyncRecords.cleanUpOutgoingAssets()
             skippedThisRound = []
             updateIdleStatus(engine)
         }
+    }
+
+    // MARK: Kimlikle yeniden alma (I1)
+
+    /// Bekletilen (defteri gelmemiş) kayıtların adları, defterlerinin adıyla birlikte kalıcı listeye yazılır ve
+    /// bellekten bırakılır. `dropping`: bulutta olmadığı anlaşılan defterler (sayfaları da silinmiş sayılır).
+    func releaseHeld(dropping gone: Set<UUID> = []) {
+        guard !heldRecords.isEmpty else { return }
+        var names: [String] = []
+        for (nb, list) in heldRecords where !gone.contains(nb) {
+            names.append(nb.uuidString)
+            names += list.map(\.name)
+        }
+        if !names.isEmpty {
+            syncLog.notice("Defteri gelmeyen \(names.count) kayıt sonra kimlikle yeniden istenecek")
+            state.addRefetch(names)
+        }
+        heldRecords = [:]
+    }
+
+    /// Kalıcı listedeki kayıtları kimlikle ister ve gelen değişiklik gibi uygular
+    func runRefetch() {
+        guard let engine, !refetching else { return }
+        let names = state.refetchNames()
+        guard !names.isEmpty else { return }
+        refetching = true
+        let db = container.privateCloudDatabase, engineID = ObjectIdentifier(engine)
+        Task { [weak self] in
+            do {
+                let result = try await SyncRefetched.fetch(db, names: Array(names))
+                self?.applyRefetched(result, engineID: engineID)
+            } catch {
+                self?.noteError(error)
+            }
+            if let self, self.engine === engine { self.refetching = false }
+        }
+    }
+
+    private func applyRefetched(_ r: SyncRefetched, engineID: ObjectIdentifier) {
+        guard let engine, ObjectIdentifier(engine) == engineID else { return }
+        if !r.unreadable.isEmpty { syncLog.error("Yeniden istenen \(r.unreadable.count) kayıt yine okunamadı") }
+        // Gelen ve sunucuda olmayanlar listeden çıkar; okunamayan ve ağ hatası alanlar kalır
+        state.removeRefetch(r.records.map(\.name) + r.gone)
+        if !r.records.isEmpty { applyFetched(SyncFetched(records: r.records)) }
+        // Defteri bulutta da yoksa bekletilen sayfaları bırakılır (defter silinmiş, sayfaları da silinir)
+        releaseHeld(dropping: Set(r.gone.compactMap { UUID(uuidString: $0) }))
+        if let d = deferredEngineState { persistEngineState(d); deferredEngineState = nil }
+        updateIdleStatus(engine)
     }
 
     /// Motor durumunu (değişiklik belirteci) yazar. Önce kütüphanenin kuyruktaki disk yazmaları bitirilir (I3):
