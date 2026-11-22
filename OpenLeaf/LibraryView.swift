@@ -309,6 +309,9 @@ struct LibraryView: View {
                         Link(destination: URL(string: "https://github.com/biggypanda/openleaf/issues/new")!) {
                             Label("GitHub'da hata bildir", systemImage: "ladybug")
                         }
+                        Link(destination: URL(string: "https://apps.apple.com/app/id6832556915?action=write-review")!) {
+                            Label("App Store'da puan ver", systemImage: "star")
+                        }
                     } label: {
                         Label("Geri bildirim gönder", systemImage: "envelope")
                     }
@@ -537,7 +540,7 @@ struct LibraryView: View {
         }
     }
 
-    /// App Store puanı ister: en az üç defteri olan ve birkaç kez not almış kullanıcıya,
+    /// App Store puanı ister: en az bir defteri olan ve üç kez not almış kullanıcıya,
     /// belgeyi kapatıp kütüphaneye döndüğü anda, sürüm başına en fazla bir kez.
     /// (Pencereyi gösterip göstermemeye sistem karar verir; yılda en çok üç kez çıkar.)
     private func askForReviewIfDue() {
@@ -545,8 +548,8 @@ struct LibraryView: View {
         let closes = defaults.integer(forKey: "puan.kapanis") + 1
         defaults.set(closes, forKey: "puan.kapanis")
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
-        guard closes >= 5,
-              library.notebooks.filter({ !$0.trashed }).count >= 3,
+        guard closes >= 3,
+              library.notebooks.contains(where: { !$0.trashed }),
               defaults.string(forKey: "puan.sorulanSurum") != version else { return }
         defaults.set(version, forKey: "puan.sorulanSurum")
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { requestReview() }
