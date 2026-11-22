@@ -12,23 +12,23 @@ let nb = SyncNotebookMeta(id: nbID, title: "T", subtitle: "", kind: "note", cove
 let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("sr-\(UUID()).bin")
 try! Data([1, 2, 3]).write(to: tmp)
 
-let r = SyncRecords.record(notebook: nb, pdf: tmp, fields: nil)
+let r = SyncRecords.record(notebook: nb, pdf: tmp, fields: nil)!
 check(SyncRecords.notebook(r)?.0 == nb, "defter meta")
 check(SyncRecords.notebook(r)?.pdf != nil, "pdf varlığı")
 let f = SyncRecords.encodeFields(r)
-let r2 = SyncRecords.record(notebook: nb, pdf: nil, fields: f)
+let r2 = SyncRecords.record(notebook: nb, pdf: nil, fields: f)!
 check(r2.recordID == r.recordID && r2.recordID.zoneID == SyncRecords.zoneID, "fields recordName")
 check(SyncRecords.notebook(r2)?.pdf == nil, "pdf nil")
 
 let pg = SyncPageMeta(id: pgID, notebook: nbID, pdfPage: 2, bookmarked: false, mark: nil, notes: [], images: [], tapes: [], inkHash: "x")
-let pr = SyncRecords.record(page: pg, ink: nil, fields: nil)
+let pr = SyncRecords.record(page: pg, ink: nil, fields: nil)!
 check(SyncRecords.page(pr)?.0 == pg && SyncRecords.page(pr)?.ink == nil, "sayfa")
 check((pr["notebook"] as? CKRecord.Reference)?.recordID.recordName == nbID.uuidString, "sayfa referansı")
 
 let fo = SyncFolderMeta(id: UUID(), name: "K", created: Date(timeIntervalSince1970: 5))
 check(SyncRecords.folder(SyncRecords.record(folder: fo, fields: nil)) == fo, "klasör")
 
-let fr = SyncRecords.record(file: tmp, notebook: nbID, name: "img-1.jpg", fields: nil)
+let fr = SyncRecords.record(file: tmp, notebook: nbID, name: "img-1.jpg", fields: nil)!
 let fp = SyncRecords.file(fr)
 check(fp?.notebook == nbID && fp?.name == "img-1.jpg", "dosya")
 let bad = CKRecord(recordType: "File", recordID: CKRecord.ID(recordName: "\(nbID.uuidString)/a/b.jpg", zoneID: SyncRecords.zoneID))
@@ -40,6 +40,21 @@ check(SyncRecords.file(bad2) == nil, "kötü ad 2")
 let junk = CKRecord(recordType: "Notebook", recordID: CKRecord.ID(recordName: "z", zoneID: SyncRecords.zoneID))
 junk["meta"] = Data([0xff])
 check(SyncRecords.notebook(junk) == nil, "bozuk meta")
+
+let missing = URL(fileURLWithPath: "/nonexistent/\(UUID()).ink")
+check(SyncRecords.record(page: pg, ink: missing, fields: nil) == nil, "kopya hatası sayfa")
+check(SyncRecords.record(notebook: nb, pdf: missing, fields: nil) == nil, "kopya hatası defter")
+check(SyncRecords.record(file: missing, notebook: nbID, name: "source.pdf", fields: nil) == nil, "kopya hatası dosya")
+let mis = SyncRecords.record(page: pg, ink: nil, fields: nil)!
+let wrong = CKRecord(recordType: "Page", recordID: CKRecord.ID(recordName: UUID().uuidString, zoneID: SyncRecords.zoneID))
+wrong["meta"] = mis["meta"]
+check(SyncRecords.page(wrong) == nil, "kimlik uyuşmazlığı sayfa")
+let wrongN = CKRecord(recordType: "Notebook", recordID: CKRecord.ID(recordName: UUID().uuidString, zoneID: SyncRecords.zoneID))
+wrongN["meta"] = r["meta"]
+check(SyncRecords.notebook(wrongN) == nil, "kimlik uyuşmazlığı defter")
+let wrongF = CKRecord(recordType: "Folder", recordID: CKRecord.ID(recordName: UUID().uuidString, zoneID: SyncRecords.zoneID))
+wrongF["meta"] = SyncRecords.record(folder: fo, fields: nil)["meta"]
+check(SyncRecords.folder(wrongF) == nil, "kimlik uyuşmazlığı klasör")
 
 SyncRecords.cleanUpOutgoingAssets()
 check(!FileManager.default.fileExists(atPath: FileManager.default.temporaryDirectory.appendingPathComponent("OpenLeaf-Gonderim").path), "temizlik")

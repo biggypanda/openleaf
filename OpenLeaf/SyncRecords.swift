@@ -72,21 +72,29 @@ enum SyncRecords {
 
     // MARK: Kayıt oluşturma
 
-    static func record(notebook meta: SyncNotebookMeta, pdf: URL?, fields: Data?) -> CKRecord {
+    /// `pdf` verilip geçici kopya yazılamazsa nil döner (kayıt atlanır, sonra yeniden denenir);
+    /// `pdf` nil ise varlıksız kayıt döner
+    static func record(notebook meta: SyncNotebookMeta, pdf: URL?, fields: Data?) -> CKRecord? {
+        var asset: CKAsset?
+        if let pdf { guard let a = outgoingAsset(pdf) else { return nil }; asset = a }
         let r = makeRecord(type: notebookType, name: meta.id.uuidString, fields: fields)
         r["meta"] = encodeMeta(meta)
-        r["pdf"] = pdf.flatMap(outgoingAsset)
+        r["pdf"] = asset
         return r
     }
 
     /// Çizim boşsa `ink` nil verilir; alan boşaltılır, karşı taraf boş mürekkep sayar
-    static func record(page meta: SyncPageMeta, ink: URL?, fields: Data?) -> CKRecord {
+    /// `ink` verilip geçici kopya yazılamazsa nil döner: aksi hâlde karşı taraf mürekkebi
+    /// boş sanıp sayfayı silerdi. Kayıt atlanır, sonra yeniden denenir.
+    static func record(page meta: SyncPageMeta, ink: URL?, fields: Data?) -> CKRecord? {
+        var asset: CKAsset?
+        if let ink { guard let a = outgoingAsset(ink) else { return nil }; asset = a }
         let r = makeRecord(type: pageType, name: meta.id.uuidString, fields: fields)
         r["meta"] = encodeMeta(meta)
         r["notebook"] = CKRecord.Reference(
             recordID: CKRecord.ID(recordName: meta.notebook.uuidString, zoneID: zoneID),
             action: .none)
-        r["ink"] = ink.flatMap(outgoingAsset)
+        r["ink"] = asset
         return r
     }
 
@@ -96,12 +104,14 @@ enum SyncRecords {
         return r
     }
 
-    static func record(file: URL, notebook: UUID, name: String, fields: Data?) -> CKRecord {
+    /// Geçici kopya yazılamazsa nil döner (kayıt atlanır, sonra yeniden denenir)
+    static func record(file: URL, notebook: UUID, name: String, fields: Data?) -> CKRecord? {
+        guard let asset = outgoingAsset(file) else { return nil }
         let r = makeRecord(type: fileType, name: "\(notebook.uuidString)/\(name)", fields: fields)
         r["notebook"] = CKRecord.Reference(
             recordID: CKRecord.ID(recordName: notebook.uuidString, zoneID: zoneID),
             action: .none)
-        r["data"] = outgoingAsset(file)
+        r["data"] = asset
         return r
     }
 
@@ -109,19 +119,23 @@ enum SyncRecords {
 
     static func notebook(_ r: CKRecord) -> (SyncNotebookMeta, pdf: URL?)? {
         guard r.recordType == notebookType,
-              let meta = decodeMeta(SyncNotebookMeta.self, from: r) else { return nil }
+              let meta = decodeMeta(SyncNotebookMeta.self, from: r),
+              meta.id.uuidString == r.recordID.recordName else { return nil }
         return (meta, (r["pdf"] as? CKAsset)?.fileURL)
     }
 
     static func page(_ r: CKRecord) -> (SyncPageMeta, ink: URL?)? {
         guard r.recordType == pageType,
-              let meta = decodeMeta(SyncPageMeta.self, from: r) else { return nil }
+              let meta = decodeMeta(SyncPageMeta.self, from: r),
+              meta.id.uuidString == r.recordID.recordName else { return nil }
         return (meta, (r["ink"] as? CKAsset)?.fileURL)
     }
 
     static func folder(_ r: CKRecord) -> SyncFolderMeta? {
-        guard r.recordType == folderType else { return nil }
-        return decodeMeta(SyncFolderMeta.self, from: r)
+        guard r.recordType == folderType,
+              let meta = decodeMeta(SyncFolderMeta.self, from: r),
+              meta.id.uuidString == r.recordID.recordName else { return nil }
+        return meta
     }
 
     static func file(_ r: CKRecord) -> (notebook: UUID, name: String, url: URL)? {
