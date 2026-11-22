@@ -154,31 +154,34 @@ enum SyncMerge {
         return result
     }
 
-    /// Her alanda: yalnız bir taraf değiştiyse o taraf, ikisi de değiştiyse `preferLocal`
-    private static func pick<T: Equatable>(_ base: T?, _ local: T, _ server: T, preferLocal: Bool) -> T {
-        if local == server { return local }
-        guard let base else { return preferLocal ? local : server }
-        if local == base { return server }
-        if server == base { return local }
-        return preferLocal ? local : server
+    /// Her alanda: yalnız bir taraf değiştiyse o taraf, ikisi de değiştiyse (veya base yoksa) `preferLocal`.
+    /// Base'i anahtar yoluyla okur; böylece isteğe bağlı alanlarda "base yok" ile "base değeri nil" karışmaz.
+    private static func pick<R, T: Equatable>(_ base: R?, _ key: KeyPath<R, T>, _ local: R, _ server: R, preferLocal: Bool) -> T {
+        let l = local[keyPath: key], s = server[keyPath: key]
+        if l == s { return l }
+        guard let base else { return preferLocal ? l : s }
+        let b = base[keyPath: key]
+        if l == b { return s }
+        if s == b { return l }
+        return preferLocal ? l : s
     }
 
     static func mergeNotebook(base: SyncNotebookMeta?, local: SyncNotebookMeta, server: SyncNotebookMeta) -> SyncNotebookMeta {
         let pl = local.modified > server.modified
         var m = local
-        m.title = pick(base?.title, local.title, server.title, preferLocal: pl)
-        m.subtitle = pick(base?.subtitle, local.subtitle, server.subtitle, preferLocal: pl)
-        m.kind = pick(base?.kind, local.kind, server.kind, preferLocal: pl)
-        m.cover = pick(base?.cover, local.cover, server.cover, preferLocal: pl)
-        m.paper = pick(base?.paper, local.paper, server.paper, preferLocal: pl)
-        m.size = pick(base?.size, local.size, server.size, preferLocal: pl)
-        m.favorite = pick(base?.favorite, local.favorite, server.favorite, preferLocal: pl)
-        m.trashed = pick(base?.trashed, local.trashed, server.trashed, preferLocal: pl)
-        m.folder = pick(base?.folder, local.folder, server.folder, preferLocal: pl)
-        m.created = pick(base?.created, local.created, server.created, preferLocal: pl)
-        m.pdfAspect = pick(base?.pdfAspect, local.pdfAspect, server.pdfAspect, preferLocal: pl)
-        m.pdfFile = pick(base?.pdfFile, local.pdfFile, server.pdfFile, preferLocal: pl)
-        m.pdfHash = pick(base?.pdfHash, local.pdfHash, server.pdfHash, preferLocal: pl)
+        m.title = pick(base, \.title, local, server, preferLocal: pl)
+        m.subtitle = pick(base, \.subtitle, local, server, preferLocal: pl)
+        m.kind = pick(base, \.kind, local, server, preferLocal: pl)
+        m.cover = pick(base, \.cover, local, server, preferLocal: pl)
+        m.paper = pick(base, \.paper, local, server, preferLocal: pl)
+        m.size = pick(base, \.size, local, server, preferLocal: pl)
+        m.favorite = pick(base, \.favorite, local, server, preferLocal: pl)
+        m.trashed = pick(base, \.trashed, local, server, preferLocal: pl)
+        m.folder = pick(base, \.folder, local, server, preferLocal: pl)
+        m.created = pick(base, \.created, local, server, preferLocal: pl)
+        m.pdfAspect = pick(base, \.pdfAspect, local, server, preferLocal: pl)
+        m.pdfFile = pick(base, \.pdfFile, local, server, preferLocal: pl)
+        m.pdfHash = pick(base, \.pdfHash, local, server, preferLocal: pl)
         m.pageOrder = mergeOrder(base: base?.pageOrder ?? [], local: local.pageOrder, server: server.pageOrder)
         m.modified = max(local.modified, server.modified)
         return m
@@ -187,9 +190,9 @@ enum SyncMerge {
     /// Mürekkep hariç sayfa alanlarını birleştirir; `inkHash` yereldeki kalır, onu `resolveInk` çözer
     static func mergePage(base: SyncPageMeta?, local: SyncPageMeta, server: SyncPageMeta, localWins: Bool) -> SyncPageMeta {
         var m = local
-        m.pdfPage = pick(base?.pdfPage, local.pdfPage, server.pdfPage, preferLocal: localWins)
-        m.bookmarked = pick(base?.bookmarked, local.bookmarked, server.bookmarked, preferLocal: localWins)
-        m.mark = pick(base?.mark, local.mark, server.mark, preferLocal: localWins)
+        m.pdfPage = pick(base, \.pdfPage, local, server, preferLocal: localWins)
+        m.bookmarked = pick(base, \.bookmarked, local, server, preferLocal: localWins)
+        m.mark = pick(base, \.mark, local, server, preferLocal: localWins)
         m.notes = mergeItems(base: base?.notes ?? [], local: local.notes, server: server.notes, localWins: localWins)
         m.images = mergeItems(base: base?.images ?? [], local: local.images, server: server.images, localWins: localWins)
         m.tapes = mergeItems(base: base?.tapes ?? [], local: local.tapes, server: server.tapes, localWins: localWins)

@@ -139,6 +139,22 @@ check("notebookFieldMerge") {
     try expect(m2.pageOrder == [A, B, C], "pageOrder birleşmeli: \(m2.pageOrder)")
     ln.modified = t2; sn.modified = t1
     try expect(SyncMerge.mergeNotebook(base: nil, local: ln, server: sn).title == "L", "base yok: local yeni")
+
+    // base yok, isteğe bağlı alan: yeni olan sunucunun nil'i kazanmalı
+    var lf = nb(id, modified: t1); lf.folder = UUID(); lf.pdfFile = "x.pdf"
+    let sf = nb(id, modified: t2)
+    let m3 = SyncMerge.mergeNotebook(base: nil, local: lf, server: sf)
+    try expect(m3.folder == nil && m3.pdfFile == nil, "base yok: yeni sunucunun nil alanları kazanmalı")
+}
+
+check("pageNoBaseOptional") {
+    let nbID = UUID(), id = UUID()
+    var l = pg(id, nbID); l.mark = "yildiz"; l.pdfPage = 3
+    let s = pg(id, nbID)
+    let m = SyncMerge.mergePage(base: nil, local: l, server: s, localWins: false)
+    try expect(m.mark == nil && m.pdfPage == nil, "base yok, localWins false: sunucu kazanmalı")
+    let m2 = SyncMerge.mergePage(base: nil, local: l, server: s, localWins: true)
+    try expect(m2.mark == "yildiz" && m2.pdfPage == 3, "base yok, localWins true: yerel kazanmalı")
 }
 
 check("inkResolution") {
