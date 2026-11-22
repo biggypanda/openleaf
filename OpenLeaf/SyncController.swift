@@ -52,8 +52,6 @@ final class SyncController {
     @ObservationIgnored var heldRecords: [UUID: [SyncRecordIn]] = [:]
     /// Bekletilen kayıt varken motor durumu diske yazılmaz: uygulama kapanırsa kayıtlar yeniden alınır
     @ObservationIgnored var deferredEngineState: Data?
-    /// Bu oturumda, yerelde silinmiş defterden kurtarılan sayfaların toplandığı defter (eski → yeni)
-    @ObservationIgnored var rescueRedirect: [UUID: UUID] = [:]
     /// Motor başlarken kütüphane deposunun yazma hatası sayısı; artarsa motor durumu artık diske yazılmaz (I3)
     @ObservationIgnored var diskFailuresAtStart = 0
     /// I2: bu motorla başarıyla biten alım sayısı; silmeler sıraya girdikten sonra bir alım bitmeden gönderilmez
@@ -252,7 +250,6 @@ final class SyncController {
         deferredEngineState = nil
         skippedThisRound = []
         sendProblem = nil
-        rescueRedirect = [:]
         completedFetches = 0
         deleteQueuedAt = [:]
         deletesWaiting = false
@@ -313,6 +310,7 @@ final class SyncController {
         var saves: [CKRecord] = [], deletes: [CKRecord.ID] = [], gone: [CKSyncEngine.PendingRecordZoneChange] = []
         var bytes = 0
         var heldDelete = false
+        let refetchNames = state.refetchNames()
         for change in pending {
             if saves.count + deletes.count >= 200 || bytes >= batchByteLimit { break }
             switch change {
@@ -320,6 +318,9 @@ final class SyncController {
                 // I1: içeriği gelmemiş yer tutucunun silmesi buluta gitmez (gerçek sayfayı silerdi); içerik
                 // gelince sayfa geri gelir
                 if let pid = UUID(uuidString: id.recordName), state.isPlaceholder(pid) { gone.append(change); continue }
+                // I1/I6: kimlikle yeniden istenmeyi bekleyen kayıt silinmez (ör. kurtarılan sayfanın resmi ya da PDF'i);
+                // yeniden alma bitince gönderilir
+                if refetchNames.contains(id.recordName) { continue }
                 // I2: sıraya girdikten sonra bir alım bitmeden silme gönderilmez; başka cihazdaki düzenleme
                 // önce alınıp silme–düzenleme kuralına girsin
                 guard SyncMerge.deleteReady(queuedAt: deleteQueuedAt[id.recordName], completedFetches: completedFetches) else {
@@ -498,6 +499,8 @@ final class SyncController {
         releaseHeld(dropping: Set(r.gone.compactMap { UUID(uuidString: $0) }))
         if let d = deferredEngineState { persistEngineState(d); deferredEngineState = nil }
         updateIdleStatus(engine)
+        // Yeniden alınmayı bekleyen kayıtların silmeleri artık gönderilebilir
+        if !engine.state.pendingRecordZoneChanges.isEmpty { Task { try? await engine.sendChanges() } }
     }
 
     /// Motor durumunu (değişiklik belirteci) yazar. Önce kütüphanenin kuyruktaki disk yazmaları bitirilir (I3):

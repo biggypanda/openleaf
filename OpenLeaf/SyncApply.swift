@@ -326,6 +326,8 @@ extension SyncController {
             }
         }
         finish(&ctx)
+        // Kurtarılan sayfaların dosyaları beklenebilir (alımda bu, alım bitince yapılır)
+        runRefetch()
     }
 
     // MARK: Tek kayıt
@@ -410,10 +412,11 @@ extension SyncController {
             if library.index(of: nb) != nil {
                 library.applyRemote(file: data, notebook: nb, name: name)
                 ctx.batch.fields[r.name] = r.fields
-            } else if let target = rescueRedirect[nb] {
-                // Kurtarma defterine giden sayfaların resimleri ve PDF'i
+            } else if let target = state.redirect(nb), library.index(of: target) != nil {
+                // Kurtarma defterine giden sayfaların resimleri ve PDF'i (I6: sonradan kimlikle istenenler dahil)
                 library.applyRemote(file: data, notebook: target, name: name)
                 ctx.saves.append(Self.fileRecordName(target, name))
+                state.removeRefetch([r.name])
             } else if state.base(notebook: nb) != nil {
                 ctx.batch.fields[r.name] = r.fields   // yerelde silinmiş defterin dosyası
             } else {
@@ -424,11 +427,13 @@ extension SyncController {
 
     /// Yerelde silinmiş deftere başka cihazda yazılmış sayfalar yeni bir deftere toplanır.
     /// Sayfalar yeni kimlik alır: eski kayıtlar için bekleyen silme gönderildiğinde bunlara dokunmasın.
+    /// I6: sayfaların resimleri ve defterin PDF'i de yeni deftere alınır. Dosya yerelde yoksa (defter silinirken
+    /// klasörü de gitti) eski dosya kaydı kimlikle yeniden istenir; o zamana kadar bekleyen silmesi gönderilmez.
     private func rescueOrphans(_ ctx: inout SyncApplyContext) {
         for (oldID, list) in ctx.orphans {
             guard let baseMeta = state.base(notebook: oldID) else { continue }
-            let newID = rescueRedirect[oldID] ?? UUID()
-            rescueRedirect[oldID] = newID
+            let newID = state.redirect(oldID) ?? UUID()
+            state.setRedirect(oldID, to: newID)
             var pages: [SyncPageMeta] = [], inks: [UUID: Data] = [:]
             for (server, ink) in list {
                 var m = server
@@ -441,6 +446,24 @@ extension SyncController {
             meta.pageOrder = pages.map(\.id)
             library.rescue(pages: pages, inks: inks, into: meta)
             ctx.rescued += pages.count
+
+            let ids = Set(pages.map(\.id))
+            var files = Set(library.notebooks.first { $0.id == newID }?.pages
+                .filter { ids.contains($0.id) }.flatMap { $0.pageImages.map(\.file) } ?? [])
+            if let pdf = baseMeta.pdfFile { files.insert(pdf) }
+            guard !files.isEmpty else { continue }
+            library.store.flush()
+            let fm = FileManager.default
+            let from = library.store.dir(oldID), to = library.store.dir(newID)
+            var missing: [String] = []
+            for name in files.sorted() where !fm.fileExists(atPath: to.appendingPathComponent(name).path) {
+                if (try? fm.copyItem(at: from.appendingPathComponent(name), to: to.appendingPathComponent(name))) != nil {
+                    ctx.saves.append(Self.fileRecordName(newID, name))
+                } else {
+                    missing.append(Self.fileRecordName(oldID, name))
+                }
+            }
+            if !missing.isEmpty { state.addRefetch(missing) }
         }
         ctx.orphans = [:]
     }
