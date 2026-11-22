@@ -5,6 +5,21 @@ import Foundation
 // Application Support altında tutulur (Dosyalar'da ve yedekte görünmesin).
 // Tüm erişim tek seri kuyruktan geçer; her yazma dosyaya atomik yapılır.
 
+/// Bir olayın tüm durum yazmaları tek seferde (her kayıt için ayrı dosya yazımı olmasın)
+struct SyncStateBatch {
+    var notebooks: [SyncNotebookMeta] = []
+    var pages: [SyncPageMeta] = []
+    var folders: [SyncFolderMeta] = []
+    /// Her türden tabanı silinecek kimlikler (ekleme/güncellemeden sonra uygulanır)
+    var removed: [UUID] = []
+    /// Kayıt adı → sistem alanları; nil silinir
+    var fields: [String: Data?] = [:]
+
+    var isEmpty: Bool {
+        notebooks.isEmpty && pages.isEmpty && folders.isEmpty && removed.isEmpty && fields.isEmpty
+    }
+}
+
 final class SyncStateStore: @unchecked Sendable {
     private struct Meta: Codable {
         var enabled = false
@@ -109,9 +124,46 @@ final class SyncStateStore: @unchecked Sendable {
         }
     }
 
+    /// Tabanı bilinen sayfalardan bu deftere ait olanlar (silinen defterin sayfa kayıtlarını bulmak için)
+    func pageIDs(inNotebook id: UUID) -> [UUID] {
+        queue.sync { pages.values.filter { $0.notebook == id }.map(\.id) }
+    }
+
+    /// Tüm tabanlar bir görüntü olarak (dosya özetleri boş)
+    func allBases() -> SyncSnapshot {
+        queue.sync { SyncSnapshot(notebooks: notebooks, pages: pages, folders: folders, files: [:]) }
+    }
+
+    /// Toplu yazma: her tür dosyası en çok bir kez yazılır
+    func apply(_ b: SyncStateBatch) {
+        guard !b.isEmpty else { return }
+        queue.sync {
+            for m in b.notebooks { notebooks[m.id] = m }
+            for m in b.pages { pages[m.id] = m }
+            for m in b.folders { folders[m.id] = m }
+            var nbDirty = !b.notebooks.isEmpty, pgDirty = !b.pages.isEmpty, flDirty = !b.folders.isEmpty
+            for id in b.removed {
+                if notebooks.removeValue(forKey: id) != nil { nbDirty = true }
+                if pages.removeValue(forKey: id) != nil { pgDirty = true }
+                if folders.removeValue(forKey: id) != nil { flDirty = true }
+            }
+            for (name, data) in b.fields { fields[name] = data }
+            if nbDirty { yaz(notebooks, Dosya.notebooks) }
+            if pgDirty { yaz(pages, Dosya.pages) }
+            if flDirty { yaz(folders, Dosya.folders) }
+            if !b.fields.isEmpty { yaz(fields, Dosya.fields) }
+        }
+    }
+
     // MARK: - CKRecord sistem alanları
 
     func systemFields(_ recordName: String) -> Data? { queue.sync { fields[recordName] } }
+
+    /// Bulutta karşılığı bilinen kayıt adları
+    func recordNames() -> Set<String> { queue.sync { Set(fields.keys) } }
+
+    /// Bu cihaz bölgeye en az bir kez kayıt göndermiş ya da almış mı (bölge daha önce vardı mı)
+    var hasSystemFields: Bool { queue.sync { !fields.isEmpty } }
 
     func setSystemFields(_ data: Data?, for recordName: String) {
         queue.sync {

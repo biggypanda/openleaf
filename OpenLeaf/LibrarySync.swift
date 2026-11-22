@@ -114,6 +114,15 @@ extension Library {
         if !changes.isEmpty { handler(changes) }
     }
 
+    /// Eşitleme açılırken (`onSyncChanges` atandıktan sonra) farkın başlangıcını şimdiki durum yapar
+    /// ve görüntüyü döndürür. Atama `lastSnapshot`'ı sıfırladığı için bu çağrılmazsa ilk kayıt boş fark verir.
+    @discardableResult
+    func seedSyncBaseline() -> SyncSnapshot {
+        let now = syncSnapshot()
+        lastSnapshot = now
+        return now
+    }
+
     /// Eşitleme açıkken ilk görüntü yoksa şimdiki durumu temel alır (sonraki değişiklik fark üretsin)
     private func ensureBaseline() {
         if onSyncChanges != nil, lastSnapshot == nil { lastSnapshot = syncSnapshot() }
@@ -319,6 +328,17 @@ extension Library {
         notebooks[i].modified = Date()
         save()
         scheduleThumbnail(meta.id)
+    }
+
+    /// Başka cihazda silinen ama burada mürekkebi değişmiş sayfayı yerinde tutar: "Kurtarıldı" işareti
+    /// ve yer imi konur. Değişiklik `onSyncChanges`'e bildirilir (sayfa yeniden gönderilir).
+    func markRescued(page id: UUID) {
+        ensureBaseline()
+        guard let i = notebooks.firstIndex(where: { $0.pages.contains { $0.id == id } }),
+              let j = notebooks[i].pages.firstIndex(where: { $0.id == id }) else { return }
+        notebooks[i].pages[j].syncMark = .rescued
+        notebooks[i].pages[j].bookmarked = true
+        save()
     }
 
     // MARK: Yardımcılar

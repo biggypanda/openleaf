@@ -67,6 +67,9 @@ enum SyncChange: Hashable {
     case deleteFile(notebook: UUID, name: String)
 }
 
+/// CloudKit hatasının durum satırına etkisi
+enum SyncStatusKind: Equatable { case offline, quotaFull, retry, other }
+
 // MARK: Birleştirme
 
 enum SyncMerge {
@@ -210,6 +213,94 @@ enum SyncMerge {
     /// Sunucuda silinen sayfanın yerelde değişmişse kurtarılması gerekir
     static func resolveRemoteDelete(base: String?, local: String?) -> DeleteResolution {
         local == base ? .delete : .rescue
+    }
+
+    // MARK: Denetleyici kararları (CloudKit'siz, Mac'te denetlenir)
+
+    /// `CKError.Code` ham değerinden durum türü (CloudKit içe aktarılmasın diye sayılarla)
+    static func statusKind(forErrorCode code: Int) -> SyncStatusKind {
+        switch code {
+        case 3, 4: .offline          // networkUnavailable, networkFailure
+        case 25: .quotaFull          // quotaExceeded
+        case 6, 7, 23: .retry        // serviceUnavailable, requestRateLimited, zoneBusy
+        default: .other
+        }
+    }
+
+    /// Klasörde değişiklik tarihi yok; iki taraf da değiştiyse sunucu kazanır
+    static func mergeFolder(base: SyncFolderMeta?, local: SyncFolderMeta, server: SyncFolderMeta) -> SyncFolderMeta {
+        var m = local
+        m.name = pick(base, \.name, local, server, preferLocal: false)
+        m.created = pick(base, \.created, local, server, preferLocal: false)
+        return m
+    }
+
+    /// `resolveInk` ile aynı; ancak çakışmada bir taraf boşsa kopya üretmez, dolu taraf kazanır
+    /// (boş taraf kaybolunca mürekkep kaybolmaz, gereksiz boş çakışma sayfası da çıkmaz)
+    static func inkAction(base: String?, local: String?, server: String?) -> InkResolution {
+        let r = resolveInk(base: base, local: local, server: server)
+        guard r == .keepBoth else { return r }
+        if local == nil { return .takeServer }
+        if server == nil { return .takeLocal }
+        return .keepBoth
+    }
+
+    /// Başka cihazda silinen defterin kurtarılacak sayfaları (yerel sırayla)
+    static func pagesToRescue(local: [SyncPageMeta], bases: [UUID: SyncPageMeta]) -> [UUID] {
+        local.filter { resolveRemoteDelete(base: bases[$0.id]?.inkHash, local: $0.inkHash) == .rescue }.map(\.id)
+    }
+
+    enum RemotePageAction: Equatable {
+        /// Yerelle birleştir (yerelde yoksa olduğu gibi ekle)
+        case merge
+        /// Yerelde silinmiş ama uzakta yeni mürekkep var: sayfa deftere geri gelir
+        case resurrect
+        /// Defteri yerelde silinmiş ama uzakta yeni mürekkep var: kurtarma defterine alınır
+        case rescueOrphan
+        /// Yerel silme kazanır (uzakta mürekkep değişmedi)
+        case skip
+        /// Defteri henüz gelmedi; aynı alımda gelene kadar beklet
+        case hold
+    }
+
+    /// Gelen sayfa kaydı yerelde karşılıksızsa ne yapılacağı. Yazılan kazanır: uzaktaki mürekkep
+    /// son eşitlenen hâlden farklıysa yerel silme onu yutmaz.
+    static func remotePageAction(localExists: Bool, notebookExists: Bool, base: SyncPageMeta?,
+                                 notebookBaseKnown: Bool, server: SyncPageMeta) -> RemotePageAction {
+        if localExists { return .merge }
+        let newInk = server.inkHash != nil && server.inkHash != base?.inkHash
+        if notebookExists {
+            guard base != nil else { return .merge }
+            return newInk ? .resurrect : .skip
+        }
+        guard notebookBaseKnown else { return .hold }
+        return newInk ? .rescueOrphan : .skip
+    }
+
+    /// Tabanlara (son eşitlenen hâl) göre gönderilmesi gerekenler. Eşitleme açılınca ve her başlatmada
+    /// çağrılır: kapalıyken ya da gönderilemeden kapanan değişiklikler böylece kaybolmaz.
+    /// `knownFiles` buluttaki dosya kayıt adlarıdır ("<defter>/<ad>"); içerik özetleri tutulmaz,
+    /// source.pdf'in değişip değişmediği defter tabanındaki `pdfHash`'ten anlaşılır.
+    static func resumeChanges(bases: SyncSnapshot, knownFiles: Set<String>, local: SyncSnapshot) -> Set<SyncChange> {
+        var old = SyncSnapshot(notebooks: bases.notebooks, pages: bases.pages, folders: bases.folders, files: [:])
+        for key in knownFiles where key.contains("/") {
+            var same = local.files[key]
+            if let (nb, name) = splitFileKey(key), name == "source.pdf",
+               bases.notebooks[nb]?.pdfHash != local.notebooks[nb]?.pdfHash {
+                same = nil
+            }
+            // Yerelde yoksa ya da değiştiyse eski özet bilinmiyor: fark üretsin
+            old.files[key] = same ?? "?"
+        }
+        return diff(old: old, new: local)
+    }
+
+    /// Devam farkındaki silmeler şüpheliyse (yerel kütüphane boş ya da defterlerin yarısından fazlası gitmiş,
+    /// ör. dizin okunamadı) gönderilmez. Sonuç en kötü ihtimalle buluttaki fazladan bir kopyadır, kayıp değil.
+    static func holdResumeDeletes(baseNotebooks: Int, localNotebooks: Int, deletedNotebooks: Int) -> Bool {
+        guard baseNotebooks > 0, deletedNotebooks > 0 else { return false }
+        if localNotebooks == 0 { return true }
+        return baseNotebooks >= 4 && deletedNotebooks * 2 > baseNotebooks
     }
 
     /// Silinen defterden, yalnızca kurtarılan sayfaları içeren yeni bir defter üstverisi üretir

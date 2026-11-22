@@ -1,6 +1,6 @@
 // İCloud eşitleme saf mantığının denetimi. Uygulama hedefinde değildir; Mac'te derlenip çalıştırılır:
 //
-//   swiftc OpenLeaf/SyncMerge.swift Tests/SyncCheck/main.swift -o "$TMPDIR/esitleme-test" && "$TMPDIR/esitleme-test"
+//   swiftc OpenLeaf/SyncMerge.swift OpenLeaf/SyncState.swift Tests/SyncCheck/main.swift -o "$TMPDIR/esitleme-test" && "$TMPDIR/esitleme-test"
 //
 // Biri kalırsa çıkış kodu 1 olur.
 
@@ -250,6 +250,124 @@ check("stateCorruptFileIsNil") {
     try Data([0xFF, 0x00, 0x13]).write(to: root.appendingPathComponent("notebooks.json"))
     let s2 = SyncStateStore(root: root)
     try expect(s2.base(notebook: id) == nil, "bozuk dosya nil vermeli")
+}
+
+check("syncErrorMapping") {
+    typealias K = SyncStatusKind
+    let cases: [(Int, K)] = [(3, .offline), (4, .offline), (25, .quotaFull), (6, .retry), (7, .retry), (23, .retry),
+                             (14, .other), (999, .other)]
+    for (code, want) in cases {
+        let got = SyncMerge.statusKind(forErrorCode: code)
+        try expect(got == want, "\(code) → \(got), beklenen \(want)")
+    }
+}
+
+check("folderMerge") {
+    let id = UUID()
+    let b = SyncFolderMeta(id: id, name: "Ders", created: t0)
+    var l = b; l.name = "Okul"
+    var s = b; s.name = "İş"
+    try expect(SyncMerge.mergeFolder(base: b, local: l, server: b).name == "Okul", "yalnız yerel değişti")
+    try expect(SyncMerge.mergeFolder(base: b, local: b, server: s).name == "İş", "yalnız sunucu değişti")
+    try expect(SyncMerge.mergeFolder(base: b, local: l, server: s).name == "İş", "ikisi de değişti: sunucu")
+    try expect(SyncMerge.mergeFolder(base: nil, local: l, server: s).name == "İş", "taban yok: sunucu")
+}
+
+check("inkActionEmptySide") {
+    typealias R = SyncMerge.InkResolution
+    let cases: [(String?, String?, String?, R)] = [
+        ("h1", "h2", "h3", .keepBoth), (nil, "h2", "h3", .keepBoth),
+        // Bir taraf boşsa kopya gereksiz: dolu taraf kazanır, mürekkep kaybolmaz
+        ("h1", nil, "h3", .takeServer), ("h1", "h2", nil, .takeLocal),
+        ("h1", "h1", "h2", .takeServer), ("h1", "h2", "h1", .takeLocal), ("h1", "h1", "h1", .same),
+        ("h1", "h1", nil, .takeServer), ("h1", nil, "h1", .takeLocal),
+    ]
+    for (b, l, s, want) in cases {
+        let got = SyncMerge.inkAction(base: b, local: l, server: s)
+        try expect(got == want, "(\(b ?? "nil"),\(l ?? "nil"),\(s ?? "nil")) → \(got), beklenen \(want)")
+    }
+}
+
+check("pagesToRescue") {
+    let n = UUID(), a = UUID(), b = UUID(), c = UUID(), d = UUID()
+    let local = [pg(a, n, ink: "h1"), pg(b, n, ink: "h2"), pg(c, n, ink: "h3"), pg(d, n)]
+    let bases = [a: pg(a, n, ink: "h1"), b: pg(b, n, ink: "eski")]
+    // a değişmedi, b değişti, c hiç eşitlenmedi ama mürekkepli, d boş ve tabansız
+    try expect(SyncMerge.pagesToRescue(local: local, bases: bases) == [b, c], "yalnız b ve c, yerel sırayla")
+}
+
+check("remotePageAction") {
+    typealias A = SyncMerge.RemotePageAction
+    let n = UUID(), p = UUID()
+    let srv = pg(p, n, ink: "yeni")
+    let baseSame = pg(p, n, ink: "yeni"), baseOld = pg(p, n, ink: "eski")
+    try expect(SyncMerge.remotePageAction(localExists: true, notebookExists: true, base: baseOld, notebookBaseKnown: true, server: srv) == A.merge, "yerelde var: birleştir")
+    try expect(SyncMerge.remotePageAction(localExists: false, notebookExists: true, base: nil, notebookBaseKnown: true, server: srv) == A.merge, "yeni sayfa")
+    try expect(SyncMerge.remotePageAction(localExists: false, notebookExists: true, base: baseOld, notebookBaseKnown: true, server: srv) == A.resurrect, "yerelde silindi, uzakta yazıldı: geri gelir")
+    try expect(SyncMerge.remotePageAction(localExists: false, notebookExists: true, base: baseSame, notebookBaseKnown: true, server: srv) == A.skip, "yerelde silindi, uzakta mürekkep aynı: silme kazanır")
+    try expect(SyncMerge.remotePageAction(localExists: false, notebookExists: true, base: baseOld, notebookBaseKnown: true, server: pg(p, n)) == A.skip, "uzakta mürekkep boşaldı: silme kazanır")
+    try expect(SyncMerge.remotePageAction(localExists: false, notebookExists: false, base: baseOld, notebookBaseKnown: true, server: srv) == A.rescueOrphan, "defter yerelde silindi, uzakta yazıldı")
+    try expect(SyncMerge.remotePageAction(localExists: false, notebookExists: false, base: nil, notebookBaseKnown: true, server: srv) == A.rescueOrphan, "tabansız mürekkepli sayfa, silinen deftere")
+    try expect(SyncMerge.remotePageAction(localExists: false, notebookExists: false, base: baseSame, notebookBaseKnown: true, server: srv) == A.skip, "defter silindi, sayfa değişmedi")
+    try expect(SyncMerge.remotePageAction(localExists: false, notebookExists: false, base: nil, notebookBaseKnown: false, server: srv) == A.hold, "defter henüz gelmedi: beklet")
+}
+
+check("resumeChanges") {
+    let a = UUID(), b = UUID(), gone = UUID(), p1 = UUID(), p2 = UUID(), p3 = UUID(), pNew = UUID(), f = UUID()
+    let imgOld = "\(a.uuidString)/img-eski.jpg", imgNew = "\(a.uuidString)/img-yeni.jpg", imgGone = "\(a.uuidString)/img-sil.jpg"
+    let pdfA = "\(a.uuidString)/source.pdf", pdfB = "\(b.uuidString)/source.pdf"
+    var na = nb(a, order: [p1, p2]); na.pdfHash = "pa"
+    var nbB = nb(b, order: [p3]); nbB.pdfHash = "pb1"
+    let bases = snap([na, nbB, nb(gone)], [pg(p1, a, ink: "h1"), pg(p2, a, ink: "h2"), pg(p3, b)],
+                     [SyncFolderMeta(id: f, name: "K", created: t0)])
+    var nbB2 = nbB; nbB2.pdfHash = "pb2"
+    let local = snap([na, nbB2], [pg(p1, a, ink: "h1"), pg(p3, b), pg(pNew, b, ink: "x")], [],
+                     files: [imgOld: "i1", imgNew: "i2", pdfA: "pa", pdfB: "pb2"])
+    let known: Set<String> = [imgOld, imgGone, pdfA, pdfB, a.uuidString]
+    let got = SyncMerge.resumeChanges(bases: bases, knownFiles: known, local: local)
+    let want: Set<SyncChange> = [.notebook(b), .page(pNew), .deletePage(p2), .deleteNotebook(gone), .deleteFolder(f),
+                                 .file(notebook: a, name: "img-yeni.jpg"), .deleteFile(notebook: a, name: "img-sil.jpg"),
+                                 .file(notebook: b, name: "source.pdf")]
+    try expect(got == want, "fark: fazla \(got.subtracting(want)), eksik \(want.subtracting(got))")
+    // Taban yoksa (ilk açılış) her şey gönderilir, hiçbir şey silinmez
+    let first = SyncMerge.resumeChanges(bases: snap(), knownFiles: [], local: local)
+    try expect(first.count == 2 + 3 + 4 && !first.contains(where: {
+        if case .deleteNotebook = $0 { return true }; if case .deletePage = $0 { return true }; return false }), "ilk açılış: \(first)")
+}
+
+check("stateBatchAndQueries") {
+    let root = geciciKok()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let n = UUID(), p1 = UUID(), p2 = UUID(), other = UUID(), f = UUID()
+    let s = SyncStateStore(root: root)
+    try expect(!s.hasSystemFields, "başta sistem alanı yok")
+    var b = SyncStateBatch()
+    b.notebooks = [nb(n, order: [p1, p2])]
+    b.pages = [pg(p1, n), pg(p2, n), pg(other, UUID())]
+    b.folders = [SyncFolderMeta(id: f, name: "K", created: t0)]
+    b.fields = ["\(n.uuidString)/img-a.jpg": Data([1]), p1.uuidString: Data([2]), "silinecek": Data([3])]
+    s.apply(b)
+    var b2 = SyncStateBatch()
+    b2.removed = [p2]
+    b2.fields = ["silinecek": nil]
+    s.apply(b2)
+    s.flush()
+    let s2 = SyncStateStore(root: root)
+    try expect(s2.hasSystemFields, "sistem alanı var")
+    try expect(s2.base(page: p2) == nil && s2.base(page: p1) != nil, "removed")
+    try expect(s2.pageIDs(inNotebook: n) == [p1], "defterin sayfaları")
+    try expect(s2.recordNames() == ["\(n.uuidString)/img-a.jpg", p1.uuidString], "kayıt adları: \(s2.recordNames())")
+    let all = s2.allBases()
+    try expect(all.notebooks.count == 1 && all.pages.count == 2 && all.folders[f] != nil, "tüm tabanlar")
+}
+
+check("resumeMassDeleteGuard") {
+    // Yerel kütüphane boş görünüyorsa (ör. dizin okunamadı) devam farkı buluttaki her şeyi silmesin
+    try expect(SyncMerge.holdResumeDeletes(baseNotebooks: 3, localNotebooks: 0, deletedNotebooks: 3), "yerel boş")
+    try expect(SyncMerge.holdResumeDeletes(baseNotebooks: 10, localNotebooks: 4, deletedNotebooks: 6), "yarıdan fazlası")
+    try expect(!SyncMerge.holdResumeDeletes(baseNotebooks: 10, localNotebooks: 8, deletedNotebooks: 2), "birkaç silme normal")
+    try expect(!SyncMerge.holdResumeDeletes(baseNotebooks: 3, localNotebooks: 1, deletedNotebooks: 2), "küçük kütüphane")
+    try expect(!SyncMerge.holdResumeDeletes(baseNotebooks: 0, localNotebooks: 0, deletedNotebooks: 0), "ilk açılış")
 }
 
 if failures > 0 { print("\n\(failures) denetim kaldı."); exit(1) }
