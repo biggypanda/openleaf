@@ -297,6 +297,10 @@ struct DocumentView: View {
         }
         .onAppear {
             LastOpened.notebook = id
+            // Eşitleme gelen değişiklikleri uygulamadan önce bekleyen çizgiyi kaydettirir
+            // (zayıf tutulur: belge kapanınca kendiliğinden etkisiz kalır, başka belge açılınca onunki atanır)
+            let editor = controller
+            library.flushOpenEditors = { [weak editor] in editor?.flush() }
             // Kayıtlı sayfa artık yoksa (sayfalar silinmiş) son sayfaya düş
             if page >= nb.pages.count { page = max(0, nb.pages.count - 1) }
         }
@@ -622,7 +626,13 @@ struct DocumentView: View {
             erasesTapes: tool == .eraser,
             tapeColor: tapeColor,
             tapeThickness: tapeSize.thickness,
-            ruler: ruler
+            ruler: ruler,
+            remoteVersion: library.remoteInkVersion[pageID] ?? 0,
+            latestData: { pid in library.drawing(notebookID, pid) },
+            onRemoteConflict: { pid, data in
+                // Uzak mürekkep sayfada kalır; bu iPad'de o sırada çizilenler yanındaki kopyaya
+                _ = library.insertConflictCopy(of: pid, ink: data)
+            }
         )
     }
 

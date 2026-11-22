@@ -8,6 +8,9 @@ struct LibraryView: View {
     @Environment(Library.self) private var library
     @Environment(AutoBackup.self) private var backup
     @Environment(AppLock.self) private var appLock
+    @Environment(SyncController.self) private var sync
+    /// İCloud'daki eşitleme verisini silme onayı (menünün dışında gösterilir)
+    @State private var confirmSyncDelete = false
     @State private var lockError: String?
     @Environment(\.requestReview) private var requestReview
     @State private var selection: SidebarItem? = .section(.belgeler)
@@ -86,6 +89,7 @@ struct LibraryView: View {
             }
         }
         .animation(Y.springSoft, value: openDoc)
+        .syncNotices(sync, confirmDelete: $confirmSyncDelete)
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.pdf]) { result in
             switch result {
             case .success(let url):
@@ -293,6 +297,8 @@ struct LibraryView: View {
                     Button { showRestore = true } label: {
                         Label("Yedekten geri yükle", systemImage: "arrow.counterclockwise")
                     }
+                    Divider()
+                    SyncMenuSection(confirmDelete: $confirmSyncDelete)
                     Divider()
                     Toggle(isOn: Binding(get: { appLock.enabled },
                                          set: { on in appLock.setEnabled(on) { lockError = $0 } })) {

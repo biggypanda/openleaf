@@ -84,6 +84,15 @@ final class SyncController {
 
     func clearNotice() { notice = nil }
 
+    /// Eşitleme kapalıyken iCloud oturumu yoksa durum `.noAccount` olur (menüde anahtar devre dışı);
+    /// oturum açılınca yeniden `.off`. Açıkken durumu motor yönetir.
+    func refreshAccountStatus() async {
+        guard !state.enabled, status == .off || status == .noAccount else { return }
+        let account = (try? await container.accountStatus()) ?? .couldNotDetermine
+        guard !state.enabled, status == .off || status == .noAccount else { return }
+        status = (account == .noAccount || account == .restricted) ? .noAccount : .off
+    }
+
     /// Kurtarma bildirimi; gösterilmemiş bir kurtarma varsa sayılar toplanır
     func addRescued(_ n: Int) {
         if case .rescued(let c)? = notice { notice = .rescued(count: c + n) } else { notice = .rescued(count: n) }

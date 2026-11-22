@@ -1287,6 +1287,52 @@
         }
       }
     },
+    "%lld sayfa başka bir iPad'de silinmişti ama burada üzerine yazılmıştı. Bu sayfalar geri getirildi ve yer imiyle işaretlendi.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Seiten wurden auf einem anderen iPad gelöscht, hier aber bearbeitet. Sie wurden wiederhergestellt und mit einem Lesezeichen versehen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld pages were deleted on another iPad but edited here. They've been brought back and bookmarked."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld páginas se eliminaron en otro iPad pero se editaron aquí. Se han recuperado y marcado con un marcador."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld pages ont été supprimées sur un autre iPad mais modifiées ici. Elles ont été rétablies et marquées d’un signet."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld pagine sono state eliminate su un altro iPad ma modificate qui. Sono state ripristinate e contrassegnate con un segnalibro."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld páginas foram apagadas em outro iPad, mas editadas aqui. Elas foram restauradas e marcadas com um marcador."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld sayfa başka bir iPad'de silinmişti ama burada üzerine yazılmıştı. Bu sayfalar geri getirildi ve yer imiyle işaretlendi."
+          }
+        }
+      }
+    },
     "%lld sayfa · sıralamak için basılı tutup sürükleyin": {
       "localizations": {
         "de": {
@@ -4947,6 +4993,144 @@
         }
       }
     },
+    "Eşitleme verisi iCloud'dan silinsin mi? Bu iPad'deki ve diğer iPad'lerdeki notlar silinmez; eşitleme her yerde kapanır.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync-Daten aus iCloud löschen? Notizen auf diesem und deinen anderen iPads werden nicht gelöscht; die Synchronisierung wird überall ausgeschaltet."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete sync data from iCloud? Notes on this iPad and your other iPads are not deleted; sync turns off everywhere."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Eliminar los datos de sincronización de iCloud? Las notas de este iPad y de tus otros iPads no se eliminan; la sincronización se desactiva en todos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer les données de synchro d’iCloud ? Les notes de cet iPad et de vos autres iPad ne sont pas supprimées ; la synchronisation est désactivée partout."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminare i dati di sincronizzazione da iCloud? Le note su questo iPad e sugli altri iPad non vengono eliminate; la sincronizzazione si disattiva ovunque."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apagar os dados de sincronização do iCloud? As notas deste iPad e dos seus outros iPads não são apagadas; a sincronização é desativada em todos."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eşitleme verisi iCloud'dan silinsin mi? Bu iPad'deki ve diğer iPad'lerdeki notlar silinmez; eşitleme her yerde kapanır."
+          }
+        }
+      }
+    },
+    "Eşitlendi": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktuell"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Up to Date"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualizado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À jour"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiornato"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Atualizado"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eşitlendi"
+          }
+        }
+      }
+    },
+    "Eşitleniyor…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird synchronisiert …"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Syncing…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizando…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisation…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizzazione…"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizando…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eşitleniyor…"
+          }
+        }
+      }
+    },
     "Favori yok": {
       "localizations": {
         "de": {
@@ -8163,6 +8347,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kullan"
+          }
+        }
+      }
+    },
+    "Kurtarıldı": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederhergestellt"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recovered"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recuperada"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Récupérée"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recuperata"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recuperada"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kurtarıldı"
           }
         }
       }
@@ -15527,6 +15757,144 @@
         }
       }
     },
+    "iCloud dolu": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud-Speicher voll"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud Storage Full"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Almacenamiento de iCloud lleno"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stockage iCloud saturé"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spazio iCloud esaurito"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Armazenamento do iCloud cheio"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud dolu"
+          }
+        }
+      }
+    },
+    "iCloud hesabı değiştiği için eşitleme durdu. Bu iPad'deki notlar yerinde.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Synchronisierung wurde gestoppt, weil sich der iCloud-Account geändert hat. Die Notizen auf diesem iPad bleiben erhalten."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync stopped because the iCloud account changed. Notes on this iPad are safe."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La sincronización se detuvo porque cambió la cuenta de iCloud. Las notas de este iPad están a salvo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La synchronisation s’est arrêtée car le compte iCloud a changé. Les notes de cet iPad sont intactes."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La sincronizzazione si è interrotta perché l’account iCloud è cambiato. Le note su questo iPad sono al sicuro."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A sincronização parou porque a conta do iCloud mudou. As notas deste iPad estão seguras."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud hesabı değiştiği için eşitleme durdu. Bu iPad'deki notlar yerinde."
+          }
+        }
+      }
+    },
+    "iCloud oturumu yok": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht bei iCloud angemeldet"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not Signed In to iCloud"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No has iniciado sesión en iCloud"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non connecté à iCloud"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accesso a iCloud non effettuato"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sessão do iCloud não iniciada"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud oturumu yok"
+          }
+        }
+      }
+    },
     "iCloud'a ulaşılamıyor": {
       "localizations": {
         "de": {
@@ -15665,6 +16033,98 @@
         }
       }
     },
+    "iCloud'daki eşitleme verisi silindiği için eşitleme durdu. Bu iPad'deki notlar yerinde.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Synchronisierung wurde gestoppt, weil die Sync-Daten in iCloud gelöscht wurden. Die Notizen auf diesem iPad bleiben erhalten."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync stopped because the sync data in iCloud was deleted. Notes on this iPad are safe."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La sincronización se detuvo porque se eliminaron los datos de sincronización de iCloud. Las notas de este iPad están a salvo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La synchronisation s’est arrêtée car les données de synchro dans iCloud ont été supprimées. Les notes de cet iPad sont intactes."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La sincronizzazione si è interrotta perché i dati di sincronizzazione su iCloud sono stati eliminati. Le note su questo iPad sono al sicuro."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A sincronização parou porque os dados de sincronização no iCloud foram apagados. As notas deste iPad estão seguras."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud'daki eşitleme verisi silindiği için eşitleme durdu. Bu iPad'deki notlar yerinde."
+          }
+        }
+      }
+    },
+    "iCloud'daki eşitleme verisini sil…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync-Daten aus iCloud löschen …"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete Sync Data from iCloud…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar datos de sincronización de iCloud…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer les données de synchro d’iCloud…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elimina dati di sincronizzazione da iCloud…"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apagar dados de sincronização do iCloud…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud'daki eşitleme verisini sil…"
+          }
+        }
+      }
+    },
     "iPad ve iCloud'da": {
       "localizations": {
         "de": {
@@ -15753,6 +16213,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "iPad ve klasörde"
+          }
+        }
+      }
+    },
+    "iPad'ler arasında eşitle": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zwischen iPads synchronisieren"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync Across iPads"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizar entre iPads"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchroniser entre iPad"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizza tra iPad"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizar entre iPads"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPad'ler arasında eşitle"
           }
         }
       }
@@ -15849,6 +16355,52 @@
         }
       }
     },
+    "Çakışma": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konflikt"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conflict"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conflicto"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conflit"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conflitto"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conflito"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çakışma"
+          }
+        }
+      }
+    },
     "Çalıştım": {
       "localizations": {
         "de": {
@@ -15937,6 +16489,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "Çam ormanı"
+          }
+        }
+      }
+    },
+    "Çevrimdışı, bağlanınca gönderilecek": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline, wird bei Verbindung synchronisiert"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline, will sync when connected"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin conexión, se sincronizará al conectarse"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hors ligne, synchronisation à la reconnexion"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline, la sincronizzazione riprenderà alla connessione"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline, será sincronizado ao conectar"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çevrimdışı, bağlanınca gönderilecek"
           }
         }
       }

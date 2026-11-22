@@ -314,6 +314,9 @@ final class Library {
     @ObservationIgnored var inkHashCache: [String: (version: Int, hash: String?)] = [:]
     /// Uzaktan mürekkep gelince artar; sayfa görünümleri bunu izleyip çizimi yeniler
     var remoteInkVersion: [UUID: Int] = [:]
+    /// Açık belge atar: tuvalin bekleyen (gecikmeli) kaydını hemen yazar. Eşitleme, gelen değişiklikleri
+    /// uygulamadan önce çağırır; kaydedilmemiş çizgiler yerel hâl olup çakışma kuralından geçer.
+    @ObservationIgnored var flushOpenEditors: (() -> Void)?
 
     init(store: NotebookStore = NotebookStore()) {
         self.store = store

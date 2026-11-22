@@ -172,6 +172,8 @@ extension SyncController {
     // MARK: Alınan değişiklikler
 
     func applyFetched(_ f: SyncFetched) {
+        // Açık sayfanın bekleyen çizgisi önce kaydedilsin: sessizce ezilmesin, çakışma kuralına girsin
+        library.flushOpenEditors?()
         var ctx = SyncApplyContext()
 
         // 1) Silmeler, üst verilerden önce (R-b): defter sırası uygulanınca silinen sayfa geri bildirilmesin
@@ -237,6 +239,8 @@ extension SyncController {
         state.apply(ctx.batch)
         ctx.batch = SyncStateBatch()
 
+        // Sunucu hâli uygulanmadan önce açık sayfanın bekleyen çizgisi kaydedilsin (alınan değişikliklerdeki gibi)
+        if !s.conflicts.isEmpty { library.flushOpenEditors?() }
         for c in s.conflicts {
             if case .file = c.content {
                 // Dosyada yerel hâl kazanır: sunucunun sistem alanlarıyla yeniden gönderilir
