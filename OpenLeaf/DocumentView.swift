@@ -178,8 +178,26 @@ struct DocumentView: View {
         }
     }
 
+    /// Açık sayfanın indeksi: sayfa kimliğiyle tutulur; eşitlemeyle sıra değişse de açık sayfa kaymaz
+    private func openIndex(_ nb: Notebook) -> Int {
+        if let pin = pinnedPage {
+            if let i = nb.pages.firstIndex(where: { $0.id == pin }) { return i }
+            // Açık sayfa silindi: bir önceki sayfaya düşülür
+            return max(0, min(page - 1, nb.pages.count - 1))
+        }
+        return min(page, nb.pages.count - 1)
+    }
+
+    /// Açık sayfayı değiştirir; indeks ve kimlik birlikte güncellenir (kütüphanenin güncel hâlinden)
+    private func setPage(_ target: Int) {
+        guard let nb = library.notebooks.first(where: { $0.id == id }), !nb.pages.isEmpty else { return }
+        let i = min(max(target, 0), nb.pages.count - 1)
+        page = i
+        pinnedPage = nb.pages[i].id
+    }
+
     private func content(_ nb: Notebook) -> some View {
-        let p = min(page, nb.pages.count - 1)
+        let p = openIndex(nb)
         let pageID = nb.pages[p].id
         return ZStack(alignment: .bottom) {
             Y.bg.ignoresSafeArea()
@@ -250,13 +268,11 @@ struct DocumentView: View {
             if showPages {
                 PageOverview(notebook: nb, current: p, pdf: pdfDoc,
                              onOpen: { i in
-                                 pinnedPage = nil
                                  forward = i >= p
-                                 page = i
+                                 setPage(i)
                                  withAnimation(Y.springSoft) { showPages = false }
                              },
                              onClose: {
-                                 pinnedPage = nil
                                  withAnimation(Y.springSoft) { showPages = false }
                              })
                     .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -301,8 +317,8 @@ struct DocumentView: View {
             // (zayıf tutulur: belge kapanınca kendiliğinden etkisiz kalır, başka belge açılınca onunki atanır)
             let editor = controller
             library.flushOpenEditors = { [weak editor] in editor?.flush() }
-            // Kayıtlı sayfa artık yoksa (sayfalar silinmiş) son sayfaya düş
-            if page >= nb.pages.count { page = max(0, nb.pages.count - 1) }
+            // Kayıtlı sayfa artık yoksa (sayfalar silinmiş) son sayfaya düş; açık sayfa kimliğiyle tutulur
+            setPage(page)
         }
         .onChange(of: page) { _, new in LastOpened.setPage(new, for: id) }
         .alert("Sayfaya git", isPresented: $goToShown) {
@@ -322,13 +338,17 @@ struct DocumentView: View {
             if phase != .active { controller.flush() }
         }
         .onChange(of: nb.pages.map(\.id)) { _, ids in
-            // Genel görünümde sıralama/silme olunca açık sayfa kaymasın
-            guard let pin = pinnedPage else { return }
+            // Sıralama/ekleme/silme (genel görünümde ya da eşitlemeyle) olunca açık sayfa kaymasın.
+            // Kalem ekrandayken tuval geçişi kalem kalkınca yapar (Canvas); burada yalnızca indeks izlenir.
+            guard !ids.isEmpty else { return }
+            guard let pin = pinnedPage else { setPage(page); return }
             if let i = ids.firstIndex(of: pin) {
-                page = i
+                if page != i { page = i }
             } else {
-                page = min(page, ids.count - 1)
-                pinnedPage = ids[page]
+                // Açık sayfa silindi: bir önceki sayfaya düş
+                let i = max(0, min(page - 1, ids.count - 1))
+                page = i
+                pinnedPage = ids[i]
             }
         }
         .overlay {
@@ -632,8 +652,28 @@ struct DocumentView: View {
             onRemoteConflict: { pid, data in
                 // Uzak mürekkep sayfada kalır; bu iPad'de o sırada çizilenler yanındaki kopyaya
                 _ = library.insertConflictCopy(of: pid, ink: data)
-            }
+            },
+            onPageGoneSave: { pid, data in savePageGone(notebookID, pid, data) }
         )
+    }
+
+    /// Kalem ekrandayken açık sayfa değişti (başka iPad'de silindi). Sayfa duruyorsa normal kayıt; silinmişse
+    /// tuvaldeki mürekkep yeni bir sayfaya yazılır ve "Kurtarıldı" + yer imiyle işaretlenir (çizgi kaybolmasın).
+    /// Silinen sayfaya kopya bağlanamadığı için `insertConflictCopy` değil, mevcut `insertPage` + `markRescued`.
+    private func savePageGone(_ notebookID: UUID, _ pid: UUID, _ data: Data) {
+        guard let nb = library.notebooks.first(where: { $0.id == notebookID }) else { return }
+        if nb.pages.contains(where: { $0.id == pid }) {
+            library.saveDrawing(notebookID, pid, data)
+            return
+        }
+        guard !((try? PKDrawing(data: data))?.strokes.isEmpty ?? true) else { return }
+        // Silinen sayfanın yerine: düşülen (önceki) sayfanın arkasına
+        let at = min(openIndex(nb) + 1, nb.pages.count)
+        library.insertPage(notebookID, at: at)
+        guard let fresh = library.notebooks.first(where: { $0.id == notebookID }), at < fresh.pages.count else { return }
+        let newID = fresh.pages[at].id
+        library.saveDrawing(notebookID, newID, data)
+        library.markRescued(page: newID)
     }
 
     private func squeezed(at point: CGPoint?) {
@@ -721,7 +761,6 @@ struct DocumentView: View {
 
     private func openPages(_ nb: Notebook, current p: Int) {
         controller.flush()
-        pinnedPage = nb.pages[p].id
         withAnimation(Y.springSoft) { showPages = true }
     }
 
@@ -769,7 +808,7 @@ struct DocumentView: View {
 
     /// Sayfa değiştir; kitap sayfası animasyonunu tuval yapar (yönü `forward`)
     private func turn(to target: Int) {
-        page = target
+        setPage(target)
     }
 
     private func deletePage(_ p: Int) {
@@ -777,7 +816,7 @@ struct DocumentView: View {
         forward = false
         withAnimation(Y.quick) {
             library.deletePage(id, nb.pages[p].id)
-            page = max(0, p - 1)
+            setPage(max(0, p - 1))
         }
     }
 

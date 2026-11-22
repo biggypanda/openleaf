@@ -16,11 +16,12 @@ struct SyncMenuSection: View {
                 Text(line)
             }
         }
-        // Hesap yokken eşitleme açılamaz (açıksa oturum açılınca kendiliğinden sürer)
-        .disabled(sync.status == .noAccount)
+        // Hesap yokken eşitleme açılamaz; açıksa her zaman kapatılabilir
+        .disabled(sync.status == .noAccount && !sync.isOn)
         Button(role: .destructive) { confirmDelete = true } label: {
             Label("iCloud'daki eşitleme verisini sil…", systemImage: "icloud.slash")
         }
+        // Bulut verisini silmek için hesap gerekir
         .disabled(sync.status == .noAccount)
     }
 }

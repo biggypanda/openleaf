@@ -833,6 +833,8 @@ struct CanvasRepresentable: UIViewRepresentable {
     var latestData: ((UUID) -> Data)? = nil
     /// Uzaktan mürekkep geldiği sırada çizilen çizgiler: tuvaldeki hâl çakışma kopyasına alınır
     var onRemoteConflict: ((UUID, Data) -> Void)? = nil
+    /// Kalem ekrandayken sayfa değişti; kalem kalkınca eski sayfanın tuvaldeki mürekkebi buraya teslim edilir
+    var onPageGoneSave: ((UUID, Data) -> Void)? = nil
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -955,28 +957,16 @@ struct CanvasRepresentable: UIViewRepresentable {
         let coord = context.coordinator
         coord.parent = self
         if coord.loaded, coord.pageID != pageID {
-            // Önce eski sayfayı kaydet, sonra yeni sayfayı yükle (kitap sayfası animasyonuyla)
-            c.endEditing(true)
-            coord.flush(c)
-            coord.resetRemote(remoteVersion)
-            let newData = data, newNotes = notes, newImages = images, newTapes = tapes, newPDF = pdfPage, pid = pageID
-            let lightOnly = isPDF || newPDF != nil
-            c.animatePageTurn(forward: turnForward) {
-                coord.pageID = pid
-                // Yeni sayfa sayfaya sığar halde açılsın
-                c.setZoomScale(1, animated: false)
-                c.paper.pdfPage = newPDF
-                c.overrideUserInterfaceStyle = lightOnly ? .light : .unspecified
-                coord.suppress = true
-                c.load(newData)
-                c.setImages(newImages)
-                c.setTapes(newTapes)
-                c.setNotes(newNotes)
-                c.undoManager?.removeAllActions()
-                coord.suppress = false
+            if coord.isDrawing {
+                // Açık sayfa kalem ekrandayken değişti (başka iPad'de silindi): çizgi kendi sayfasında
+                // bitsin, geçiş kalem kalkınca yapılır
+                coord.pageChangeDeferred = true
+            } else {
+                // Önce eski sayfayı kaydet, sonra yeni sayfayı yükle
+                c.endEditing(true)
+                coord.flush(c)
+                turnPage(c, coord)
             }
-            DispatchQueue.main.async { [weak controller] in controller?.refresh() }
-            c.setContentOffset(CGPoint(x: -c.adjustedContentInset.left, y: -c.adjustedContentInset.top), animated: false)
         } else if coord.loaded, coord.pageID == pageID, coord.remoteSeen != remoteVersion {
             // Açık sayfaya uzaktan mürekkep geldi; sayfa değişmeden yeniden yüklenir
             coord.remoteSeen = remoteVersion
@@ -985,6 +975,30 @@ struct CanvasRepresentable: UIViewRepresentable {
         applySettings(c)
         coord.oneFingerSwipes.forEach { $0.isEnabled = pencilOnly }
         controller.canvas = c
+    }
+
+    /// Yeni sayfayı yükler (kitap sayfası animasyonuyla). Eski sayfa çağırandan önce kaydedilmiş olmalı.
+    func turnPage(_ c: OpenLeafCanvas, _ coord: Coordinator) {
+        c.endEditing(true)
+        coord.resetRemote(remoteVersion)
+        let newData = data, newNotes = notes, newImages = images, newTapes = tapes, newPDF = pdfPage, pid = pageID
+        let lightOnly = isPDF || newPDF != nil
+        c.animatePageTurn(forward: turnForward) {
+            coord.pageID = pid
+            // Yeni sayfa sayfaya sığar halde açılsın
+            c.setZoomScale(1, animated: false)
+            c.paper.pdfPage = newPDF
+            c.overrideUserInterfaceStyle = lightOnly ? .light : .unspecified
+            coord.suppress = true
+            c.load(newData)
+            c.setImages(newImages)
+            c.setTapes(newTapes)
+            c.setNotes(newNotes)
+            c.undoManager?.removeAllActions()
+            coord.suppress = false
+        }
+        DispatchQueue.main.async { [weak controller] in controller?.refresh() }
+        c.setContentOffset(CGPoint(x: -c.adjustedContentInset.left, y: -c.adjustedContentInset.top), animated: false)
     }
 
     static func dismantleUIView(_ c: OpenLeafCanvas, coordinator: Coordinator) {
@@ -1000,7 +1014,13 @@ struct CanvasRepresentable: UIViewRepresentable {
         var pageID: UUID?
         private var work: DispatchWorkItem?
         /// Kalem (ya da araç) ekranda mı
-        private var isDrawing = false
+        private(set) var isDrawing = false
+        /// Kalem ekrandayken sayfa değişti; geçiş kalem kalkınca yapılır
+        var pageChangeDeferred = false
+        /// Kalem inince tuvaldeki çizgi sayısı (gecikmeli geçişte çizim olup olmadığını anlamak için)
+        private var strokesAtPenDown = 0
+        /// Son kayıt ya da yüklemeden sonra kullanıcı çizimi değişti mi
+        private var changedSinceSave = false
         /// Görülen son uzak mürekkep sayacı
         var remoteSeen = 0
         /// Uzaktan mürekkep geldi, tuval henüz yeniden yüklenmedi (çizim sürerken kalem kalkınca yüklenir)
@@ -1016,6 +1036,7 @@ struct CanvasRepresentable: UIViewRepresentable {
             // Geri al adımı çizgi bitince kaydedilir; durumu bir tur sonra oku
             DispatchQueue.main.async { [weak self] in self?.parent.controller.refresh() }
             guard loaded, !suppress, let c = canvasView as? OpenLeafCanvas, !c.isApplyingLayout, let pid = pageID else { return }
+            changedSinceSave = true
             if remotePending {
                 // Uzaktan gelen mürekkebin üstüne yazılmasın; kalem kalkınca çakışma kopyası olur
                 strokeAfterRemote = true
@@ -1025,6 +1046,7 @@ struct CanvasRepresentable: UIViewRepresentable {
             let item = DispatchWorkItem { [weak self, weak c] in
                 guard let self, let c else { return }
                 self.work = nil
+                self.changedSinceSave = false
                 self.parent.onChange(pid, c.canonicalData)
             }
             work = item
@@ -1040,25 +1062,55 @@ struct CanvasRepresentable: UIViewRepresentable {
             }
             guard work != nil, loaded, let pid = pageID else { return }
             work?.cancel(); work = nil
+            changedSinceSave = false
             parent.onChange(pid, c.canonicalData)
         }
 
-        func canvasViewDidBeginUsingTool(_ canvasView: PKCanvasView) { isDrawing = true }
+        func canvasViewDidBeginUsingTool(_ canvasView: PKCanvasView) {
+            isDrawing = true
+            strokesAtPenDown = canvasView.drawing.strokes.count
+        }
 
         func canvasViewDidEndUsingTool(_ canvasView: PKCanvasView) {
             isDrawing = false
-            guard remotePending, let c = canvasView as? OpenLeafCanvas else { return }
+            guard remotePending || pageChangeDeferred, let c = canvasView as? OpenLeafCanvas else { return }
             // Bir tur sonra: biten çizginin `canvasViewDrawingDidChange`'i önce gelsin
             DispatchQueue.main.async { [weak self, weak c] in
-                if let self, let c { self.resolveRemote(c) }
+                guard let self, let c else { return }
+                if self.pageChangeDeferred { self.finishDeferredPageChange(c) } else { self.resolveRemote(c) }
             }
+        }
+
+        /// Kalem kalktı; ekrandayken kaybolan (ya da yer değiştiren) sayfadan yenisine geçilir.
+        /// Tuvaldeki mürekkep, çizim olduysa ya da uzak mürekkep sonrası çizildiyse sayfa kimliğiyle teslim edilir:
+        /// DocumentView sayfa duruyorsa kaydeder, silinmişse kurtarılmış yeni sayfa olarak saklar.
+        private func finishDeferredPageChange(_ c: OpenLeafCanvas) {
+            guard pageChangeDeferred, !isDrawing, loaded else { return }
+            pageChangeDeferred = false
+            // Bildirim sırasına bağlı kalmamak için çizgi sayısına da bakılır
+            let dirty = changedSinceSave || strokeAfterRemote || work != nil
+                || c.drawing.strokes.count != strokesAtPenDown
+            work?.cancel(); work = nil
+            if dirty, let pid = pageID {
+                if strokeAfterRemote {
+                    parent.onRemoteConflict?(pid, c.canonicalData)
+                } else {
+                    parent.onPageGoneSave?(pid, c.canonicalData)
+                }
+            }
+            changedSinceSave = false
+            strokeAfterRemote = false
+            remotePending = false
+            if pageID != parent.pageID { parent.turnPage(c, self) }
         }
 
         /// Açık sayfaya uzaktan mürekkep uygulandı. Çizim sürüyorsa kalem kalkınca, sürmüyorsa hemen yüklenir.
         func remoteArrived(_ c: OpenLeafCanvas) {
             remotePending = true
-            if work != nil {
-                // Eşitleme önce bekleyen kaydı yazar; yine de kalmışsa üstüne yazılmasın, kopyaya gitsin
+            if work != nil || isDrawing {
+                // Eşitleme önce bekleyen kaydı yazar; yine de kalmışsa üstüne yazılmasın, kopyaya gitsin.
+                // Kalem ekrandaysa çizgi her durumda kopyaya gider: kalem kalkınca bildirimlerin hangi
+                // sırayla geldiğine bağlı kalmasın (çizgi sessizce kaybolmasın)
                 work?.cancel(); work = nil
                 strokeAfterRemote = true
             }
@@ -1074,6 +1126,8 @@ struct CanvasRepresentable: UIViewRepresentable {
             remoteSeen = version
             remotePending = false
             strokeAfterRemote = false
+            changedSinceSave = false
+            pageChangeDeferred = false
         }
 
         private func resolveRemote(_ c: OpenLeafCanvas) {
@@ -1083,6 +1137,7 @@ struct CanvasRepresentable: UIViewRepresentable {
                 strokeAfterRemote = false
                 parent.onRemoteConflict?(pid, c.canonicalData)
             }
+            changedSinceSave = false
             suppress = true
             c.load(parent.latestData?(pid) ?? parent.data)
             // Eski geri alma adımları yeni yüklenen mürekkebe uymaz
