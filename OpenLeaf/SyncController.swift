@@ -54,6 +54,8 @@ final class SyncController {
     @ObservationIgnored var deferredEngineState: Data?
     /// Bu oturumda, yerelde silinmiş defterden kurtarılan sayfaların toplandığı defter (eski → yeni)
     @ObservationIgnored var rescueRedirect: [UUID: UUID] = [:]
+    /// Motor başlarken kütüphane deposunun yazma hatası sayısı; artarsa motor durumu artık diske yazılmaz (I3)
+    @ObservationIgnored var diskFailuresAtStart = 0
 
     private var container: CKContainer { CKContainer(identifier: Self.containerID) }
 
@@ -148,6 +150,7 @@ final class SyncController {
         if let data = state.engineState {
             serialization = try? JSONDecoder().decode(CKSyncEngine.State.Serialization.self, from: data)
         }
+        diskFailuresAtStart = library.store.failureCount
         let config = CKSyncEngine.Configuration(database: container.privateCloudDatabase,
                                                 stateSerialization: serialization, delegate: self)
         let engine = CKSyncEngine(config)
@@ -332,9 +335,9 @@ final class SyncController {
     func handle(_ event: SyncPrepared, engineID: ObjectIdentifier) {
         if case .state(let data) = event {
             if let engine, ObjectIdentifier(engine) == engineID {
-                if heldRecords.isEmpty { state.engineState = data } else { deferredEngineState = data }
+                if heldRecords.isEmpty { persistEngineState(data) } else { deferredEngineState = data }
             } else if let closedEngine, ObjectIdentifier(closedEngine) == engineID, !state.enabled {
-                state.engineState = data
+                persistEngineState(data)
             }
             return
         }
@@ -372,7 +375,7 @@ final class SyncController {
                 syncLog.error("Defteri gelmeyen \(self.heldRecords.count) defter için kayıtlar bırakıldı")
                 heldRecords = [:]
             }
-            if let d = deferredEngineState { state.engineState = d; deferredEngineState = nil }
+            if let d = deferredEngineState { persistEngineState(d); deferredEngineState = nil }
             updateIdleStatus(engine)
         case .didSend:
             // R-h: geçici kopyalar yalnızca gönderim turu bütünüyle bitince silinir
@@ -380,6 +383,14 @@ final class SyncController {
             skippedThisRound = []
             updateIdleStatus(engine)
         }
+    }
+
+    /// Motor durumunu (değişiklik belirteci) yazar. Önce kütüphanenin kuyruktaki disk yazmaları bitirilir (I3):
+    /// belirteç, uygulanan değişiklik diske inmeden ilerlemesin. Yazma hatası olduysa belirteç diske yazılmaz.
+    func persistEngineState(_ data: Data?) {
+        // `failureCount` kuyruğu bekler: okunduğunda bekleyen yazmalar bitmiştir
+        if library.store.failureCount != diskFailuresAtStart { state.freezeEngineState() }
+        state.engineState = data
     }
 
     private func updateIdleStatus(_ engine: CKSyncEngine) {

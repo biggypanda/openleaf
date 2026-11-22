@@ -35,6 +35,10 @@ final class SyncStateStore: @unchecked Sendable {
     private var folders: [UUID: SyncFolderMeta] = [:]
     private var fields: [String: Data] = [:]
     private var engine: Data?
+    /// Bir durum dosyası yazılamadı ya da uygulanan değişiklik diske yazılamadı: bu oturumda motor durumu
+    /// (değişiklik belirteci) artık diske yazılmaz. Uygulama yeniden açılınca kayıtlar eski belirteçten yeniden alınır;
+    /// tabanı yazılamamış bir değişiklik böylece "alındı" sayılıp atlanmaz.
+    private var frozen = false
 
     private enum Dosya {
         static let meta = "meta.json", notebooks = "notebooks.json", pages = "pages.json"
@@ -66,9 +70,14 @@ final class SyncStateStore: @unchecked Sendable {
         return try? JSONDecoder().decode(T.self, from: data)
     }
 
+    /// Başarısız yazma motor durumunu dondurur (bkz. `frozen`)
     private func yaz<T: Encodable>(_ deger: T, _ ad: String) {
-        guard let data = try? JSONEncoder().encode(deger) else { return }
-        try? data.write(to: root.appendingPathComponent(ad), options: .atomic)
+        do {
+            let data = try JSONEncoder().encode(deger)
+            try data.write(to: root.appendingPathComponent(ad), options: .atomic)
+        } catch {
+            frozen = true
+        }
     }
 
     private func sil(_ ad: String) {
@@ -78,15 +87,23 @@ final class SyncStateStore: @unchecked Sendable {
     // MARK: - Genel durum
 
     /// `CKSyncEngine.State.Serialization`'ın JSON'u.
+    /// Donmuşken (bkz. `frozen`) yalnızca bellekte güncellenir, diske yazılmaz.
     var engineState: Data? {
         get { queue.sync { engine } }
         set {
             queue.sync {
                 engine = newValue
+                guard !frozen else { return }
                 if let v = newValue { yaz(v, Dosya.engine) } else { sil(Dosya.engine) }
             }
         }
     }
+
+    /// Uygulanan bir değişiklik diske yazılamadı: bu oturumda motor durumu artık diske yazılmaz
+    func freezeEngineState() { queue.sync { frozen = true } }
+
+    /// Bir durum yazması başarısız oldu mu (ya da donduruldu mu)
+    var isFrozen: Bool { queue.sync { frozen } }
 
     var enabled: Bool {
         get { queue.sync { meta.enabled } }
@@ -179,6 +196,7 @@ final class SyncStateStore: @unchecked Sendable {
         queue.sync {
             engine = nil; notebooks = [:]; pages = [:]; folders = [:]; fields = [:]
             meta.accountID = nil
+            frozen = false
             for ad in [Dosya.engine, Dosya.notebooks, Dosya.pages, Dosya.folders, Dosya.fields] { sil(ad) }
             yaz(meta, Dosya.meta)
         }

@@ -166,6 +166,10 @@ struct SyncApplyContext {
     /// Yerelde silinmiş deftere uzaktan yazılmış sayfalar (eski defter → sayfalar)
     var orphans: [UUID: [(SyncPageMeta, Data?)]] = [:]
     var rescued = 0
+    /// Uygulama başlarken kütüphane deposunun yazma hatası sayısı; `finish` artış görürse taban ilerlemez
+    var diskFailures: Int
+
+    init(diskFailures: Int) { self.diskFailures = diskFailures }
 }
 
 extension SyncController {
@@ -174,7 +178,7 @@ extension SyncController {
     func applyFetched(_ f: SyncFetched) {
         // Açık sayfanın bekleyen çizgisi önce kaydedilsin: sessizce ezilmesin, çakışma kuralına girsin
         library.flushOpenEditors?()
-        var ctx = SyncApplyContext()
+        var ctx = SyncApplyContext(diskFailures: library.store.failureCount)
 
         // 1) Silmeler, üst verilerden önce (R-b): defter sırası uygulanınca silinen sayfa geri bildirilmesin
         let deletedNotebooks = Set(f.deletions.filter { $0.type == SyncRecords.notebookType }
@@ -216,7 +220,7 @@ extension SyncController {
     // MARK: Gönderim sonucu
 
     func applySent(_ s: SyncSent) {
-        var ctx = SyncApplyContext()
+        var ctx = SyncApplyContext(diskFailures: library.store.failureCount)
         let zoneKnown = state.hasSystemFields
         for (name, fields, base) in s.saved {
             ctx.batch.fields[name] = fields
@@ -398,7 +402,15 @@ extension SyncController {
     }
 
     private func finish(_ ctx: inout SyncApplyContext) {
-        state.apply(ctx.batch)
+        // I3: kuyruktaki mürekkep, dizin ve dosya yazmaları bitsin. Biri yazılamadıysa taban ve motor durumu
+        // ilerlemez: diskte eski hâl varken taban yeniyi gösterirse sonraki açılış eski mürekkebi gönderirdi.
+        library.store.flush()
+        if library.store.failureCount != ctx.diskFailures {
+            syncLog.error("Uygulanan değişiklik diske yazılamadı; taban ve motor durumu ilerletilmedi")
+            state.freezeEngineState()
+        } else {
+            state.apply(ctx.batch)
+        }
         var saves = ctx.saves
         for t in ctx.touched {
             switch t {
@@ -418,7 +430,7 @@ extension SyncController {
         addPendingSaves(saves)
         if ctx.rescued > 0 { addRescued(ctx.rescued) }
         if heldRecords.isEmpty, let d = deferredEngineState {
-            state.engineState = d
+            persistEngineState(d)
             deferredEngineState = nil
         }
     }

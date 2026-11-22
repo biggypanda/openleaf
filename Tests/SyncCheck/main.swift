@@ -426,6 +426,27 @@ check("duplicatePageIDs") {
     try expect(tie.count == 1 && tie[0].notebook == b, "eşit tarih")
 }
 
+check("stateFreezeKeepsOldEngineState") {
+    // I3: uygulanan değişiklik diske yazılamadıysa motor durumu (belirteç) diske yazılmaz
+    let root = geciciKok()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let s = SyncStateStore(root: root)
+    s.engineState = Data([1])
+    s.freezeEngineState()
+    s.engineState = Data([2])
+    try expect(s.engineState == Data([2]), "bellekte güncel")
+    try expect(SyncStateStore(root: root).engineState == Data([1]), "diskte eski belirteç kalır")
+    // Durum dosyası yazılamazsa da donar
+    let bad = geciciKok()
+    defer { try? FileManager.default.removeItem(at: bad) }
+    let s2 = SyncStateStore(root: bad)
+    try FileManager.default.removeItem(at: bad)
+    try Data().write(to: bad)   // kök artık bir dosya: yazmalar başarısız
+    s2.setBase(pg(UUID(), UUID()))
+    try expect(s2.isFrozen, "taban yazılamadı: dondu")
+    try FileManager.default.removeItem(at: bad)
+}
+
 check("resumeMassDeleteGuard") {
     // Yerel kütüphane boş görünüyorsa (ör. dizin okunamadı) devam farkı buluttaki her şeyi silmesin
     try expect(SyncMerge.holdResumeDeletes(baseNotebooks: 3, localNotebooks: 0, deletedNotebooks: 3), "yerel boş")
