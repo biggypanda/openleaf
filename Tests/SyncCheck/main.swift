@@ -399,6 +399,33 @@ check("stateBatchAndQueries") {
     try expect(all.notebooks.count == 1 && all.pages.count == 2 && all.folders[f] != nil, "tüm tabanlar")
 }
 
+check("duplicatePageIDs") {
+    // C1: eski sürümde çoğaltılan defter (N2) N1'in sayfa kimliklerini paylaşıyor
+    let n1 = UUID(), n2 = UUID(), n3 = UUID(), p = UUID(), q = UUID(), r = UUID()
+    let list: [(id: UUID, created: Date, pages: [UUID])] = [
+        (n2, t1, [p, q]),          // kopya, sonra oluşturuldu; dizide önce gelse de kimlikleri değişir
+        (n1, t0, [p, q, r]),
+        (n3, t2, [UUID()]),
+    ]
+    let re = SyncMerge.duplicatePageIDs(list)
+    try expect(re.count == 2, "iki sayfa yeniden kimlik almalı: \(re)")
+    try expect(re.allSatisfy { $0.notebook == n2 }, "en eski defter (n1) kimliklerini korur")
+    try expect(re.map(\.index) == [0, 1] && re.map(\.old) == [p, q], "sıra ve eski kimlik")
+    try expect(Set(re.map(\.new)).count == 2 && !re.contains { [p, q, r].contains($0.new) }, "yeni kimlikler benzersiz")
+    // Her cihazda aynı sonuç: dizi sırası farklı olsa da
+    let again = SyncMerge.duplicatePageIDs([list[1], list[2], list[0]])
+    try expect(again == re, "kararlı ve sıradan bağımsız")
+    // Yinelenme yoksa boş
+    try expect(SyncMerge.duplicatePageIDs([(n1, t0, [p, q]), (n2, t1, [r])]).isEmpty, "yinelenme yok")
+    // Aynı defterde iki kez geçen kimlik
+    let same = SyncMerge.duplicatePageIDs([(n1, t0, [p, p, p])])
+    try expect(same.map(\.index) == [1, 2] && Set(same.map(\.new)).count == 2, "aynı defterde: \(same)")
+    // Eşit tarihte kimlik metni karar verir
+    let (a, b) = n1.uuidString < n2.uuidString ? (n1, n2) : (n2, n1)
+    let tie = SyncMerge.duplicatePageIDs([(b, t0, [p]), (a, t0, [p])])
+    try expect(tie.count == 1 && tie[0].notebook == b, "eşit tarih")
+}
+
 check("resumeMassDeleteGuard") {
     // Yerel kütüphane boş görünüyorsa (ör. dizin okunamadı) devam farkı buluttaki her şeyi silmesin
     try expect(SyncMerge.holdResumeDeletes(baseNotebooks: 3, localNotebooks: 0, deletedNotebooks: 3), "yerel boş")

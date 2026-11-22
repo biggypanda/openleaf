@@ -90,7 +90,13 @@ extension Library {
     /// Defterin üst verisini, sayfalarını ve dosya özetlerini görüntüye ekler
     private func addSlice(of nb: Notebook, to snap: inout SyncSnapshot) {
         snap.notebooks[nb.id] = meta(of: nb)
-        for p in nb.pages { snap.pages[p.id] = pageMeta(p, in: nb.id) }
+        for p in nb.pages {
+            if let other = snap.pages[p.id], other.notebook != nb.id {
+                // C1: aynı sayfa kimliği iki defterde; açılışta `reassignDuplicatePageIDs` düzeltir
+                syncLog.error("Sayfa kimliği iki defterde birden: \(p.id.uuidString, privacy: .public)")
+            }
+            snap.pages[p.id] = pageMeta(p, in: nb.id)
+        }
         let dir = store.dir(nb.id)
         var names = Set(nb.pages.flatMap { $0.pageImages.map(\.file) })
         if let pdf = nb.pdfFile { names.insert(pdf) }
@@ -101,6 +107,43 @@ extension Library {
             if !flushed, !FileManager.default.fileExists(atPath: url.path) { store.flush(); flushed = true }
             if let h = fileHash(url) { snap.files[nb.id.uuidString + "/" + name] = h }
         }
+    }
+
+    // MARK: Yinelenen sayfa kimlikleri (C1)
+
+    /// Eski sürümde çoğaltılan defterler sayfa kimliklerini paylaşıyordu; eşitleme sayfayı kimliğiyle tanıdığı
+    /// için birinin (ör. boş yer tutucu) hâli ötekinin mürekkebini ezebilirdi. En eski defter dışındaki kopyalar
+    /// kararlı yeni kimlik alır (her iPad aynı kimliği üretir); mürekkep yeni kimliğe yazılır.
+    /// Eşitleme başlarken, ilk görüntüden önce çağrılır. Düzeltilen sayfa sayısını döndürür.
+    @discardableResult
+    func reassignDuplicatePageIDs() -> Int {
+        let plan = SyncMerge.duplicatePageIDs(notebooks.map { (id: $0.id, created: $0.created, pages: $0.pages.map(\.id)) })
+        guard !plan.isEmpty else { return 0 }
+        store.flush()
+        var touched = Set<UUID>()
+        var done = 0
+        for r in plan {
+            guard let i = index(of: r.notebook), notebooks[i].pages.indices.contains(r.index),
+                  notebooks[i].pages[r.index].id == r.old else { continue }
+            let ink = drawing(r.notebook, r.old)
+            notebooks[i].pages[r.index].id = r.new
+            if !ink.isEmpty {
+                drawingCache.set(key(r.notebook, r.new), ink)
+                store.writeDrawing(r.notebook, r.new, ink)
+            }
+            // Eski dosyayı bu defterde başka sayfa kullanmıyorsa kaldır
+            if !notebooks[i].pages.contains(where: { $0.id == r.old }) {
+                drawingCache.set(key(r.notebook, r.old), nil)
+                store.deleteDrawing(r.notebook, r.old)
+            }
+            touched.insert(r.notebook)
+            done += 1
+        }
+        guard done > 0 else { return 0 }
+        save()
+        store.flush()
+        touched.forEach { scheduleThumbnail($0) }
+        return done
     }
 
     // MARK: Değişiklik bildirimi
@@ -398,7 +441,16 @@ extension Library {
         let byID = Dictionary(nb.pages.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         var seen = Set<UUID>()
         var result: [Page] = []
-        for id in order where seen.insert(id).inserted { result.append(byID[id] ?? Page(id: id)) }
+        for id in order where seen.insert(id).inserted {
+            if let p = byID[id] { result.append(p); continue }
+            // C1: başka defterdeki bir sayfanın kimliği (eski sürümün çoğalttığı defter); boş yer tutucusu
+            // açılmaz, yoksa o sayfa kimliğiyle gönderilen boş hâl öteki defterin mürekkebini ezebilirdi
+            if notebooks.contains(where: { $0.id != nb.id && $0.pages.contains { $0.id == id } }) {
+                syncLog.error("Sıradaki sayfa başka defterde; yer tutucu açılmadı: \(id.uuidString, privacy: .public)")
+                continue
+            }
+            result.append(Page(id: id))
+        }
         let kept = nb.pages.filter { !seen.contains($0.id) }
         result.append(contentsOf: kept)
         nb.pages = result.isEmpty ? [Page()] : result

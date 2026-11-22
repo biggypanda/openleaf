@@ -326,6 +326,51 @@ enum SyncMerge {
         return baseNotebooks >= 4 && deletedNotebooks * 2 > baseNotebooks
     }
 
+    // MARK: Yinelenen sayfa kimlikleri (C1)
+
+    /// Yeniden kimlik alması gereken sayfa: defter, defterdeki sırası, eski ve yeni kimlik
+    struct PageReID: Equatable {
+        var notebook: UUID
+        var index: Int
+        var old: UUID
+        var new: UUID
+    }
+
+    /// Eşitleme sayfaları kütüphane genelinde kimlikle tanır; eski sürümde çoğaltılan defterler sayfa kimliklerini
+    /// paylaşıyordu. Aynı kimlik birden çok yerde geçiyorsa en eski defterdeki (oluşturma tarihi, eşitse kimlik
+    /// metni; her cihazda aynı sonuç) ilk geçiş kimliği korur, diğerleri yeni kimlik alır. Yeni kimlik
+    /// (defter, eski kimlik, defterdeki kaçıncı geçiş) üçlüsünden türetilir: iki iPad aynı sayfaya aynı kimliği verir.
+    static func duplicatePageIDs(_ notebooks: [(id: UUID, created: Date, pages: [UUID])]) -> [PageReID] {
+        var count: [UUID: Int] = [:]
+        for nb in notebooks { for p in nb.pages { count[p, default: 0] += 1 } }
+        guard count.values.contains(where: { $0 > 1 }) else { return [] }
+        let ordered = notebooks.sorted {
+            $0.created != $1.created ? $0.created < $1.created : $0.id.uuidString < $1.id.uuidString
+        }
+        var kept = Set<UUID>()
+        var out: [PageReID] = []
+        for nb in ordered {
+            var seenHere: [UUID: Int] = [:]
+            for (i, p) in nb.pages.enumerated() where count[p, default: 0] > 1 {
+                if kept.insert(p).inserted { continue }
+                let n = seenHere[p, default: 0]
+                seenHere[p] = n + 1
+                out.append(PageReID(notebook: nb.id, index: i, old: p, new: derivedPageID(notebook: nb.id, page: p, occurrence: n)))
+            }
+        }
+        return out
+    }
+
+    /// (defter, sayfa, geçiş) üçlüsünden kararlı bir UUID (SHA256'nın ilk 16 baytı, sürüm 5 biçiminde)
+    static func derivedPageID(notebook: UUID, page: UUID, occurrence: Int) -> UUID {
+        let seed = "openleaf-sayfa/\(notebook.uuidString)/\(page.uuidString)/\(occurrence)"
+        var b = Array(SHA256.hash(data: Data(seed.utf8)).prefix(16))
+        b[6] = (b[6] & 0x0F) | 0x50
+        b[8] = (b[8] & 0x3F) | 0x80
+        return UUID(uuid: (b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7],
+                           b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15]))
+    }
+
     /// Silinen defterden, yalnızca kurtarılan sayfaları içeren yeni bir defter üstverisi üretir
     static func rescueNotebook(from deleted: SyncNotebookMeta, keeping pages: [UUID], newID: UUID, now: Date) -> SyncNotebookMeta {
         var m = deleted

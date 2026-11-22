@@ -458,7 +458,11 @@ final class Library {
         copy.favorite = false
         copy.created = Date()
         copy.modified = Date()
+        // Sayfalar yeni kimlik alır: eşitleme sayfaları kütüphane genelinde kimlikle tanır, iki defter aynı
+        // kimliği paylaşırsa birinin boş hâli ötekinin mürekkebini ezebilir. Mürekkep dosyaları da yeni adlarına taşınır.
+        copy.pages = nb.pages.map { p in var c = p; c.id = UUID(); return c }
         store.copyDir(nb.id, to: copy.id)
+        for (old, new) in zip(nb.pages, copy.pages) { store.moveDrawing(copy.id, from: old.id, to: new.id) }
         notebooks.append(copy)
         save()
         bumpThumb(copy.id)

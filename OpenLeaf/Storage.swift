@@ -143,6 +143,16 @@ final class NotebookStore: @unchecked Sendable {
         }
     }
 
+    /// Defter klasöründeki mürekkep dosyasını yeni sayfa kimliğine taşır (bekleyen yazmalardan sonra)
+    func moveDrawing(_ id: UUID, from: UUID, to: UUID) {
+        let src = drawingURL(id, from), dst = drawingURL(id, to)
+        queue.sync {
+            guard fm.fileExists(atPath: src.path) else { return }
+            try? fm.removeItem(at: dst)
+            attempt { try fm.moveItem(at: src, to: dst) }
+        }
+    }
+
     func deleteDrawing(_ id: UUID, _ page: UUID) {
         let url = drawingURL(id, page)
         queue.async { try? FileManager.default.removeItem(at: url) }

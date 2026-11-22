@@ -158,6 +158,10 @@ final class SyncController {
         if serialization == nil {
             engine.state.add(pendingDatabaseChanges: [.saveZone(CKRecordZone(zoneID: SyncRecords.zoneID))])
         }
+        // C1: eski sürümde çoğaltılan defterlerin paylaştığı sayfa kimlikleri, ilk görüntüden önce ayrılır
+        library.flushOpenEditors?()
+        let reIDs = library.reassignDuplicatePageIDs()
+        if reIDs > 0 { syncLog.notice("Yinelenen \(reIDs) sayfa kimliği yenilendi") }
         // R-a: atama lastSnapshot'ı sıfırlar; başlangıç açıkça kurulur
         library.onSyncChanges = { [weak self] changes in self?.enqueue(changes) }
         let snapshot = library.seedSyncBaseline()
