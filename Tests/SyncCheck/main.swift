@@ -190,5 +190,67 @@ check("rescuePlan") {
     try expect(r.created == now && r.modified == now, "tarihler now")
 }
 
+func geciciKok() -> URL {
+    let u = FileManager.default.temporaryDirectory.appendingPathComponent("esitleme-\(UUID().uuidString)")
+    try? FileManager.default.createDirectory(at: u, withIntermediateDirectories: true)
+    return u
+}
+
+check("stateRoundTrip") {
+    let root = geciciKok()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let nbID = UUID(), pgID = UUID(), flID = UUID()
+    let n = nb(nbID, title: "Fizik", order: [pgID])
+    let p = SyncPageMeta(id: pgID, notebook: nbID, pdfPage: 2, bookmarked: true, mark: "yildiz",
+                         notes: [], images: [], tapes: [], inkHash: "h1")
+    let f = SyncFolderMeta(id: flID, name: "Ders", created: Date(timeIntervalSince1970: 100))
+    let s1 = SyncStateStore(root: root)
+    s1.engineState = Data([7])
+    s1.enabled = true
+    s1.accountID = "hesap-1"
+    s1.setBase(n); s1.setBase(p); s1.setBase(f)
+    s1.setSystemFields(Data([1, 2, 3]), for: "rec-1")
+    s1.flush()
+    let s2 = SyncStateStore(root: root)
+    try expect(s2.engineState == Data([7]), "engineState")
+    try expect(s2.enabled && s2.accountID == "hesap-1", "enabled/accountID")
+    try expect(s2.base(notebook: nbID) == n, "defter tabanı")
+    try expect(s2.base(page: pgID) == p, "sayfa tabanı")
+    try expect(s2.base(folder: flID) == f, "klasör tabanı")
+    try expect(s2.systemFields("rec-1") == Data([1, 2, 3]), "sistem alanı")
+    s2.removeBase(nbID)
+    try expect(s2.base(notebook: nbID) == nil, "removeBase")
+}
+
+check("stateResetKeepsEnabled") {
+    let root = geciciKok()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let id = UUID()
+    let s = SyncStateStore(root: root)
+    s.enabled = true
+    s.engineState = Data([9]); s.accountID = "a"
+    s.setBase(nb(id, title: "X", order: []))
+    s.setSystemFields(Data([4]), for: "r")
+    s.reset()
+    try expect(s.base(notebook: id) == nil && s.engineState == nil && s.accountID == nil, "temizlenmeli")
+    try expect(s.systemFields("r") == nil, "sistem alanı temizlenmeli")
+    try expect(s.enabled, "enabled kalmalı")
+    s.flush()
+    let s2 = SyncStateStore(root: root)
+    try expect(s2.enabled && s2.base(notebook: id) == nil && s2.accountID == nil, "diskte de öyle")
+}
+
+check("stateCorruptFileIsNil") {
+    let root = geciciKok()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let id = UUID()
+    let s = SyncStateStore(root: root)
+    s.setBase(nb(id, title: "X", order: []))
+    s.flush()
+    try Data([0xFF, 0x00, 0x13]).write(to: root.appendingPathComponent("notebooks.json"))
+    let s2 = SyncStateStore(root: root)
+    try expect(s2.base(notebook: id) == nil, "bozuk dosya nil vermeli")
+}
+
 if failures > 0 { print("\n\(failures) denetim kaldı."); exit(1) }
 print("\nTüm denetimler geçti.")
