@@ -960,7 +960,7 @@ struct CanvasRepresentable: UIViewRepresentable {
             if coord.isDrawing {
                 // Açık sayfa kalem ekrandayken değişti (başka iPad'de silindi): çizgi kendi sayfasında
                 // bitsin, geçiş kalem kalkınca yapılır
-                coord.pageChangeDeferred = true
+                coord.deferPageChange()
             } else {
                 // Önce eski sayfayı kaydet, sonra yeni sayfayı yükle
                 c.endEditing(true)
@@ -1042,10 +1042,14 @@ struct CanvasRepresentable: UIViewRepresentable {
                 strokeAfterRemote = true
                 return
             }
+            // Sayfa geçişi bekliyor: eski sayfa silinmiş olabilir, kayıt geçişte teslim edilir
+            if pageChangeDeferred { work?.cancel(); work = nil; return }
             work?.cancel()
             let item = DispatchWorkItem { [weak self, weak c] in
                 guard let self, let c else { return }
                 self.work = nil
+                // Bu arada geçiş ertelendiyse silinmiş sayfaya (etkisiz) yazıp işareti silmesin
+                guard !self.pageChangeDeferred else { return }
                 self.changedSinceSave = false
                 self.parent.onChange(pid, c.canonicalData)
             }
@@ -1054,6 +1058,11 @@ struct CanvasRepresentable: UIViewRepresentable {
         }
 
         func flush(_ c: OpenLeafCanvas) {
+            if pageChangeDeferred {
+                // Kalem ekrandaysa geçişte teslim edilir; değilse (kapanış, arka plan) şimdi teslim et
+                if !isDrawing { deliverDeferredInk(c) }
+                return
+            }
             if strokeAfterRemote, loaded, let pid = pageID {
                 // Uzak mürekkep geldikten sonra çizilenler sayfaya değil çakışma kopyasına yazılır
                 strokeAfterRemote = false
@@ -1086,13 +1095,31 @@ struct CanvasRepresentable: UIViewRepresentable {
         /// DocumentView sayfa duruyorsa kaydeder, silinmişse kurtarılmış yeni sayfa olarak saklar.
         private func finishDeferredPageChange(_ c: OpenLeafCanvas) {
             guard pageChangeDeferred, !isDrawing, loaded else { return }
+            deliverDeferredInk(c)
             pageChangeDeferred = false
+            remotePending = false
+            if pageID != parent.pageID { parent.turnPage(c, self) }
+        }
+
+        /// Kalem ekrandayken sayfa değişti: bekleyen gecikmeli kayıt iptal edilir (silinmiş sayfaya etkisiz
+        /// yazılıp kaydedildi sanılmasın); çizim geçişte `deliverDeferredInk` ile teslim edilir
+        func deferPageChange() {
+            pageChangeDeferred = true
+            if work != nil {
+                work?.cancel(); work = nil
+                changedSinceSave = true
+            }
+        }
+
+        /// Ertelenen geçişte tuvaldeki kaydedilmemiş mürekkebi sayfa kimliğiyle teslim eder
+        private func deliverDeferredInk(_ c: OpenLeafCanvas) {
             // Bildirim sırasına bağlı kalmamak için çizgi sayısına da bakılır
             let dirty = changedSinceSave || strokeAfterRemote || work != nil
                 || c.drawing.strokes.count != strokesAtPenDown
             work?.cancel(); work = nil
-            if dirty, let pid = pageID {
+            if dirty, loaded, let pid = pageID {
                 if strokeAfterRemote {
+                    // Sayfa silinmişse DocumentView kurtarılmış sayfaya düşer
                     parent.onRemoteConflict?(pid, c.canonicalData)
                 } else {
                     parent.onPageGoneSave?(pid, c.canonicalData)
@@ -1100,8 +1127,7 @@ struct CanvasRepresentable: UIViewRepresentable {
             }
             changedSinceSave = false
             strokeAfterRemote = false
-            remotePending = false
-            if pageID != parent.pageID { parent.turnPage(c, self) }
+            strokesAtPenDown = c.drawing.strokes.count
         }
 
         /// Açık sayfaya uzaktan mürekkep uygulandı. Çizim sürüyorsa kalem kalkınca, sürmüyorsa hemen yüklenir.

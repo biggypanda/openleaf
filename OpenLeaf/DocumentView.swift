@@ -650,8 +650,14 @@ struct DocumentView: View {
             remoteVersion: library.remoteInkVersion[pageID] ?? 0,
             latestData: { pid in library.drawing(notebookID, pid) },
             onRemoteConflict: { pid, data in
-                // Uzak mürekkep sayfada kalır; bu iPad'de o sırada çizilenler yanındaki kopyaya
-                _ = library.insertConflictCopy(of: pid, ink: data)
+                // Uzak mürekkep sayfada kalır; bu iPad'de o sırada çizilenler yanındaki kopyaya.
+                // Sayfa bu arada silindiyse kopyanın kaynağı yok: kurtarılmış yeni sayfaya yazılır
+                let exists = library.notebooks.first { $0.id == notebookID }?.pages.contains { $0.id == pid } ?? false
+                if exists {
+                    _ = library.insertConflictCopy(of: pid, ink: data)
+                } else {
+                    savePageGone(notebookID, pid, data)
+                }
             },
             onPageGoneSave: { pid, data in savePageGone(notebookID, pid, data) }
         )
