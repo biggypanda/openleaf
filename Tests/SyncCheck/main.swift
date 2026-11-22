@@ -171,10 +171,42 @@ check("inkResolution") {
 }
 
 check("remoteDelete") {
-    try expect(SyncMerge.resolveRemoteDelete(base: "h1", local: "h1") == .delete, "h1,h1")
-    try expect(SyncMerge.resolveRemoteDelete(base: "h1", local: "h2") == .rescue, "h1,h2")
-    try expect(SyncMerge.resolveRemoteDelete(base: nil, local: nil) == .delete, "nil,nil")
-    try expect(SyncMerge.resolveRemoteDelete(base: nil, local: "h1") == .rescue, "nil,h1")
+    let n = UUID(), p = UUID()
+    try expect(SyncMerge.resolveRemoteDelete(base: pg(p, n, ink: "h1"), local: pg(p, n, ink: "h1")) == .delete, "h1,h1")
+    try expect(SyncMerge.resolveRemoteDelete(base: pg(p, n, ink: "h1"), local: pg(p, n, ink: "h2")) == .rescue, "h1,h2")
+    try expect(SyncMerge.resolveRemoteDelete(base: nil, local: pg(p, n)) == .delete, "nil,boş")
+    try expect(SyncMerge.resolveRemoteDelete(base: nil, local: pg(p, n, ink: "h1")) == .rescue, "nil,h1")
+    // Yer imi ve işaret içerik sayılmaz
+    var marked = pg(p, n, bookmarked: true, ink: "h1"); marked.mark = "rescued"
+    try expect(SyncMerge.resolveRemoteDelete(base: pg(p, n, ink: "h1"), local: marked) == .delete, "yalnız yer imi/işaret")
+}
+
+check("remoteDeleteRescuesNoteOnlyChange") {
+    // I5: başka cihaz sayfayı sildi; burada yalnızca yapışkan not eklendi (mürekkep aynı) → kurtarılır
+    let n = UUID(), p = UUID()
+    var local = pg(p, n, ink: "h1"); local.notes = [item(UUID(), 1)]
+    try expect(SyncMerge.resolveRemoteDelete(base: pg(p, n, ink: "h1"), local: local) == .rescue, "yalnız not")
+    // Mürekkepsiz, yalnız notlu yeni sayfa (taban yok)
+    var fresh = pg(p, n); fresh.notes = [item(UUID(), 2)]
+    try expect(SyncMerge.resolveRemoteDelete(base: nil, local: fresh) == .rescue, "tabansız notlu sayfa")
+    // Not metni değişti
+    let noteID = UUID()
+    var b = pg(p, n); b.notes = [item(noteID, 1)]
+    var l = pg(p, n); l.notes = [item(noteID, 2)]
+    try expect(SyncMerge.resolveRemoteDelete(base: b, local: l) == .rescue, "not değişti")
+    try expect(SyncMerge.resolveRemoteDelete(base: b, local: b) == .delete, "not aynı")
+}
+
+check("remoteDeleteRescuesImageOnlyChange") {
+    let n = UUID(), p = UUID()
+    var local = pg(p, n, ink: "h1"); local.images = [item(UUID(), 7)]
+    try expect(SyncMerge.resolveRemoteDelete(base: pg(p, n, ink: "h1"), local: local) == .rescue, "yalnız resim")
+    var taped = pg(p, n, ink: "h1"); taped.tapes = [item(UUID(), 3)]
+    try expect(SyncMerge.resolveRemoteDelete(base: pg(p, n, ink: "h1"), local: taped) == .rescue, "yalnız bant")
+    // Defter silmesinde de aynı kural
+    let a = UUID(), c = UUID()
+    var withImage = pg(a, n); withImage.images = [item(UUID(), 9)]
+    try expect(SyncMerge.pagesToRescue(local: [withImage, pg(c, n)], bases: [a: pg(a, n)]) == [a], "defter silmesi: resimli sayfa kurtarılır")
 }
 
 check("rescuePlan") {
@@ -310,6 +342,12 @@ check("remotePageAction") {
     try expect(SyncMerge.remotePageAction(localExists: false, notebookExists: false, base: nil, notebookBaseKnown: true, server: srv) == A.rescueOrphan, "tabansız mürekkepli sayfa, silinen deftere")
     try expect(SyncMerge.remotePageAction(localExists: false, notebookExists: false, base: baseSame, notebookBaseKnown: true, server: srv) == A.skip, "defter silindi, sayfa değişmedi")
     try expect(SyncMerge.remotePageAction(localExists: false, notebookExists: false, base: nil, notebookBaseKnown: false, server: srv) == A.hold, "defter henüz gelmedi: beklet")
+    // I5: uzakta yalnızca not eklendi (mürekkep aynı): yerel silme onu yutmaz
+    var noteOnly = pg(p, n, ink: "yeni"); noteOnly.notes = [item(UUID(), 4)]
+    try expect(SyncMerge.remotePageAction(localExists: false, notebookExists: true, base: baseSame, notebookBaseKnown: true, server: noteOnly) == A.resurrect, "yalnız not: geri gelir")
+    try expect(SyncMerge.remotePageAction(localExists: false, notebookExists: false, base: baseSame, notebookBaseKnown: true, server: noteOnly) == A.rescueOrphan, "yalnız not, defter silindi: kurtarılır")
+    var imgOnly = pg(p, n); imgOnly.images = [item(UUID(), 5)]
+    try expect(SyncMerge.remotePageAction(localExists: false, notebookExists: true, base: pg(p, n), notebookBaseKnown: true, server: imgOnly) == A.resurrect, "yalnız resim: geri gelir")
 }
 
 check("resumeChanges") {

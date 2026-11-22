@@ -434,7 +434,7 @@ extension SyncController {
         state.apply(b)
     }
 
-    /// Başka cihazda silinen defter. Yerelde mürekkebi değişmiş sayfalar aynı başlık ve ayarlarla yeni bir
+    /// Başka cihazda silinen defter. Yerelde içeriği (mürekkep, not, resim, bant) değişmiş sayfalar aynı başlık ve ayarlarla yeni bir
     /// deftere kurtarılır; değişmemişler silinir. Kurtarılan sayfa sayısını döndürür.
     func remoteDeleteNotebook(_ id: UUID) -> Int {
         var ids = [id] + state.pageIDs(inNotebook: id)
@@ -478,10 +478,10 @@ extension SyncController {
         return count
     }
 
-    /// Başka cihazda silinen sayfa: mürekkebi burada değiştiyse yerinde kalır ("Kurtarıldı"), yoksa silinir
+    /// Başka cihazda silinen sayfa: içeriği (mürekkep, not, resim, bant) burada değiştiyse yerinde kalır ("Kurtarıldı"), yoksa silinir
     func remoteDeletePage(_ id: UUID) -> Int {
         guard let local = library.syncPage(id) else { forget([id]); return 0 }
-        switch SyncMerge.resolveRemoteDelete(base: state.base(page: id)?.inkHash, local: local.inkHash) {
+        switch SyncMerge.resolveRemoteDelete(base: state.base(page: id), local: local) {
         case .delete:
             library.removeRemote(page: id)
             forget([id])

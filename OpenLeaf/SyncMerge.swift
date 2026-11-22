@@ -210,9 +210,32 @@ enum SyncMerge {
         return .keepBoth
     }
 
-    /// Sunucuda silinen sayfanın yerelde değişmişse kurtarılması gerekir
-    static func resolveRemoteDelete(base: String?, local: String?) -> DeleteResolution {
-        local == base ? .delete : .rescue
+    /// Sayfanın kullanıcı içeriği: mürekkep, notlar, resimler ve bantlar (yer imi, işaret ve PDF sayfası hariç)
+    private struct PageContent: Equatable {
+        var ink: String?
+        var notes: [SyncItem]
+        var images: [SyncItem]
+        var tapes: [SyncItem]
+        static let empty = PageContent(ink: nil, notes: [], images: [], tapes: [])
+    }
+
+    private static func content(_ p: SyncPageMeta?) -> PageContent {
+        guard let p else { return .empty }
+        return PageContent(ink: p.inkHash, notes: p.notes, images: p.images, tapes: p.tapes)
+    }
+
+    /// Sayfada kullanıcı içeriği var mı (boş yer tutucu sayfa değil)
+    static func hasContent(_ p: SyncPageMeta) -> Bool { content(p) != .empty }
+
+    /// İçerik (mürekkep, not, resim, bant) son eşitlenen hâlden farklı mı; tabanı yoksa içerik varsa farklıdır
+    static func contentChanged(base: SyncPageMeta?, current: SyncPageMeta) -> Bool {
+        content(base) != content(current)
+    }
+
+    /// Sunucuda silinen sayfanın içeriği yerelde değişmişse kurtarılması gerekir.
+    /// Yalnızca mürekkebe değil, notlara, resimlere ve bantlara da bakılır (yalnız not eklenen sayfa da kurtarılır).
+    static func resolveRemoteDelete(base: SyncPageMeta?, local: SyncPageMeta) -> DeleteResolution {
+        contentChanged(base: base, current: local) ? .rescue : .delete
     }
 
     // MARK: Denetleyici kararları (CloudKit'siz, Mac'te denetlenir)
@@ -247,34 +270,34 @@ enum SyncMerge {
 
     /// Başka cihazda silinen defterin kurtarılacak sayfaları (yerel sırayla)
     static func pagesToRescue(local: [SyncPageMeta], bases: [UUID: SyncPageMeta]) -> [UUID] {
-        local.filter { resolveRemoteDelete(base: bases[$0.id]?.inkHash, local: $0.inkHash) == .rescue }.map(\.id)
+        local.filter { resolveRemoteDelete(base: bases[$0.id], local: $0) == .rescue }.map(\.id)
     }
 
     enum RemotePageAction: Equatable {
         /// Yerelle birleştir (yerelde yoksa olduğu gibi ekle)
         case merge
-        /// Yerelde silinmiş ama uzakta yeni mürekkep var: sayfa deftere geri gelir
+        /// Yerelde silinmiş ama uzakta yeni içerik (mürekkep, not, resim, bant) var: sayfa deftere geri gelir
         case resurrect
-        /// Defteri yerelde silinmiş ama uzakta yeni mürekkep var: kurtarma defterine alınır
+        /// Defteri yerelde silinmiş ama uzakta yeni içerik var: kurtarma defterine alınır
         case rescueOrphan
-        /// Yerel silme kazanır (uzakta mürekkep değişmedi)
+        /// Yerel silme kazanır (uzakta içerik değişmedi)
         case skip
         /// Defteri henüz gelmedi; aynı alımda gelene kadar beklet
         case hold
     }
 
-    /// Gelen sayfa kaydı yerelde karşılıksızsa ne yapılacağı. Yazılan kazanır: uzaktaki mürekkep
-    /// son eşitlenen hâlden farklıysa yerel silme onu yutmaz.
+    /// Gelen sayfa kaydı yerelde karşılıksızsa ne yapılacağı. Yazılan kazanır: uzaktaki içerik (mürekkep,
+    /// not, resim, bant) son eşitlenen hâlden farklıysa yerel silme onu yutmaz.
     static func remotePageAction(localExists: Bool, notebookExists: Bool, base: SyncPageMeta?,
                                  notebookBaseKnown: Bool, server: SyncPageMeta) -> RemotePageAction {
         if localExists { return .merge }
-        let newInk = server.inkHash != nil && server.inkHash != base?.inkHash
+        let newContent = hasContent(server) && contentChanged(base: base, current: server)
         if notebookExists {
             guard base != nil else { return .merge }
-            return newInk ? .resurrect : .skip
+            return newContent ? .resurrect : .skip
         }
         guard notebookBaseKnown else { return .hold }
-        return newInk ? .rescueOrphan : .skip
+        return newContent ? .rescueOrphan : .skip
     }
 
     /// Tabanlara (son eşitlenen hâl) göre gönderilmesi gerekenler. Eşitleme açılınca ve her başlatmada
