@@ -21,6 +21,10 @@
 	<false/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Derste tahtanın ya da kitabın fotoğrafını çekip sayfaya eklemek için.</string>
 	<key>NSFaceIDUsageDescription</key>
