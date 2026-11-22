@@ -144,10 +144,11 @@ extension Library {
     // MARK: Uzaktan uygulama
 
     func applyRemote(notebook m: SyncNotebookMeta) {
+        var keptLocal = false
         if let i = index(of: m.id) {
             var nb = notebooks[i]
             fill(&nb, from: m)
-            reorderPages(&nb, order: m.pageOrder)
+            keptLocal = reorderPages(&nb, order: m.pageOrder)
             notebooks[i] = nb
         } else {
             store.createDir(m.id)
@@ -160,6 +161,12 @@ extension Library {
         persistRemote()
         patchSync(notebook: m.id)
         scheduleThumbnail(m.id)
+        if keptLocal {
+            // Sunucunun sırasında olmayan yerel sayfa korundu: defter üst verisi sunucudakinden farklı.
+            // lastSnapshot'ta sunucunun sırasını bırakıp fark üretiriz ki sunucu sayfanın var olduğunu öğrensin.
+            lastSnapshot?.notebooks[m.id]?.pageOrder = m.pageOrder
+            notifySync()
+        }
     }
 
     /// `ink == nil` mürekkebe dokunmaz
@@ -363,17 +370,19 @@ extension Library {
         nb.pdfFile = m.pdfFile
     }
 
-    /// Sayfaları verilen sıraya dizer; bilinmeyen kimlik boş sayfa olur (içeriği sonra gelir), listede olmayan sayfa düşer
-    private func reorderPages(_ nb: inout Notebook, order: [UUID]) {
+    /// Sayfaları verilen sıraya dizer; bilinmeyen kimlik boş sayfa olur (içeriği sonra gelir).
+    /// Listede olmayan yerel sayfalar SİLİNMEZ: sona, mevcut göreli sırayla eklenir ve mürekkepleri dokunulmaz kalır.
+    /// Gerçek silme yalnızca `removeRemote(page:)` ile olur. Böyle bir sayfa korunduysa true döner.
+    @discardableResult
+    private func reorderPages(_ nb: inout Notebook, order: [UUID]) -> Bool {
         let byID = Dictionary(nb.pages.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         var seen = Set<UUID>()
         var result: [Page] = []
         for id in order where seen.insert(id).inserted { result.append(byID[id] ?? Page(id: id)) }
-        for p in nb.pages where !seen.contains(p.id) {
-            drawingCache.set(key(nb.id, p.id), nil)
-            store.deleteDrawing(nb.id, p.id)
-        }
+        let kept = nb.pages.filter { !seen.contains($0.id) }
+        result.append(contentsOf: kept)
         nb.pages = result.isEmpty ? [Page()] : result
+        return !kept.isEmpty
     }
 
     private func page(from m: SyncPageMeta, base: Page?) -> Page {
