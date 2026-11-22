@@ -229,10 +229,17 @@ extension Library {
     func applyRemote(page m: SyncPageMeta, ink: Data?) {
         guard let i = index(of: m.notebook) else { return }
         if let j = notebooks[i].pages.firstIndex(where: { $0.id == m.id }) {
-            notebooks[i].pages[j] = page(from: m, base: notebooks[i].pages[j])
+            let old = notebooks[i].pages[j]
+            let new = page(from: m, base: old)
+            notebooks[i].pages[j] = new
+            // I4: açık sayfa notları, resimleri ve bantları yeniden uygulasın
+            if old.notes != new.notes || old.images != new.images || old.tapes != new.tapes {
+                remoteItemsVersion[m.id, default: 0] += 1
+            }
         } else {
             // Sıra bilgisi henüz gelmedi; sona eklenir, defter üst verisi sırayı düzeltir
             notebooks[i].pages.append(page(from: m, base: nil))
+            remoteItemsVersion[m.id, default: 0] += 1
         }
         if let ink {
             let k = key(m.notebook, m.id)
@@ -267,6 +274,12 @@ extension Library {
         store.writeFile(data, to: url)
         // Özet hemen doğru çıksın diye yazma bitsin
         store.flush()
+        // Resmi kullanan açık sayfa dosya gelince yeniden çizsin (I4)
+        if let i = index(of: notebook) {
+            for p in notebooks[i].pages where p.pageImages.contains(where: { $0.file == name }) {
+                remoteItemsVersion[p.id, default: 0] += 1
+            }
+        }
         if name == "source.pdf" {
             // Eski metin önbelleği yeni PDF'e ait değil; arama yeniden çıkarsın
             textCache[notebook] = nil
@@ -317,6 +330,15 @@ extension Library {
         persistRemote()
         lastSnapshot?.folders[id] = nil
         for nb in touched { patchSync(notebook: nb) }
+    }
+
+    /// I4: tuval listeyi, sayfaya uzaktan gelen son not/resim/bant sürümünü uygulamadan önce ürettiyse (eski liste)
+    /// uzaktan eklenen öğeler korunur; tuvaldeki öğeler kendi kimliklerinde kazanır. Böylece açık sayfadaki bir
+    /// düzenleme, ekrana henüz gelmemiş uzak notu, resmi ya da bandı silmez.
+    func keepingRemote<T: Identifiable>(_ list: [T], current: [T], page: UUID, seen: Int?) -> [T] where T.ID == UUID {
+        guard let seen, seen != remoteItemsVersion[page] ?? 0 else { return list }
+        let ids = Set(list.map(\.id))
+        return list + current.filter { !ids.contains($0.id) }
     }
 
     // MARK: Çakışma ve kurtarma

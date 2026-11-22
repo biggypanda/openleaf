@@ -75,9 +75,12 @@ extension Library {
         return name
     }
 
-    func setImages(_ id: UUID, _ page: UUID, _ images: [PageImage]) {
+    func setImages(_ id: UUID, _ page: UUID, _ images: [PageImage], seenRemote: Int? = nil) {
         update(id) { nb in
-            if let i = nb.pages.firstIndex(where: { $0.id == page }) { nb.pages[i].images = images.isEmpty ? nil : images }
+            if let i = nb.pages.firstIndex(where: { $0.id == page }) {
+                let list = keepingRemote(images, current: nb.pages[i].pageImages, page: page, seen: seenRemote)
+                nb.pages[i].images = list.isEmpty ? nil : list
+            }
             nb.modified = Date()
         }
         cleanupImages(id)

@@ -314,6 +314,9 @@ final class Library {
     @ObservationIgnored var inkHashCache: [String: (version: Int, hash: String?)] = [:]
     /// Uzaktan mürekkep gelince artar; sayfa görünümleri bunu izleyip çizimi yeniler
     var remoteInkVersion: [UUID: Int] = [:]
+    /// Uzaktan sayfanın notları, resimleri ya da bantları (veya bir resim dosyası) değişince artar; açık sayfa
+    /// bunları yeniden uygular. Mürekkepten ayrı tutulur: not gelmesi çizilen çizgiyi çakışma kopyasına göndermesin.
+    var remoteItemsVersion: [UUID: Int] = [:]
     /// Açık belge atar: tuvalin bekleyen (gecikmeli) kaydını hemen yazar. Eşitleme, gelen değişiklikleri
     /// uygulamadan önce çağırır; kaydedilmemiş çizgiler yerel hâl olup çakışma kuralından geçer.
     @ObservationIgnored var flushOpenEditors: (() -> Void)?
@@ -494,9 +497,13 @@ final class Library {
         scheduleThumbnail(id)
     }
 
-    func setNotes(_ id: UUID, _ page: UUID, _ notes: [StickyNote]) {
+    /// `seenRemote`: listeyi üreten tuvalin gördüğü uzak öğe sürümü (bkz. `keepingRemote`)
+    func setNotes(_ id: UUID, _ page: UUID, _ notes: [StickyNote], seenRemote: Int? = nil) {
         update(id) { nb in
-            if let i = nb.pages.firstIndex(where: { $0.id == page }) { nb.pages[i].notes = notes.isEmpty ? nil : notes }
+            if let i = nb.pages.firstIndex(where: { $0.id == page }) {
+                let list = keepingRemote(notes, current: nb.pages[i].stickyNotes, page: page, seen: seenRemote)
+                nb.pages[i].notes = list.isEmpty ? nil : list
+            }
             nb.modified = Date()
         }
         scheduleThumbnail(id)
