@@ -44,6 +44,13 @@ struct LibraryView: View {
     @State private var showNew = false
     @State private var showImporter = false
     @State private var importError: String?
+    /// Toplu içe aktarma: ilerleme (toplam 0 = hazırlanıyor), iptal edilebilen iş ve bitince özet
+    @State private var importProgress: (done: Int, total: Int)?
+    @State private var importTask: Task<ImportSummary, Never>?
+    @State private var importSummary: ImportSummary?
+    /// Paylaş menüsünden art arda gelen dosyalar (Notability çoklu paylaşım) kısa bir süre toplanır
+    @State private var pendingIncoming: [URL] = []
+    @State private var incomingTask: Task<Void, Never>?
     /// Yedekleme: dışa aktarılacak dosya, geri yükleme seçici ve sonuç mesajı
     @State private var backupDoc: BackupDocument?
     @State private var showBackupExport = false
@@ -89,15 +96,24 @@ struct LibraryView: View {
             }
         }
         .animation(Y.springSoft, value: openDoc)
-        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.pdf]) { result in
+        .overlay(alignment: .bottom) {
+            if let p = importProgress { importCard(p) }
+        }
+        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.pdf, .zip, .folder], allowsMultipleSelection: true) { result in
             switch result {
-            case .success(let url):
-                do {
-                    let id = try library.importPDF(from: url)
-                    if let f = currentFolder { library.move(id, toFolder: f) }
-                    openDoc = OpenDoc(id: id)
+            case .success(let urls):
+                if urls.count == 1, let url = urls.first, url.pathExtension.lowercased() == "pdf" {
+                    // Tek PDF: eskisi gibi hemen aç
+                    do {
+                        let id = try library.importPDF(from: url)
+                        if let f = currentFolder { library.move(id, toFolder: f) }
+                        openDoc = OpenDoc(id: id)
+                    }
+                    catch { importError = error.localizedDescription }
+                } else if !urls.isEmpty {
+                    let folder = currentFolder
+                    Task { await runBatch(urls, into: folder) }
                 }
-                catch { importError = error.localizedDescription }
             case .failure(let error):
                 importError = error.localizedDescription
             }
@@ -111,6 +127,11 @@ struct LibraryView: View {
             Button("Tamam", role: .cancel) {}
         } message: {
             Text(lockError ?? "")
+        }
+        .alert(summaryTitle, isPresented: Binding(get: { importSummary != nil }, set: { if !$0 { importSummary = nil } })) {
+            Button("Tamam", role: .cancel) {}
+        } message: {
+            Text(summaryMessage)
         }
         .alert("PDF içe aktarılamadı", isPresented: Binding(get: { importError != nil }, set: { if !$0 { importError = nil } })) {
             Button("Tamam", role: .cancel) {}
@@ -469,7 +490,7 @@ struct LibraryView: View {
                     Button("Whiteboard", systemImage: "rectangle.on.rectangle.angled") { quick(kind: .whiteboard) }
                     Divider()
                     Button("Klasör", systemImage: "folder.badge.plus") { askFolderName(.create) }
-                    Button("PDF içe aktar", systemImage: "square.and.arrow.down") { showImporter = true }
+                    Button("İçe aktar", systemImage: "square.and.arrow.down") { showImporter = true }
                 } label: {
                     Label("Yeni", systemImage: "plus")
                         .labelStyle(.titleAndIcon)
@@ -499,7 +520,7 @@ struct LibraryView: View {
                     .buttonStyle(.borderedProminent)
                     .buttonBorderShape(.capsule)
                     .controlSize(.large)
-                Button("PDF içe aktar", systemImage: "square.and.arrow.down") { showImporter = true }
+                Button("İçe aktar", systemImage: "square.and.arrow.down") { showImporter = true }
                     .buttonStyle(.bordered)
                     .buttonBorderShape(.capsule)
                     .controlSize(.large)
@@ -572,12 +593,78 @@ struct LibraryView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { requestReview() }
     }
 
+    /// Paylaş menüsü / "OpenLeaf'te aç": PDF ya da ZIP. Art arda gelenler 1 sn toplanıp birlikte aktarılır.
     private func openIncoming(_ url: URL) {
         guard url.isFileURL else { return }
-        defer {
+        pendingIncoming.append(url)
+        incomingTask?.cancel()
+        incomingTask = Task {
+            try? await Task.sleep(for: .seconds(1))
+            guard !Task.isCancelled else { return }
+            // Önceki toplu aktarım sürüyorsa bitmesini bekle
+            while importProgress != nil { try? await Task.sleep(for: .milliseconds(300)) }
+            let urls = pendingIncoming
+            pendingIncoming = []
+            incomingTask = nil
+            if urls.count == 1, let one = urls.first, one.pathExtension.lowercased() == "pdf" {
+                openSingleIncoming(one)
+            } else if !urls.isEmpty {
+                await runBatch(urls, into: nil)
+            }
             // Sistem dosyayı Inbox klasörüne kopyalar; içe aktardıktan sonra o kopyayı sil
-            if url.path.contains("/Inbox/") { try? FileManager.default.removeItem(at: url) }
+            for u in urls where u.path.contains("/Inbox/") { try? FileManager.default.removeItem(at: u) }
         }
+    }
+
+    /// Toplu içe aktarma: ilerleme kartını gösterir, bitince özet verir.
+    private func runBatch(_ urls: [URL], into folder: UUID?) async {
+        importProgress = (0, 0)
+        let task = Task { [library] in
+            await library.importBatch(urls, into: folder) { done, total in importProgress = (done, total) }
+        }
+        importTask = task
+        let summary = await task.value
+        importTask = nil
+        importProgress = nil
+        if folder == nil, !summary.imported.isEmpty, currentFolder == nil { selection = .section(.belgeler) }
+        importSummary = summary
+    }
+
+    private func importCard(_ p: (done: Int, total: Int)) -> some View {
+        VStack(spacing: 12) {
+            if p.total == 0 {
+                Text("Hazırlanıyor…").font(.headline)
+                ProgressView()
+            } else {
+                Text("İçe aktarılıyor… \(p.done) / \(p.total)").font(.headline).monospacedDigit()
+                ProgressView(value: Double(p.done), total: Double(p.total))
+            }
+            Button("Vazgeç", role: .cancel) { importTask?.cancel() }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+        }
+        .padding(20)
+        .frame(width: 320)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .shadow(color: .black.opacity(0.12), radius: 16, y: 6)
+        .padding(.bottom, 32)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+    }
+
+    private var summaryTitle: String {
+        let n = importSummary?.imported.count ?? 0
+        return n == 0 ? String(localized: "Hiçbir defter aktarılamadı") : String(localized: "\(n) defter aktarıldı")
+    }
+
+    private var summaryMessage: String {
+        guard let skipped = importSummary?.skipped, !skipped.isEmpty else { return "" }
+        let shown = skipped.prefix(10).joined(separator: ", ")
+        var text = String(localized: "Atlanan dosyalar: \(shown)")
+        if skipped.count > 10 { text += " " + String(localized: "ve \(skipped.count - 10) dosya daha") }
+        return text
+    }
+
+    private func openSingleIncoming(_ url: URL) {
         do {
             let id = try library.importPDF(from: url)
             selection = .section(.belgeler)
