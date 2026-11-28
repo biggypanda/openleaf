@@ -15,6 +15,9 @@ struct LibraryView: View {
     @State private var folderPrompt: FolderPrompt?
     @State private var folderName = ""
     @State private var deletingFolder: Folder?
+    /// Adı değiştirilen defter
+    @State private var renamingNotebook: Notebook?
+    @State private var notebookName = ""
 
     enum FolderPrompt: Identifiable {
         case create
@@ -118,6 +121,14 @@ struct LibraryView: View {
             TextField("Klasör adı", text: $folderName)
             Button(folderPromptAction) { commitFolderName() }
             Button("Vazgeç", role: .cancel) { folderPrompt = nil }
+        }
+        .alert("Defteri yeniden adlandır", isPresented: Binding(get: { renamingNotebook != nil }, set: { if !$0 { renamingNotebook = nil } })) {
+            TextField("Defter adı", text: $notebookName)
+            Button("Kaydet") {
+                if let nb = renamingNotebook { library.renameNotebook(nb.id, notebookName) }
+                renamingNotebook = nil
+            }
+            Button("Vazgeç", role: .cancel) { renamingNotebook = nil }
         }
         .confirmationDialog("“\(deletingFolder?.name ?? "")” klasörü silinsin mi?",
                             isPresented: Binding(get: { deletingFolder != nil }, set: { if !$0 { deletingFolder = nil } }),
@@ -308,6 +319,9 @@ struct LibraryView: View {
                         }
                         Link(destination: URL(string: "https://github.com/biggypanda/openleaf/issues/new")!) {
                             Label("GitHub'da hata bildir", systemImage: "ladybug")
+                        }
+                        Link(destination: URL(string: "https://apps.apple.com/app/id6832556915?action=write-review")!) {
+                            Label("App Store'da puan ver", systemImage: "star")
                         }
                     } label: {
                         Label("Geri bildirim gönder", systemImage: "envelope")
@@ -512,6 +526,12 @@ struct LibraryView: View {
             Button(nb.favorite ? String(localized: "Favorilerden çıkar") : String(localized: "Favorilere ekle"), systemImage: nb.favorite ? "star.slash" : "star") {
                 afterMenu { library.update(nb.id) { $0.favorite.toggle() } }
             }
+            Button("Yeniden adlandır", systemImage: "pencil") {
+                afterMenu {
+                    notebookName = nb.title
+                    renamingNotebook = nb
+                }
+            }
             Button("Çoğalt", systemImage: "plus.square.on.square") { afterMenu { library.duplicate(nb) } }
             Menu("Klasöre taşı", systemImage: "folder") {
                 ForEach(library.folders) { f in
@@ -537,7 +557,7 @@ struct LibraryView: View {
         }
     }
 
-    /// App Store puanı ister: en az üç defteri olan ve birkaç kez not almış kullanıcıya,
+    /// App Store puanı ister: en az bir defteri olan ve üç kez not almış kullanıcıya,
     /// belgeyi kapatıp kütüphaneye döndüğü anda, sürüm başına en fazla bir kez.
     /// (Pencereyi gösterip göstermemeye sistem karar verir; yılda en çok üç kez çıkar.)
     private func askForReviewIfDue() {
@@ -545,8 +565,8 @@ struct LibraryView: View {
         let closes = defaults.integer(forKey: "puan.kapanis") + 1
         defaults.set(closes, forKey: "puan.kapanis")
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
-        guard closes >= 5,
-              library.notebooks.filter({ !$0.trashed }).count >= 3,
+        guard closes >= 3,
+              library.notebooks.contains(where: { !$0.trashed }),
               defaults.string(forKey: "puan.sorulanSurum") != version else { return }
         defaults.set(version, forKey: "puan.sorulanSurum")
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { requestReview() }
