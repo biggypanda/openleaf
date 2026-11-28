@@ -4,6 +4,7 @@ import SwiftUI
 struct OpenLeafApp: App {
     @State private var library: Library
     @State private var backup: AutoBackup
+    @State private var sync: SyncController
     @State private var appLock = AppLock()
     /// Ana ekran kısayolları sahne temsilcisinden gelir
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
@@ -14,6 +15,9 @@ struct OpenLeafApp: App {
         let library = Library()
         _library = State(initialValue: library)
         _backup = State(initialValue: AutoBackup(library: library))
+        // İCloud eşitleme Library'den sonra kurulur; kapalıyken Library'ye hiçbir şey bağlamaz
+        _sync = State(initialValue: SyncController(library: library,
+                                                   state: SyncStateStore(root: SyncStateStore.varsayilanKok)))
     }
 
     var body: some Scene {
@@ -21,9 +25,12 @@ struct OpenLeafApp: App {
             LibraryView()
                 .environment(library)
                 .environment(backup)
+                .environment(sync)
                 .environment(appLock)
                 .overlay { LockCover().environment(appLock) }
                 .task { backup.start() }
+                // Açık bırakıldıysa eşitleme başlar (yeniden çağrı zararsız: motor varsa bir şey yapmaz)
+                .task { sync.startIfEnabled() }
                 // Yeni açılan pencereler (iPad'de birden fazla olabilir) de seçili temayla başlasın
                 .onAppear { theme.apply() }
                 .onChange(of: theme) { _, new in new.apply() }

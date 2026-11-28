@@ -33,6 +33,9 @@ your own iCloud or to a folder you choose. Available in English, Turkish, German
   a ZIP, a folder or many PDFs at once, from the share sheet or the Import button; subfolders become OpenLeaf folders
 - **Automatic backup** (off by default): to your own iCloud, or to any folder you pick in Files (Google Drive, Dropbox,
   OneDrive, a USB drive…); only changed pages are uploaded, and a fresh install offers to restore
+- **iPad sync** (off by default): keeps your notebooks in step between your iPads through a private CloudKit database in your
+  own iCloud; conflicting handwriting keeps both versions (one as a conflict copy), and a page edited on one iPad while
+  deleted on another is rescued instead of lost
 - **Manual backup:** the whole library as a single file to Files / iCloud Drive; restore from a backup
 - **First-launch tour:** five short pages introducing the app, ending with the backup choice; can be reopened from the menu
 - Light and dark themes; interface in English, Turkish, German, Spanish, French, Italian and Brazilian Portuguese; no ads, subscription or account
@@ -58,6 +61,12 @@ The backup engine has its own checks, which run on the Mac without Xcode's test 
 
 ```bash
 swiftc OpenLeaf/BackupEngine.swift Tests/BackupEngineCheck/main.swift -o /tmp/backup-check && /tmp/backup-check
+```
+
+The sync merge logic has its own check too:
+
+```bash
+swiftc OpenLeaf/SyncMerge.swift OpenLeaf/SyncState.swift Tests/SyncCheck/main.swift -o /tmp/sync-check && /tmp/sync-check
 ```
 
 So do the ZIP reader and the bulk import plan:
@@ -98,10 +107,19 @@ build without iCloud (backup to a chosen folder still works).
 | `OpenLeaf/BackupEngine.swift` | Mirrors the library to a backup folder and copies it back (Foundation only) |
 | `OpenLeaf/AutoBackup.swift` | Automatic backup: destination (iCloud or a chosen folder), triggers, status, restore |
 | `OpenLeaf/AutoBackupView.swift` | Automatic backup settings sheet |
+| `OpenLeaf/SyncMerge.swift` | Three-way merge logic for sync (Foundation only) |
+| `OpenLeaf/SyncState.swift` | Sync state store |
+| `OpenLeaf/SyncRecords.swift` | CloudKit record conversion |
+| `OpenLeaf/SyncController.swift` | CKSyncEngine driver |
+| `OpenLeaf/SyncApply.swift` | Applies fetched changes to the library |
+| `OpenLeaf/LibrarySync.swift` | Library hooks for sync |
+| `OpenLeaf/SyncView.swift` | Sync menu and notices |
 | `OpenLeaf/Onboarding.swift` | First-launch tour |
 | `OpenLeaf-Info.plist` | PDF and ZIP document type registration |
 | `OpenLeaf.entitlements` | iCloud container for automatic backup |
 | `Tests/BackupEngineCheck/main.swift` | Checks for the backup engine (run on the Mac, see below) |
+| `Tests/SyncCheck/main.swift` | Checks for the sync merge logic (run on the Mac) |
+| `Tests/SyncRecordsCheck/main.swift` | Checks for CloudKit record conversion (run on the Mac) |
 | `Tests/ZipReaderCheck/main.swift` | Checks for the ZIP reader |
 | `Tests/ImportPlanCheck/main.swift` | Checks for the bulk import plan |
 
@@ -148,7 +166,7 @@ backup leaves the previous one valid. Restoring adds the notebooks that are miss
 
 ## Privacy
 
-OpenLeaf collects no data. Backups go only to the user's own iCloud account or chosen folder. See [PRIVACY.md](PRIVACY.md).
+OpenLeaf collects no data. Backups and iPad sync go only to the user's own iCloud account (sync uses its private CloudKit database) or, for backups, a chosen folder. See [PRIVACY.md](PRIVACY.md).
 
 ## License
 

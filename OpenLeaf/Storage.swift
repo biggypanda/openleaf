@@ -13,12 +13,15 @@ import Foundation
 /// Tüm yazmalar tek sıralı kuyrukta ve atomik yapılır; okumalar aynı kuyruktan geçer,
 /// böylece yarım yazılmış bir dosya hiç okunmaz.
 ///
-/// Değişen durumu yoktur (kök klasör ve kuyruk sabit), bu yüzden iş parçacıkları arasında paylaşılabilir.
+/// Kök klasör ve kuyruk sabittir; tek değişen durum (yazma hatası sayacı) yalnızca kuyrukta değişir,
+/// bu yüzden iş parçacıkları arasında paylaşılabilir.
 final class NotebookStore: @unchecked Sendable {
     let root: URL
     // Okumalar ana iş parçacığından eşzamanlı bekleniyor; düşük öncelik takılmaya yol açmasın
     private let queue = DispatchQueue(label: "openleaf.depo", qos: .userInitiated)
     private let fm = FileManager.default
+    /// Başarısız yazma sayısı (yalnızca kuyrukta değişir)
+    private var failures = 0
 
     init(root: URL? = nil) {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -84,9 +87,14 @@ final class NotebookStore: @unchecked Sendable {
 
     private func attempt(_ work: () throws -> Void) {
         do { try work() } catch {
+            failures += 1
             NotificationCenter.default.post(name: Self.writeFailed, object: nil)
         }
     }
+
+    /// Şimdiye kadarki başarısız yazma sayısı (sıradaki yazmalar bittikten sonra okunur). Eşitleme, uyguladığı
+    /// değişiklik diske yazılamadıysa tabanı ve motor durumunu ilerletmemek için bakar.
+    var failureCount: Int { queue.sync { failures } }
 
     // MARK: Klasörler (kullanıcının defter grupları)
 
@@ -138,8 +146,21 @@ final class NotebookStore: @unchecked Sendable {
         let folder = dir(id)
         queue.async {
             try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            if data.isEmpty { try? FileManager.default.removeItem(at: url) }
+            if data.isEmpty {
+                // Silinemeyen eski mürekkep de bir yazma hatasıdır (eşitleme tabanı ilerlemesin)
+                if FileManager.default.fileExists(atPath: url.path) { self.attempt { try FileManager.default.removeItem(at: url) } }
+            }
             else { self.attempt { try data.write(to: url, options: .atomic) } }
+        }
+    }
+
+    /// Defter klasöründeki mürekkep dosyasını yeni sayfa kimliğine taşır (bekleyen yazmalardan sonra)
+    func moveDrawing(_ id: UUID, from: UUID, to: UUID) {
+        let src = drawingURL(id, from), dst = drawingURL(id, to)
+        queue.sync {
+            guard fm.fileExists(atPath: src.path) else { return }
+            try? fm.removeItem(at: dst)
+            attempt { try fm.moveItem(at: src, to: dst) }
         }
     }
 

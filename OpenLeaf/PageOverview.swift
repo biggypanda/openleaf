@@ -147,6 +147,19 @@ struct PageOverview: View {
                             .accessibilityHidden(true)
                     }
                 }
+                // Eşitleme işareti: çakışma kopyası ya da başka iPad'de silinip burada kurtarılan sayfa
+                .overlay(alignment: .bottom) {
+                    if let mark = page.syncMark {
+                        let color = mark == .conflict ? Y.danger : Y.accent
+                        Text(mark == .conflict ? "Çakışma" : "Kurtarıldı")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(color)
+                            .padding(.horizontal, 8).padding(.vertical, 3)
+                            .background(Y.surface, in: Capsule())
+                            .overlay(Capsule().strokeBorder(color.opacity(0.5), lineWidth: 1))
+                            .padding(.bottom, 8)
+                    }
+                }
             Text("\(i + 1)")
                 .font(.footnote.weight(isCurrent ? .bold : .regular).monospacedDigit())
                 .foregroundStyle(isCurrent ? Y.accent : Y.ink2)

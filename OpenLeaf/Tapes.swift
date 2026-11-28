@@ -80,9 +80,12 @@ struct Tape: Identifiable, Codable, Equatable {
 }
 
 extension Library {
-    func setTapes(_ id: UUID, _ page: UUID, _ tapes: [Tape]) {
+    func setTapes(_ id: UUID, _ page: UUID, _ tapes: [Tape], seenRemote: Int? = nil) {
         update(id) { nb in
-            if let i = nb.pages.firstIndex(where: { $0.id == page }) { nb.pages[i].tapes = tapes.isEmpty ? nil : tapes }
+            if let i = nb.pages.firstIndex(where: { $0.id == page }) {
+                let list = keepingRemote(tapes, current: nb.pages[i].pageTapes, page: page, seen: seenRemote)
+                nb.pages[i].tapes = list.isEmpty ? nil : list
+            }
             nb.modified = Date()
         }
         scheduleThumbnail(id)
