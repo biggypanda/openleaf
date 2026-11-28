@@ -2877,6 +2877,52 @@
         }
       }
     },
+    "Bir deftere basılı tut ve Yeniden adlandır'ı seç.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Halte ein Notizbuch gedrückt und wähle „Umbenennen“."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touch and hold a notebook, then choose Rename."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantén pulsado un cuaderno y elige Renombrar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez longuement un carnet, puis choisissez Renommer."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tieni premuto un quaderno e scegli Rinomina."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque e segure um caderno e escolha Renomear."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir deftere basılı tut ve Yeniden adlandır'ı seç."
+          }
+        }
+      }
+    },
     "Bir renge basılı tutarak yerine başka bir renk koyabilirsin.": {
       "localizations": {
         "de": {
@@ -4073,48 +4119,48 @@
         }
       }
     },
-    "Cornell, haftalık plan, ders programı, deneme analizi gibi şablonlar hazır. Hocanın attığı PDF'i de açıp doğrudan üstüne yazabilirsin.": {
+    "Cornell, haftalık plan, ders programı, deneme analizi gibi şablonlar hazır. Hocanın attığı PDF'i de açıp doğrudan üstüne yazabilirsin. GoodNotes ya da Notability'den geliyorsan tüm defterlerini tek seferde taşıyabilirsin.": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vorlagen wie Cornell, Wochenplan, Stundenplan und Probeklausur-Auswertung sind schon da. Auch das PDF von deiner Lehrkraft kannst du öffnen und direkt darauf schreiben."
+            "value": "Vorlagen wie Cornell, Wochenplan, Stundenplan und Probeklausur-Auswertung sind schon da. Auch das PDF von deiner Lehrkraft kannst du öffnen und direkt darauf schreiben. Du kommst von GoodNotes oder Notability? Du kannst alle deine Notizbücher auf einmal übernehmen."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Templates like Cornell, weekly plan, timetable and mock exam review are ready to go. You can also open the PDF your teacher sent and write right on it."
+            "value": "Templates like Cornell, weekly plan, timetable and mock exam review are ready to go. You can also open the PDF your teacher sent and write right on it. Coming from GoodNotes or Notability? You can bring all your notebooks over in one go."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tienes listas plantillas como Cornell, plan semanal, horario y análisis de simulacro. También puedes abrir el PDF que te mandó el profesor y escribir encima."
+            "value": "Tienes listas plantillas como Cornell, plan semanal, horario y análisis de simulacro. También puedes abrir el PDF que te mandó el profesor y escribir encima. ¿Vienes de GoodNotes o Notability? Puedes traer todos tus cuadernos de una vez."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Des modèles comme Cornell, planning hebdo, emploi du temps ou bilan d’examen blanc sont prêts. Vous pouvez aussi ouvrir le PDF envoyé par votre prof et écrire directement dessus."
+            "value": "Des modèles comme Cornell, planning hebdo, emploi du temps ou bilan d’examen blanc sont prêts. Vous pouvez aussi ouvrir le PDF envoyé par votre prof et écrire directement dessus. Vous venez de GoodNotes ou Notability ? Vous pouvez transférer tous vos carnets en une fois."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Modelli come Cornell, piano settimanale, orario delle lezioni e analisi della simulazione sono già pronti. Puoi anche aprire il PDF che ti ha mandato il prof e scriverci sopra."
+            "value": "Modelli come Cornell, piano settimanale, orario delle lezioni e analisi della simulazione sono già pronti. Puoi anche aprire il PDF che ti ha mandato il prof e scriverci sopra. Arrivi da GoodNotes o Notability? Puoi trasferire tutti i tuoi quaderni in un colpo solo."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Modelos como Cornell, agenda semanal, horário de aulas e análise de simulado já estão prontos. Você também pode abrir o PDF que o professor mandou e escrever direto nele."
+            "value": "Modelos como Cornell, agenda semanal, horário de aulas e análise de simulado já estão prontos. Você também pode abrir o PDF que o professor mandou e escrever direto nele. Vem do GoodNotes ou do Notability? Você pode trazer todos os seus cadernos de uma vez."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cornell, haftalık plan, ders programı, deneme analizi gibi şablonlar hazır. Hocanın attığı PDF'i de açıp doğrudan üstüne yazabilirsin."
+            "value": "Cornell, haftalık plan, ders programı, deneme analizi gibi şablonlar hazır. Hocanın attığı PDF'i de açıp doğrudan üstüne yazabilirsin. GoodNotes ya da Notability'den geliyorsan tüm defterlerini tek seferde taşıyabilirsin."
           }
         }
       }
@@ -4345,6 +4391,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "Defteri yeniden adlandır"
+          }
+        }
+      }
+    },
+    "Defterlerimi taşı": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notizbücher übernehmen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move my notebooks"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traer mis cuadernos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transférer mes carnets"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trasferisci i miei quaderni"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trazer meus cadernos"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Defterlerimi taşı"
           }
         }
       }
@@ -6277,6 +6369,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "GitHub'da hata bildir"
+          }
+        }
+      }
+    },
+    "GoodNotes, Notability ya da PDF veren her uygulamadan tüm defterlerini tek seferde getir; klasörlerin korunur.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hol alle deine Notizbücher auf einmal aus GoodNotes, Notability oder jeder App, die PDFs exportiert – deine Ordner bleiben erhalten."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bring all your notebooks from GoodNotes, Notability or any app that exports PDFs in one go; your folders are kept."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trae de una vez todos tus cuadernos de GoodNotes, Notability o cualquier app que exporte PDF; tus carpetas se conservan."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transférez en une fois tous vos carnets depuis GoodNotes, Notability ou toute app qui exporte des PDF ; vos dossiers sont conservés."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Porta in un colpo solo tutti i quaderni da GoodNotes, Notability o qualsiasi app che esporta PDF; le cartelle vengono mantenute."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traga de uma vez todos os seus cadernos do GoodNotes, do Notability ou de qualquer app que exporte PDF; suas pastas são mantidas."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GoodNotes, Notability ya da PDF veren her uygulamadan tüm defterlerini tek seferde getir; klasörlerin korunur."
           }
         }
       }
@@ -10375,6 +10513,52 @@
         }
       }
     },
+    "OpenLeaf'te yenilikler": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neu in OpenLeaf"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What's new in OpenLeaf"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novedades de OpenLeaf"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouveautés d'OpenLeaf"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novità di OpenLeaf"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novidades do OpenLeaf"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenLeaf'te yenilikler"
+          }
+        }
+      }
+    },
     "Orta": {
       "localizations": {
         "de": {
@@ -11939,6 +12123,52 @@
         }
       }
     },
+    "Resmi yerine kilitle": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bild fixieren"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock an image in place"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fijar una imagen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verrouiller une image"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blocca un'immagine"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Travar uma imagem"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resmi yerine kilitle"
+          }
+        }
+      }
+    },
     "Ribozom:": {
       "localizations": {
         "de": {
@@ -12625,6 +12855,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sayfa numarası"
+          }
+        }
+      }
+    },
+    "Sayfadaki resmi kilitle; üstüne yazarken yanlışlıkla kaymasın.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fixiere ein Bild auf der Seite, damit es beim Schreiben nicht verrutscht."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock an image on the page so it doesn't shift while you write on it."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fija una imagen en la página para que no se mueva mientras escribes encima."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verrouillez une image sur la page pour qu'elle ne bouge pas pendant que vous écrivez dessus."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blocca un'immagine sulla pagina così non si sposta mentre ci scrivi sopra."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trave uma imagem na página para ela não sair do lugar enquanto você escreve."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sayfadaki resmi kilitle; üstüne yazarken yanlışlıkla kaymasın."
           }
         }
       }

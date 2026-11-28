@@ -66,6 +66,9 @@ struct LibraryView: View {
     @State private var restoreOffered = false
     /// İlk açılış tanıtımı: yalnızca yeni kuranlara bir kez gösterilir, menüden yeniden açılabilir
     @AppStorage("tanitim.goruldu") private var onboardingSeen = false
+    /// Güncelleyenlere bir kez çıkan "Yenilikler" penceresinin en son gösterildiği sürüm
+    @AppStorage("yenilikler.gorulen") private var whatsNewSeen = ""
+    @State private var showWhatsNew = false
     @State private var showOnboarding = false
     @AppStorage(AppTheme.storageKey) private var theme: AppTheme = .system
     @State private var showAbout = false
@@ -174,9 +177,26 @@ struct LibraryView: View {
             OnboardingView()
         }
         .onAppear {
-            guard !onboardingSeen else { return }
-            // Kütüphanesinde defter olan kişi uygulamayı tanıyor: güncellemede tanıtım çıkmasın
-            if library.notebooks.isEmpty { showOnboarding = true } else { onboardingSeen = true }
+            if !onboardingSeen {
+                if library.notebooks.isEmpty {
+                    // Yeni kurulum: tanıtım çıkar, yenilikler penceresi gerekmez
+                    showOnboarding = true
+                    whatsNewSeen = WhatsNew.version
+                    return
+                }
+                // Kütüphanesinde defter olan kişi uygulamayı tanıyor: güncellemede tanıtım çıkmasın
+                onboardingSeen = true
+            }
+            if whatsNewSeen != WhatsNew.version { showWhatsNew = true }
+        }
+        .sheet(isPresented: $showWhatsNew, onDismiss: {
+            whatsNewSeen = WhatsNew.version
+            considerBackupPrompts()
+        }) {
+            WhatsNew {
+                // Pencere kapanırken yenisi açılamıyor: bir an bekle
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { showGuide = true }
+            }
         }
         .sheet(isPresented: $showGuide) {
             MigrationGuide {
@@ -411,7 +431,7 @@ struct LibraryView: View {
     /// Kütüphane boşsa ve iCloud'da yedek varsa geri yüklemeyi teklif eder (oturum başına bir kez);
     /// kütüphanede defter varsa otomatik yedeği açmayı bir kez sorar.
     private func considerBackupPrompts() {
-        guard openDoc == nil, !showOnboarding, !showAutoBackup, !showBackupAsk, restoreOffer == nil else { return }
+        guard openDoc == nil, !showOnboarding, !showWhatsNew, !showAutoBackup, !showBackupAsk, restoreOffer == nil else { return }
         // Tanıtım birazdan açılacaksa (ilk açılış) sırayı ona bırak
         if !onboardingSeen, library.notebooks.isEmpty { return }
         if library.notebooks.isEmpty {
