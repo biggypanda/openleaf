@@ -19,7 +19,7 @@ struct ZipEntry {
 }
 
 enum ZipError: Error {
-    case notZip, corrupt, unsupported, encrypted, crcMismatch, unsafePath
+    case notZip, corrupt, unsupported, encrypted, crcMismatch, unsafePath, cancelled
 }
 
 final class ZipReader {
@@ -54,14 +54,15 @@ final class ZipReader {
         // ZIP64: EOCD'nin hemen önünde konum kaydı (locator) varsa gerçek değerler ZIP64 kaydında
         if e >= 20, tail.u32(e - 20) == 0x0706_4b50 {
             let recOffset = tail.u64(e - 20 + 8)
-            guard recOffset + 56 <= size else { throw ZipError.corrupt }
+            // Toplamalar taşmasın: bozuk arşivdeki dev değerler uygulamayı çökertmemeli
+            guard size >= 56, recOffset <= size - 56 else { throw ZipError.corrupt }
             let rec = try Self.read(handle, at: recOffset, count: 56)
             guard rec.u32(0) == 0x0606_4b50 else { throw ZipError.corrupt }
             count = rec.u64(32)
             cdSize = rec.u64(40)
             cdOffset = rec.u64(48)
         }
-        guard cdOffset + cdSize <= size, cdSize < UInt64(Int.max) else { throw ZipError.corrupt }
+        guard cdSize <= size, cdOffset <= size - cdSize else { throw ZipError.corrupt }
 
         let cd = try Self.read(handle, at: cdOffset, count: Int(cdSize))
         var list: [ZipEntry] = []
@@ -91,13 +92,15 @@ final class ZipReader {
             let extraEnd = x + extraLen
             while x + 4 <= extraEnd {
                 let tag = cd.u16(x), len = Int(cd.u16(x + 2))
+                let blockEnd = x + 4 + len
+                guard blockEnd <= extraEnd else { throw ZipError.corrupt }
                 var f = x + 4
                 if tag == 0x0001 {
-                    if usize == 0xFFFF_FFFF, f + 8 <= x + 4 + len { usize = cd.u64(f); f += 8 }
-                    if csize == 0xFFFF_FFFF, f + 8 <= x + 4 + len { csize = cd.u64(f); f += 8 }
-                    if offset == 0xFFFF_FFFF, f + 8 <= x + 4 + len { offset = cd.u64(f); f += 8 }
+                    if usize == 0xFFFF_FFFF, f + 8 <= blockEnd { usize = cd.u64(f); f += 8 }
+                    if csize == 0xFFFF_FFFF, f + 8 <= blockEnd { csize = cd.u64(f); f += 8 }
+                    if offset == 0xFFFF_FFFF, f + 8 <= blockEnd { offset = cd.u64(f); f += 8 }
                 }
-                x += 4 + len
+                x = blockEnd
             }
 
             list.append(ZipEntry(path: name, method: method, crc32: crc, compressedSize: csize,
@@ -109,32 +112,37 @@ final class ZipReader {
     }
 
     /// Girdiyi `dest` dosyasına açar. Hata olursa yarım dosya silinir.
-    func extract(_ e: ZipEntry, to dest: URL) throws {
+    /// `isCancelled` her parçada sorulur; true dönerse `ZipError.cancelled` atılır.
+    func extract(_ e: ZipEntry, to dest: URL, isCancelled: () -> Bool = { false }) throws {
         if e.isEncrypted { throw ZipError.encrypted }
         guard e.method == 0 || e.method == 8 else { throw ZipError.unsupported }
         guard let input = try? FileHandle(forReadingFrom: url) else { throw ZipError.corrupt }
         defer { try? input.close() }
 
-        guard e.localHeaderOffset + 30 <= fileSize else { throw ZipError.corrupt }
+        guard fileSize >= 30, e.localHeaderOffset <= fileSize - 30 else { throw ZipError.corrupt }
         let header = try Self.read(input, at: e.localHeaderOffset, count: 30)
         guard header.u32(0) == 0x0403_4b50 else { throw ZipError.corrupt }
         let dataStart = e.localHeaderOffset + 30 + UInt64(header.u16(26)) + UInt64(header.u16(28))
-        guard dataStart + e.compressedSize <= fileSize else { throw ZipError.corrupt }
+        guard dataStart <= fileSize, e.compressedSize <= fileSize - dataStart else { throw ZipError.corrupt }
 
         let fm = FileManager.default
         try fm.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
         guard fm.createFile(atPath: dest.path, contents: nil),
               let output = try? FileHandle(forWritingTo: dest) else { throw ZipError.corrupt }
 
-        let sink = Sink(output)
+        let sink = Sink(output, limit: e.uncompressedSize)
         do {
             try input.seek(toOffset: dataStart)
             var left = e.compressedSize
             if e.method == 0 {
                 while left > 0 {
+                    if isCancelled() { throw ZipError.cancelled }
                     let n = Int(min(left, UInt64(Self.chunk)))
-                    guard let d = try input.read(upToCount: n), d.count == n else { throw ZipError.corrupt }
-                    try sink.write(d)
+                    // Okunan parça autorelease; havuz boşaltılmazsa tüm girdi bellekte birikir
+                    try autoreleasepool {
+                        guard let d = try input.read(upToCount: n), d.count == n else { throw ZipError.corrupt }
+                        try sink.write(d)
+                    }
                     left -= UInt64(n)
                 }
             } else {
@@ -146,9 +154,12 @@ final class ZipReader {
                 } catch { throw ZipError.corrupt }
                 do {
                     while left > 0 {
+                        if isCancelled() { throw ZipError.cancelled }
                         let n = Int(min(left, UInt64(Self.chunk)))
-                        guard let d = try input.read(upToCount: n), d.count == n else { throw ZipError.corrupt }
-                        try filter.write(d)
+                        try autoreleasepool {
+                            guard let d = try input.read(upToCount: n), d.count == n else { throw ZipError.corrupt }
+                            try filter.write(d)
+                        }
                         left -= UInt64(n)
                     }
                     try filter.finalize()
@@ -188,14 +199,21 @@ final class ZipReader {
     }
 
     /// Tüm arşivi `dir` içine açar. Artıklar sessizce atlanır; açılamayan girdilerin adları `failed`'a yazılır.
-    static func extractAll(_ zip: URL, to dir: URL) -> (files: [URL], failed: [String]) {
+    /// `isCancelled` true dönerse o ana dek açılanlarla durur. `progress(bitmiş, toplam)` her girdiden sonra.
+    static func extractAll(_ zip: URL, to dir: URL,
+                           progress: (Int, Int) -> Void = { _, _ in },
+                           isCancelled: () -> Bool = { false }) -> (files: [URL], failed: [String]) {
         guard let reader = try? ZipReader(url: zip) else { return ([], [zip.lastPathComponent]) }
         var files: [URL] = [], failed: [String] = []
-        for e in reader.entries {
+        for (i, e) in reader.entries.enumerated() {
+            if isCancelled() { break }
+            defer { progress(i + 1, reader.entries.count) }
             if isJunk(e.path) || e.isDirectory { continue }
             guard let rel = safeRelativePath(e.path) else { failed.append(e.path); continue }
             let dest = dir.appendingPathComponent(rel)
-            do { try reader.extract(e, to: dest); files.append(dest) } catch { failed.append(e.path) }
+            do { try reader.extract(e, to: dest, isCancelled: isCancelled); files.append(dest) }
+            catch ZipError.cancelled { break }
+            catch { failed.append(e.path) }
         }
         return (files, failed)
     }
@@ -206,13 +224,15 @@ final class ZipReader {
         return d
     }
 
-    /// Yazılanı sayar ve CRC32'sini tutar
+    /// Yazılanı sayar ve CRC32'sini tutar. Bildirilen boyutu aşan veri (ZIP bombası) hemen durdurulur.
     private final class Sink {
         let handle: FileHandle
+        let limit: UInt64
         var count: UInt64 = 0
         var crc: UInt32 = 0xFFFF_FFFF
-        init(_ h: FileHandle) { handle = h }
+        init(_ h: FileHandle, limit: UInt64) { handle = h; self.limit = limit }
         func write(_ d: Data) throws {
+            guard UInt64(d.count) <= limit - count else { throw ZipError.corrupt }
             try handle.write(contentsOf: d)
             count += UInt64(d.count)
             d.withUnsafeBytes { buf in

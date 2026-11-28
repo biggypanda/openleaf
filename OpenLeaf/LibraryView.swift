@@ -499,7 +499,9 @@ struct LibraryView: View {
                     Divider()
                     Button("Klasör", systemImage: "folder.badge.plus") { askFolderName(.create) }
                     Button("İçe aktar", systemImage: "square.and.arrow.down") { showImporter = true }
+                        .disabled(importProgress != nil)
                     Button("Başka uygulamadan taşı", systemImage: "arrow.right.doc.on.clipboard") { showGuide = true }
+                        .disabled(importProgress != nil)
                 } label: {
                     Label("Yeni", systemImage: "plus")
                         .labelStyle(.titleAndIcon)
@@ -530,10 +532,12 @@ struct LibraryView: View {
                     .buttonBorderShape(.capsule)
                     .controlSize(.large)
                 Button("İçe aktar", systemImage: "square.and.arrow.down") { showImporter = true }
+                    .disabled(importProgress != nil)
                     .buttonStyle(.bordered)
                     .buttonBorderShape(.capsule)
                     .controlSize(.large)
                 Button("Başka uygulamadan taşı", systemImage: "arrow.right.doc.on.clipboard") { showGuide = true }
+                    .disabled(importProgress != nil)
                     .buttonStyle(.borderless)
             }
             .frame(maxWidth: .infinity, minHeight: 420)
@@ -612,8 +616,12 @@ struct LibraryView: View {
         incomingTask = Task {
             try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
-            // Önceki toplu aktarım sürüyorsa bitmesini bekle
-            while importProgress != nil { try? await Task.sleep(for: .milliseconds(300)) }
+            // Önceki toplu aktarım sürüyorsa bitmesini bekle. Bu arada yeni dosya gelirse bu görev iptal
+            // edilir ve yerine kurulan görev bekleyen dosyaları da alır: o zaman burada dur.
+            while importProgress != nil {
+                try? await Task.sleep(for: .milliseconds(300))
+                if Task.isCancelled { return }
+            }
             let urls = pendingIncoming
             pendingIncoming = []
             incomingTask = nil
@@ -629,6 +637,8 @@ struct LibraryView: View {
 
     /// Toplu içe aktarma: ilerleme kartını gösterir, bitince özet verir.
     private func runBatch(_ urls: [URL], into folder: UUID?) async {
+        // Aynı anda tek aktarım: düğmeler kapalı, paylaş menüsü bekliyor; yine de koru
+        guard importProgress == nil else { return }
         importProgress = (0, 0)
         let task = Task { [library] in
             await library.importBatch(urls, into: folder) { done, total in importProgress = (done, total) }

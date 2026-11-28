@@ -19,6 +19,11 @@ enum ImportPlan {
     /// - Kökte yalnız tek bir klasör varsa o bir sarmalayıcıdır: içinde alt klasör varsa adı yok sayılır,
     ///   yoksa (tek klasör dışa aktarımı) kökteki PDF'ler onun adını alır.
     static func items(in root: URL, rootFolder: String? = nil) -> [ImportItem] {
+        scan(in: root, rootFolder: rootFolder).items
+    }
+
+    /// `items(in:)` ile aynı; ayrıca PDF olmayan dosyaların adlarını (`skipped`) döndürür ki özette görünsün.
+    static func scan(in root: URL, rootFolder: String? = nil) -> (items: [ImportItem], skipped: [String]) {
         let top = visibleChildren(root)
         if top.count == 1, isDirectory(top[0]) {
             let wrapper = top[0]
@@ -28,11 +33,12 @@ enum ImportPlan {
         return collect(root, rootFolder: rootFolder)
     }
 
-    private static func collect(_ base: URL, rootFolder: String?) -> [ImportItem] {
+    private static func collect(_ base: URL, rootFolder: String?) -> (items: [ImportItem], skipped: [String]) {
         let fm = FileManager.default
         let baseParts = base.resolvingSymlinksInPath().standardizedFileURL.pathComponents
-        guard let walker = fm.enumerator(at: base, includingPropertiesForKeys: [.isDirectoryKey]) else { return [] }
+        guard let walker = fm.enumerator(at: base, includingPropertiesForKeys: [.isDirectoryKey]) else { return ([], []) }
         var found: [(rel: String, item: ImportItem)] = []
+        var skipped: [(rel: String, name: String)] = []
         for case let url as URL in walker {
             let parts = url.resolvingSymlinksInPath().standardizedFileURL.pathComponents
             guard parts.count > baseParts.count, Array(parts.prefix(baseParts.count)) == baseParts else { continue }
@@ -42,11 +48,16 @@ enum ImportPlan {
                 if isDirectory(url) { walker.skipDescendants() }
                 continue
             }
-            guard url.pathExtension.lowercased() == "pdf", !isDirectory(url) else { continue }
+            if isDirectory(url) { continue }
+            guard url.pathExtension.lowercased() == "pdf" else {
+                skipped.append((rel, url.lastPathComponent))
+                continue
+            }
             let folder = relParts.count > 1 ? relParts[0] : rootFolder
             found.append((rel, ImportItem(pdf: url, folderName: folder)))
         }
-        return found.sorted { $0.rel.localizedStandardCompare($1.rel) == .orderedAscending }.map(\.item)
+        let order = { (a: String, b: String) in a.localizedStandardCompare(b) == .orderedAscending }
+        return (found.sorted { order($0.rel, $1.rel) }.map(\.item), skipped.sorted { order($0.rel, $1.rel) }.map(\.name))
     }
 
     private static func visibleChildren(_ dir: URL) -> [URL] {
@@ -64,6 +75,14 @@ struct ImportSummary {
     var imported: [UUID] = []
     /// Aktarılamayan dosyaların adları
     var skipped: [String] = []
+}
+
+/// Ayrık göreve iptal iletmek için iş parçacığı güvenli bayrak
+private final class ImportCancelFlag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value = false
+    var isSet: Bool { lock.withLock { value } }
+    func set() { lock.withLock { value = true } }
 }
 
 #if canImport(UIKit)
@@ -87,13 +106,25 @@ extension Library {
             if Task.isCancelled { return summary }
             if src.startAccessingSecurityScopedResource() { scoped.append(src) }
             if ImportPlan.isDirectory(src) {
-                items += ImportPlan.items(in: src, rootFolder: src.lastPathComponent)
+                // Klasör taraması (File Provider'da yavaş olabilir) ana iş parçacığını tutmasın
+                let scan = await Task.detached(priority: .userInitiated) { ImportPlan.scan(in: src, rootFolder: src.lastPathComponent) }.value
+                items += scan.items
+                summary.skipped += scan.skipped
             } else if src.pathExtension.lowercased() == "zip" {
                 let tmp = fm.temporaryDirectory.appendingPathComponent("ice-aktar-" + UUID().uuidString)
                 temps.append(tmp)
-                let result = await Task.detached(priority: .userInitiated) { ZipReader.extractAll(src, to: tmp) }.value
-                summary.skipped += result.failed.map { ($0 as NSString).lastPathComponent }
-                items += ImportPlan.items(in: tmp)
+                // Ayrık görev iptali devralmaz: bayrakla ilet ki "Vazgeç" açma sırasında da çalışsın
+                let flag = ImportCancelFlag()
+                let result = await withTaskCancellationHandler {
+                    await Task.detached(priority: .userInitiated) { () -> (items: [ImportItem], skipped: [String]) in
+                        let r = ZipReader.extractAll(src, to: tmp, isCancelled: { flag.isSet })
+                        let scan = ImportPlan.scan(in: tmp)
+                        return (scan.items, r.failed.map { ($0 as NSString).lastPathComponent } + scan.skipped)
+                    }.value
+                } onCancel: { flag.set() }
+                if Task.isCancelled { return summary }
+                items += result.items
+                summary.skipped += result.skipped
             } else if src.pathExtension.lowercased() == "pdf" {
                 items.append(ImportItem(pdf: src, folderName: nil))
             } else {
@@ -101,12 +132,12 @@ extension Library {
             }
         }
 
-        // Aynı adlı klasör varsa onu kullan; yoksa ilk defter girerken aç (boş klasör kalmasın)
+        // Aynı adlı klasör varsa onu kullan; yoksa ilk defter girdikten sonra aç (boş klasör kalmasın)
         var folderIDs: [String: UUID] = [:]
-        func folderID(_ name: String) -> UUID {
+        func existingFolder(_ name: String) -> UUID? {
             let key = name.lowercased()
             if let id = folderIDs[key] { return id }
-            let id = folders.first { $0.name.caseInsensitiveCompare(name) == .orderedSame }?.id ?? createFolder(name)
+            let id = folders.first { $0.name.caseInsensitiveCompare(name) == .orderedSame }?.id
             folderIDs[key] = id
             return id
         }
@@ -115,11 +146,12 @@ extension Library {
         for (i, item) in items.enumerated() {
             if Task.isCancelled { break }
             do {
-                let id = try importPDF(from: item.pdf)
-                if let name = item.folderName {
-                    move(id, toFolder: folderID(name))
-                } else if let folder {
-                    move(id, toFolder: folder)
+                let target = item.folderName.map(existingFolder) ?? folder
+                let id = try importPDF(from: item.pdf, folder: target)
+                if let name = item.folderName, target == nil {
+                    let created = createFolder(name)
+                    folderIDs[name.lowercased()] = created
+                    move(id, toFolder: created)
                 }
                 summary.imported.append(id)
             } catch {

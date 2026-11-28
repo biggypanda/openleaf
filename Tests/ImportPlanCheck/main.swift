@@ -94,5 +94,12 @@ check("seçilen klasör adı") { root in
     try expect(got == ["a.pdf | Ders", "Alt/b.pdf | Alt"], "\(got)")
 }
 
+check("PDF olmayanlar atlandı sayılır") { root in
+    for r in ["a.pdf", "Ders/b.goodnotes", "Ders/c.note", "resim.png", "__MACOSX/._a.pdf", "._x.pdf", ".DS_Store"] { touch(root, r) }
+    let scan = ImportPlan.scan(in: root)
+    try expect(scan.items.map { $0.pdf.lastPathComponent } == ["a.pdf"], "\(scan.items)")
+    try expect(scan.skipped == ["b.goodnotes", "c.note", "resim.png"], "\(scan.skipped)")
+}
+
 print(failures == 0 ? "\nTümü geçti." : "\n\(failures) denetim kaldı.")
 exit(failures == 0 ? 0 : 1)

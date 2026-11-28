@@ -199,5 +199,107 @@ check("empty file entry") { b in
     try expect(try Data(contentsOf: files[0]).isEmpty, "boş")
 }
 
+
+// MARK: - İnceleme düzeltmeleri
+
+func le16(_ v: UInt16) -> Data { withUnsafeBytes(of: v.littleEndian) { Data($0) } }
+func le32(_ v: UInt32) -> Data { withUnsafeBytes(of: v.littleEndian) { Data($0) } }
+func le64(_ v: UInt64) -> Data { withUnsafeBytes(of: v.littleEndian) { Data($0) } }
+
+func eocd(count: UInt16, cdSize: UInt32, cdOffset: UInt32) -> Data {
+    le32(0x0605_4b50) + le16(0) + le16(0) + le16(count) + le16(count) + le32(cdSize) + le32(cdOffset) + le16(0)
+}
+
+/// Merkezi dizin girdisi (yerel başlık yazılmaz; ofset elle verilir)
+func cdEntry(name: String, csize: UInt32, usize: UInt32, offset: UInt32, extra: Data) -> Data {
+    let n = Data(name.utf8)
+    var d = le32(0x0201_4b50) + le16(45) + le16(45) + le16(0x0800) + le16(0) + le16(0) + le16(0) + le32(0)
+    d += le32(csize) + le32(usize) + le16(UInt16(n.count)) + le16(UInt16(extra.count)) + le16(0)
+    d += le16(0) + le16(0) + le32(0) + le32(offset)
+    return d + n + extra
+}
+
+func footprint() -> UInt64 {
+    var info = task_vm_info_data_t()
+    var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size)
+    let kr = withUnsafeMutablePointer(to: &info) {
+        $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+            task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
+        }
+    }
+    return kr == KERN_SUCCESS ? info.phys_footprint : 0
+}
+
+check("bozuk: ZIP64 konum taşması") { b in
+    let locator = le32(0x0706_4b50) + le32(0) + le64(0xFFFF_FFFF_FFFF_FFF0) + le32(1)
+    try (locator + eocd(count: 0, cdSize: 0, cdOffset: 0)).write(to: b.zip)
+    do { _ = try ZipReader(url: b.zip); throw Fail(description: "hata atmadı") } catch ZipError.corrupt {}
+}
+
+check("bozuk: ekstra alan taşması") { b in
+    let extra = le16(0x0001) + le16(100)
+    let cd = cdEntry(name: "a", csize: 0xFFFF_FFFF, usize: 0xFFFF_FFFF, offset: 0, extra: extra)
+    try (cd + eocd(count: 1, cdSize: UInt32(cd.count), cdOffset: 0)).write(to: b.zip)
+    do { _ = try ZipReader(url: b.zip); throw Fail(description: "hata atmadı") } catch ZipError.corrupt {}
+}
+
+check("bozuk: girdi ofseti taşması") { b in
+    let extra = le16(0x0001) + le16(8) + le64(0xFFFF_FFFF_FFFF_FFF0)
+    let cd = cdEntry(name: "a.pdf", csize: 3, usize: 3, offset: 0xFFFF_FFFF, extra: extra)
+    try (cd + eocd(count: 1, cdSize: UInt32(cd.count), cdOffset: 0)).write(to: b.zip)
+    let r = try ZipReader(url: b.zip)
+    do { try r.extract(r.entries[0], to: b.out.appendingPathComponent("a.pdf")); throw Fail(description: "hata atmadı") }
+    catch ZipError.corrupt {}
+    let (files, failed) = ZipReader.extractAll(b.zip, to: b.out)
+    try expect(files.isEmpty && failed == ["a.pdf"], "atlandı: \(failed)")
+}
+
+check("bomba: bildirilenden büyük veri") { b in
+    b.write("a.txt", repeated)
+    try b.zipCmd(["-9", b.zip.path, "a.txt"])
+    var data = try Data(contentsOf: b.zip)
+    // Merkezi dizindeki açılmış boyutu 10 bayta indir
+    let sig = le32(0x0201_4b50)
+    guard let r = data.range(of: sig) else { throw Fail(description: "CD yok") }
+    data.replaceSubrange(r.lowerBound + 24 ..< r.lowerBound + 28, with: le32(10))
+    try data.write(to: b.zip)
+    let reader = try ZipReader(url: b.zip)
+    do { try reader.extract(reader.entries[0], to: b.out.appendingPathComponent("a.txt")); throw Fail(description: "hata atmadı") }
+    catch ZipError.corrupt {}
+}
+
+check("iptal") { b in
+    for i in 0..<5 { b.write("d\(i).pdf", bytes(100)) }
+    try b.zipCmd([b.zip.path, "d0.pdf", "d1.pdf", "d2.pdf", "d3.pdf", "d4.pdf"])
+    // İki dosya açılınca iptal et
+    let (files, failed) = ZipReader.extractAll(b.zip, to: b.out) {
+        ((try? fm.contentsOfDirectory(atPath: b.out.path))?.count ?? 0) >= 2
+    }
+    // İkinci dosya yazılmaya başlayınca iptal görülür: yarım dosya silinir, yalnız ilki kalır
+    try expect(files.count == 1 && failed.isEmpty, "erken durdu: \(files.count) \(failed)")
+    let left = try fm.contentsOfDirectory(atPath: b.out.path)
+    try expect(left == ["d0.pdf"], "yarım dosya kalmadı: \(left)")
+}
+
+check("bellek sınırlı") { b in
+    // 200 MB'lık girdi: açarken bellek girdi boyutuyla büyümemeli
+    let big = b.src.appendingPathComponent("buyuk.bin")
+    fm.createFile(atPath: big.path, contents: nil)
+    let h = try FileHandle(forWritingTo: big)
+    let mb = bytes(1 << 20)
+    for _ in 0..<200 { try h.write(contentsOf: mb) }
+    try h.close()
+    for (name, level) in [("stored", "-0"), ("deflate", "-1")] {
+        try? fm.removeItem(at: b.zip)
+        try b.zipCmd([level, b.zip.path, "buyuk.bin"])
+        let before = footprint()
+        let r = try ZipReader(url: b.zip)
+        try r.extract(r.entries[0], to: b.out.appendingPathComponent("buyuk.bin"))
+        let grew = Int64(footprint()) - Int64(before)
+        try expect(grew < 64 << 20, "\(name): bellek \(grew >> 20) MB büyüdü")
+        try? fm.removeItem(at: b.out.appendingPathComponent("buyuk.bin"))
+    }
+}
+
 print(failures == 0 ? "\nTümü geçti." : "\n\(failures) denetim kaldı.")
 exit(failures == 0 ? 0 : 1)
