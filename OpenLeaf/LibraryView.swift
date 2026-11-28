@@ -43,6 +43,8 @@ struct LibraryView: View {
     @State private var sharing: SharedFile?
     @State private var showNew = false
     @State private var showImporter = false
+    /// Başka not uygulamasından taşıma rehberi
+    @State private var showGuide = false
     @State private var importError: String?
     /// Toplu içe aktarma: ilerleme (toplam 0 = hazırlanıyor), iptal edilebilen iş ve bitince özet
     @State private var importProgress: (done: Int, total: Int)?
@@ -175,6 +177,12 @@ struct LibraryView: View {
             guard !onboardingSeen else { return }
             // Kütüphanesinde defter olan kişi uygulamayı tanıyor: güncellemede tanıtım çıkmasın
             if library.notebooks.isEmpty { showOnboarding = true } else { onboardingSeen = true }
+        }
+        .sheet(isPresented: $showGuide) {
+            MigrationGuide {
+                // Pencere kapanırken dosya seçici açılamıyor: bir an bekle
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { showImporter = true }
+            }
         }
         .sheet(isPresented: $showAutoBackup, onDismiss: { restoreOnOpen = nil }) {
             AutoBackupSheet(restoreOnAppear: restoreOnOpen)
@@ -491,6 +499,7 @@ struct LibraryView: View {
                     Divider()
                     Button("Klasör", systemImage: "folder.badge.plus") { askFolderName(.create) }
                     Button("İçe aktar", systemImage: "square.and.arrow.down") { showImporter = true }
+                    Button("Başka uygulamadan taşı", systemImage: "arrow.right.doc.on.clipboard") { showGuide = true }
                 } label: {
                     Label("Yeni", systemImage: "plus")
                         .labelStyle(.titleAndIcon)
@@ -524,6 +533,8 @@ struct LibraryView: View {
                     .buttonStyle(.bordered)
                     .buttonBorderShape(.capsule)
                     .controlSize(.large)
+                Button("Başka uygulamadan taşı", systemImage: "arrow.right.doc.on.clipboard") { showGuide = true }
+                    .buttonStyle(.borderless)
             }
             .frame(maxWidth: .infinity, minHeight: 420)
         } else {
