@@ -366,6 +366,17 @@ final class Library {
         return f.id
     }
 
+    /// Defterin adını değiştirir; boş ad girilirse eski ad kalır
+    func renameNotebook(_ id: UUID, _ name: String) {
+        let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty else { return }
+        update(id) { nb in
+            guard nb.title != clean else { return }
+            nb.title = clean
+            nb.modified = Date()
+        }
+    }
+
     func renameFolder(_ id: UUID, _ name: String) {
         guard let i = folders.firstIndex(where: { $0.id == id }) else { return }
         folders[i].name = Self.cleanName(name)

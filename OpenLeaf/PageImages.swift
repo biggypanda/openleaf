@@ -12,6 +12,10 @@ struct PageImage: Identifiable, Codable, Equatable {
     var y: Double
     var w: Double
     var h: Double
+    /// Kilitli resim taşınmaz ve boyutlanmaz (eski kayıtlarda alan yok: kilitsiz)
+    var locked: Bool?
+
+    var isLocked: Bool { locked == true }
 
     var frame: CGRect {
         get { CGRect(x: x, y: y, width: w, height: h) }
@@ -102,6 +106,15 @@ final class ImageSelectionView: UIView {
     var onMove: ((CGRect) -> Void)?
     var onMoveEnded: (() -> Void)?
     var onDelete: (() -> Void)?
+    var onToggleLock: (() -> Void)?
+
+    /// Kilitliyken sürükleme ve köşe tutamacı kapalı; yalnızca menü kalır
+    var locked = false {
+        didSet {
+            guard locked != oldValue else { return }
+            applyLock()
+        }
+    }
 
     private let border = CAShapeLayer()
     private let handle = UIView()
@@ -109,6 +122,7 @@ final class ImageSelectionView: UIView {
     private let menuButton = UIButton(type: .system)
     private var startFrame: CGRect = .zero
     private lazy var resizePan = UIPanGestureRecognizer(target: self, action: #selector(resize(_:)))
+    private lazy var movePan = UIPanGestureRecognizer(target: self, action: #selector(dragImage(_:)))
     /// Çerçeve ile resim arası boşluk
     static let pad: CGFloat = 6
 
@@ -133,7 +147,6 @@ final class ImageSelectionView: UIView {
         handle.addGestureRecognizer(resizePan)
         addSubview(handle)
 
-        menuButton.setImage(UIImage(systemName: "ellipsis", withConfiguration: UIImage.SymbolConfiguration(pointSize: 13, weight: .bold)), for: .normal)
         menuButton.tintColor = UIColor(hex: 0x24483F)
         menuButton.backgroundColor = UIColor(hex: 0xFBF9F4)
         menuButton.layer.cornerRadius = 15
@@ -141,17 +154,32 @@ final class ImageSelectionView: UIView {
         menuButton.layer.borderColor = UIColor.black.withAlphaComponent(0.12).cgColor
         menuButton.showsMenuAsPrimaryAction = true
         menuButton.accessibilityLabel = String(localized: "Resim seçenekleri")
+        addSubview(menuButton)
+
+        movePan.require(toFail: resizePan)
+        addGestureRecognizer(movePan)
+        applyLock()
+    }
+
+    private func applyLock() {
+        movePan.isEnabled = !locked
+        resizePan.isEnabled = !locked
+        handle.isHidden = locked
+        border.lineDashPattern = locked ? nil : [6, 4]
+        let symbol = locked ? "lock.fill" : "ellipsis"
+        menuButton.setImage(UIImage(systemName: symbol, withConfiguration: UIImage.SymbolConfiguration(pointSize: 13, weight: .bold)), for: .normal)
         menuButton.menu = UIMenu(children: [
+            UIAction(title: locked ? String(localized: "Kilidi aç") : String(localized: "Yerine kilitle"),
+                     image: UIImage(systemName: locked ? "lock.open" : "lock")) { [weak self] _ in
+                self?.onToggleLock?()
+            },
             UIAction(title: String(localized: "Resmi sil"), image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
                 self?.onDelete?()
             }
         ])
-        addSubview(menuButton)
-
-        let movePan = UIPanGestureRecognizer(target: self, action: #selector(dragImage(_:)))
-        movePan.require(toFail: resizePan)
-        addGestureRecognizer(movePan)
-        accessibilityLabel = String(localized: "Seçili resim; sürükleyerek taşıyın")
+        accessibilityLabel = locked
+            ? String(localized: "Seçili resim; kilitli")
+            : String(localized: "Seçili resim; sürükleyerek taşıyın")
     }
 
     required init?(coder: NSCoder) { fatalError() }

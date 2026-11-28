@@ -500,6 +500,7 @@ final class OpenLeafCanvas: PKCanvasView {
         if let s = selectedImage, let img = images.first(where: { $0.id == s }) {
             let p = ImageSelectionView.pad
             imageSelection.frame = img.frame.applying(m).insetBy(dx: -p, dy: -p)
+            imageSelection.locked = img.isLocked
             imageSelection.isHidden = false
             bringSubviewToFront(imageSelection)
         } else {
@@ -518,6 +519,7 @@ final class OpenLeafCanvas: PKCanvasView {
         }
         imageSelection.onMoveEnded = { [weak self] in self?.finishImageMove() }
         imageSelection.onDelete = { [weak self] in self?.deleteSelectedImage() }
+        imageSelection.onToggleLock = { [weak self] in self?.toggleSelectedImageLock() }
         addSubview(imageSelection)
     }
 
@@ -533,6 +535,14 @@ final class OpenLeafCanvas: PKCanvasView {
         f.origin.y = min(max(f.minY, 0), canonical.height - f.height)
         images[i].frame = f
         UIView.animate(withDuration: 0.18) { self.layoutImages() }
+        onImagesChange?(images)
+    }
+
+    /// Seçili resmi yerine kilitler ya da kilidini açar
+    private func toggleSelectedImageLock() {
+        guard let s = selectedImage, let i = images.firstIndex(where: { $0.id == s }) else { return }
+        images[i].locked = images[i].isLocked ? nil : true
+        layoutImages()
         onImagesChange?(images)
     }
 
