@@ -95,7 +95,10 @@ extension Library {
         var summary = ImportSummary()
         var temps: [URL] = []
         var scoped: [URL] = []
+        // Eşitleme açıksa her defterde değil, aktarım bitince bir kez bildir
+        beginSyncBatch()
         defer {
+            endSyncBatch()
             for t in temps { try? fm.removeItem(at: t) }
             for s in scoped { s.stopAccessingSecurityScopedResource() }
         }

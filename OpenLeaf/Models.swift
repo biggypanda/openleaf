@@ -308,6 +308,8 @@ final class Library {
     }
     /// Farkın karşılaştırılacağı son bilinen eşitleme durumu (LibrarySync.swift)
     @ObservationIgnored var lastSnapshot: SyncSnapshot?
+    /// Toplu işlem (ör. toplu içe aktarma) sürerken > 0: eşitleme bildirimi sona ertelenir
+    @ObservationIgnored var syncBatchDepth = 0
     /// Dosya özeti önbelleği: (yol, boyut, değişiklik tarihi) aynıysa yeniden özetlenmez
     @ObservationIgnored var fileHashCache: [String: (size: Int, date: Date, hash: String)] = [:]
     /// Sayfa mürekkep özeti önbelleği: mürekkep sürümü aynıysa yeniden okunmaz/özetlenmez

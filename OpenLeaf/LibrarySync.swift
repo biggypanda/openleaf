@@ -150,11 +150,22 @@ extension Library {
 
     /// `save()` ve `saveFolders()` sonunda çağrılır; eşitleme kapalıysa hiçbir şey yapmaz
     func notifySync() {
-        guard let handler = onSyncChanges else { return }
+        guard syncBatchDepth == 0, let handler = onSyncChanges else { return }
         let now = syncSnapshot()
         let changes = SyncMerge.diff(old: lastSnapshot ?? now, new: now)
         lastSnapshot = now
         if !changes.isEmpty { handler(changes) }
+    }
+
+    /// Toplu işlemde her kayıtta tüm kütüphanenin görüntüsünü almak, defter sayısının karesi kadar iş
+    /// demek. Bu yüzden işlem boyunca bildirim bekletilir; bitince tek bir fark gönderilir.
+    /// Güvenli: uzaktan uygulama `lastSnapshot`'ı yalnız kendi defter/klasör diliminde yamalar,
+    /// toplu işlemin eklediği yeni defterler ve klasörler sondaki farkta yakalanır.
+    func beginSyncBatch() { syncBatchDepth += 1 }
+
+    func endSyncBatch() {
+        syncBatchDepth = max(0, syncBatchDepth - 1)
+        if syncBatchDepth == 0 { notifySync() }
     }
 
     /// Eşitleme açılırken (`onSyncChanges` atandıktan sonra) farkın başlangıcını şimdiki durum yapar
