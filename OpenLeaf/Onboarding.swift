@@ -21,7 +21,7 @@ struct OnboardingView: View {
             Page(title: String(localized: "Bantla kapat, kendini dene"),
                  text: String(localized: "Ezberlemen gereken yerin üstünü bantla kapat. Aklına gelmezse banta dokun, cevap altından çıksın.")),
             Page(title: String(localized: "Boş sayfayla uğraşma"),
-                 text: String(localized: "Cornell, haftalık plan, ders programı, deneme analizi gibi şablonlar hazır. Hocanın attığı PDF'i de açıp doğrudan üstüne yazabilirsin.")),
+                 text: String(localized: "Cornell, haftalık plan, ders programı, deneme analizi gibi şablonlar hazır. Hocanın attığı PDF'i de açıp doğrudan üstüne yazabilirsin. GoodNotes ya da Notability'den geliyorsan tüm defterlerini tek seferde taşıyabilirsin.")),
             Page(title: String(localized: "Notların başına bir şey gelmesin"),
                  text: String(localized: "Otomatik yedeği açarsan defterlerin kendi iCloud'una ya da seçtiğin bir klasöre yedeklenir; iPad bozulsa bile notların durur. Notlarını senden başka kimse göremez, biz de.")),
         ]

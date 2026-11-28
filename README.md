@@ -29,6 +29,8 @@ your own iCloud or to a folder you choose. Available in English, Turkish, German
 - **Photos and images:** take a photo or pick one from your library; move, resize, write on top
 - **Pages:** book-style page curl, overview (thumbnail grid), drag to reorder, duplicate
 - **PDF:** import, write on pages, "Open In → OpenLeaf", export any notebook as a PDF
+- **Move from another app:** bring a whole library from GoodNotes, Notability or any app that exports PDFs, in one go:
+  a ZIP, a folder or many PDFs at once, from the share sheet or the Import button; subfolders become OpenLeaf folders
 - **Automatic backup** (off by default): to your own iCloud, or to any folder you pick in Files (Google Drive, Dropbox,
   OneDrive, a USB drive…); only changed pages are uploaded, and a fresh install offers to restore
 - **Manual backup:** the whole library as a single file to Files / iCloud Drive; restore from a backup
@@ -58,6 +60,13 @@ The backup engine has its own checks, which run on the Mac without Xcode's test 
 swiftc OpenLeaf/BackupEngine.swift Tests/BackupEngineCheck/main.swift -o /tmp/backup-check && /tmp/backup-check
 ```
 
+So do the ZIP reader and the bulk import plan:
+
+```bash
+swiftc OpenLeaf/ZipReader.swift Tests/ZipReaderCheck/main.swift -o /tmp/zip-check && /tmp/zip-check
+swiftc OpenLeaf/ZipReader.swift OpenLeaf/BulkImport.swift Tests/ImportPlanCheck/main.swift -o /tmp/plan-check && /tmp/plan-check
+```
+
 Building for a device needs your own Apple developer team and iCloud container: change the bundle identifier and the
 container name in `OpenLeaf.entitlements`, or drop the file together with the `CODE_SIGN_ENTITLEMENTS` build setting to
 build without iCloud (backup to a chosen folder still works).
@@ -76,6 +85,9 @@ build without iCloud (backup to a chosen folder still works).
 | `OpenLeaf/Canvas.swift` | PencilKit canvas and paper patterns |
 | `OpenLeaf/CoverView.swift` | Covers and logo |
 | `OpenLeaf/PDFSupport.swift` | PDF import, page rendering, thumbnails, export |
+| `OpenLeaf/ZipReader.swift` | Streaming ZIP reader (stored, deflate, ZIP64; Foundation and Compression only) |
+| `OpenLeaf/BulkImport.swift` | Bulk import of ZIPs, folders and PDFs into notebooks and folders |
+| `OpenLeaf/MigrationGuide.swift` | "Move from another app" guide |
 | `OpenLeaf/Templates.swift` | Page templates (Cornell, planners, exam tables) |
 | `OpenLeaf/Tapes.swift` | Tapes: model, drawing, view |
 | `OpenLeaf/StickyNotes.swift` | Sticky notes (text and ink layer) |
@@ -87,9 +99,11 @@ build without iCloud (backup to a chosen folder still works).
 | `OpenLeaf/AutoBackup.swift` | Automatic backup: destination (iCloud or a chosen folder), triggers, status, restore |
 | `OpenLeaf/AutoBackupView.swift` | Automatic backup settings sheet |
 | `OpenLeaf/Onboarding.swift` | First-launch tour |
-| `OpenLeaf-Info.plist` | PDF document type registration |
+| `OpenLeaf-Info.plist` | PDF and ZIP document type registration |
 | `OpenLeaf.entitlements` | iCloud container for automatic backup |
 | `Tests/BackupEngineCheck/main.swift` | Checks for the backup engine (run on the Mac, see below) |
+| `Tests/ZipReaderCheck/main.swift` | Checks for the ZIP reader |
+| `Tests/ImportPlanCheck/main.swift` | Checks for the bulk import plan |
 
 The code comments and the source strings are in Turkish; the other languages come from the string catalog
 (`OpenLeaf/Localizable.xcstrings`).
