@@ -57,8 +57,31 @@ final class InstantTiledLayer: CATiledLayer {
     override class func fadeDuration() -> CFTimeInterval { 0 }
 }
 
+/// Yakınlaşınca PDF sayfasını vektör döşemelerle net çizen katmanın çizicisi (döşemeler arka planda çizilir)
+private final class PDFTileDrawer: NSObject, CALayerDelegate {
+    private let lock = NSLock()
+    private var page: PDFPage?
+    private var size: CGSize = .zero
+
+    func set(_ page: PDFPage?, size: CGSize) {
+        lock.lock(); self.page = page; self.size = size; lock.unlock()
+    }
+
+    func draw(_ layer: CALayer, in ctx: CGContext) {
+        lock.lock(); let page = self.page, size = self.size; lock.unlock()
+        guard let page, size.width > 0 else { return }
+        PDFRender.draw(page, in: CGRect(origin: .zero, size: size), context: ctx)
+    }
+
+    /// Kare dışı özellik değişimlerinde örtük animasyon olmasın
+    func action(for layer: CALayer, forKey event: String) -> CAAction? { NSNull() }
+}
+
 /// Tuvalin altında duran kâğıt yüzeyi. Yakınlaştırınca bulanıklaşmasın diye döşemeli katmanla
-/// (her yakınlık düzeyinde yeniden) çizilir; PDF sayfası da vektör olarak çizilir.
+/// (her yakınlık düzeyinde yeniden) çizilir.
+/// PDF sayfası ekran çözünürlüğünde bir kez bitmap'e çizilir ve komşu sayfalar önceden hazırlanır:
+/// sayfa çevrilirken döşemeler parça parça gelip sayfa pikselli görünmesin, yavaş iPad'de takılmasın.
+/// Yakınlaşınca bitmap'in üstünde vektör döşemeler net çizilir; döşeme gelmeden bitmap görünür.
 final class PaperUIView: UIView {
     override class var layerClass: AnyClass { InstantTiledLayer.self }
 
@@ -67,8 +90,15 @@ final class PaperUIView: UIView {
     var isWhiteboard = false
     /// Doluysa desen yerine bu PDF sayfası çizilir
     var pdfPage: PDFPage? {
-        didSet { if oldValue !== pdfPage { redraw() } }
+        didSet {
+            if oldValue !== pdfPage {
+                redraw()
+                showPDFImage(waitIfMissing: true)
+            }
+        }
     }
+    /// Tuvalin yakınlık oranı; 1'den büyükse PDF vektör döşemelerle de çizilir
+    var zoom: CGFloat = 1 { didSet { if zoom != oldValue { updateDetail() } } }
 
     /// Döşemeler arka planda çizilir; orada kullanılan değerlerin ana iş parçacığındaki kopyası
     private struct Snapshot {
@@ -83,6 +113,25 @@ final class PaperUIView: UIView {
     private var snap = Snapshot(style: .cizgili, scale: 1, whiteboard: false, pdf: nil,
                                 traits: UITraitCollection(userInterfaceStyle: .light), size: .zero)
 
+    /// Ekran çözünürlüğünde hazır PDF sayfası
+    private let imageLayer = CALayer()
+    /// Yakınlaşınca bitmap'in üstünde net vektör döşemeler
+    private let detailLayer = InstantTiledLayer()
+    private let tileDrawer = PDFTileDrawer()
+
+    /// Hazır sayfa bitmap'leri (açık sayfa ve komşuları)
+    private struct Rendered {
+        let page: PDFPage
+        let pixels: CGSize
+        let image: CGImage
+    }
+    private var cache: [Rendered] = []
+    private static let cacheLimit = 3
+    /// Arka plan çizimleri sırayla yapılır; aynı anda çok sayfa çizilip cihaz yorulmasın
+    private static let renderQueue = DispatchQueue(label: "openleaf.paper.render", qos: .userInitiated)
+    /// Arka planda çizilmekte olan sayfalar (aynı sayfa iki kez sıraya girmesin)
+    private var pending: Set<ObjectIdentifier> = []
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         isOpaque = false
@@ -92,12 +141,26 @@ final class PaperUIView: UIView {
             tiled.levelsOfDetailBias = 3
             tiled.tileSize = CGSize(width: 512, height: 512)
         }
+        imageLayer.contentsGravity = .resize
+        imageLayer.isOpaque = true
+        imageLayer.actions = ["contents": NSNull(), "bounds": NSNull(), "position": NSNull(), "hidden": NSNull()]
+        imageLayer.isHidden = true
+        layer.addSublayer(imageLayer)
+        detailLayer.levelsOfDetail = 4
+        detailLayer.levelsOfDetailBias = 3
+        detailLayer.tileSize = CGSize(width: 512, height: 512)
+        detailLayer.delegate = tileDrawer
+        detailLayer.isHidden = true
+        layer.addSublayer(detailLayer)
         layer.shadowColor = UIColor(hex: 0x28220F).cgColor
         layer.shadowOpacity = 0.12
         layer.shadowRadius = 14
         layer.shadowOffset = CGSize(width: 0, height: 6)
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (v: PaperUIView, _: UITraitCollection) in
             v.redraw()
+        }
+        registerForTraitChanges([UITraitDisplayScale.self]) { (v: PaperUIView, _: UITraitCollection) in
+            v.showPDFImage(waitIfMissing: false)
         }
     }
     required init?(coder: NSCoder) { fatalError() }
@@ -106,7 +169,17 @@ final class PaperUIView: UIView {
         super.layoutSubviews()
         layer.shadowPath = isWhiteboard ? nil : UIBezierPath(roundedRect: bounds, cornerRadius: 6).cgPath
         layer.shadowOpacity = isWhiteboard ? 0 : 0.12
-        if snapshotValue().size != bounds.size { redraw() }
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        imageLayer.frame = bounds
+        detailLayer.frame = bounds
+        CATransaction.commit()
+        if snapshotValue().size != bounds.size {
+            redraw()
+            // Boyut değişince (döndürme, bölünmüş ekran) eski bitmap esnetilmiş görünür, yenisi arka planda çizilir
+            showPDFImage(waitIfMissing: false)
+            updateDetail()
+        }
     }
 
     private func snapshotValue() -> Snapshot { lock.lock(); defer { lock.unlock() }; return snap }
@@ -119,14 +192,115 @@ final class PaperUIView: UIView {
         setNeedsDisplay()
     }
 
+    // MARK: PDF bitmap'i
+
+    private var pixelSize: CGSize {
+        let scale = traitCollection.displayScale
+        return CGSize(width: (bounds.width * scale).rounded(), height: (bounds.height * scale).rounded())
+    }
+
+    private func cached(_ page: PDFPage, _ pixels: CGSize) -> CGImage? {
+        cache.first { $0.page === page && $0.pixels == pixels }?.image
+    }
+
+    private func store(_ page: PDFPage, _ pixels: CGSize, _ image: CGImage) {
+        cache.removeAll { $0.page === page }
+        cache.append(Rendered(page: page, pixels: pixels, image: image))
+        // Açık sayfayı hiç atma; en eski komşudan başla
+        while cache.count > Self.cacheLimit,
+              let i = cache.firstIndex(where: { $0.page !== pdfPage }) {
+            cache.remove(at: i)
+        }
+    }
+
+    private static func render(_ page: PDFPage, pixels: CGSize) -> CGImage? {
+        PDFRender.image(page, size: pixels, scale: 1).cgImage
+    }
+
+    /// Açık PDF sayfasının bitmap'ini gösterir. `waitIfMissing` ise (sayfa değişti) hazır değilse hemen çizer:
+    /// sayfa çevirme animasyonu yarım döşemeyle değil, net sayfayla başlasın.
+    private func showPDFImage(waitIfMissing: Bool) {
+        guard let page = pdfPage, bounds.width > 0, bounds.height > 0 else {
+            imageLayer.contents = nil
+            imageLayer.isHidden = true
+            updateDetail()
+            return
+        }
+        let pixels = pixelSize
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        if let image = cached(page, pixels) {
+            imageLayer.contents = image
+        } else if waitIfMissing, let image = Self.render(page, pixels: pixels) {
+            store(page, pixels, image)
+            imageLayer.contents = image
+        } else {
+            // Eski bitmap (başka sayfanınsa) yanlış sayfa göstermesin
+            if waitIfMissing { imageLayer.contents = nil }
+            renderInBackground(page, pixels: pixels)
+        }
+        imageLayer.isHidden = false
+        CATransaction.commit()
+        updateDetail()
+        prefetchNeighbors(of: page, pixels: pixels)
+    }
+
+    private func renderInBackground(_ page: PDFPage, pixels: CGSize) {
+        let id = ObjectIdentifier(page)
+        guard !pending.contains(id) else { return }
+        pending.insert(id)
+        Self.renderQueue.async { [weak self] in
+            let image = Self.render(page, pixels: pixels)
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.pending.remove(id)
+                guard let image else { return }
+                // Bu arada boyut değiştiyse eski boyutta çizilmiş bitmap'i saklama
+                guard pixels == self.pixelSize else {
+                    if self.pdfPage === page { self.showPDFImage(waitIfMissing: false) }
+                    return
+                }
+                self.store(page, pixels, image)
+                if self.pdfPage === page {
+                    CATransaction.begin()
+                    CATransaction.setDisableActions(true)
+                    self.imageLayer.contents = image
+                    CATransaction.commit()
+                }
+            }
+        }
+    }
+
+    private func prefetchNeighbors(of page: PDFPage, pixels: CGSize) {
+        guard let doc = page.document else { return }
+        let i = doc.index(for: page)
+        for j in [i + 1, i - 1] where j >= 0 && j < doc.pageCount {
+            guard let next = doc.page(at: j), cached(next, pixels) == nil else { continue }
+            renderInBackground(next, pixels: pixels)
+        }
+    }
+
+    /// Yakınlaşınca vektör döşemeleri aç, sayfaya sığarken kapat (bitmap zaten net)
+    private func updateDetail() {
+        let on = pdfPage != nil && zoom > 1.01
+        tileDrawer.set(on ? pdfPage : nil, size: bounds.size)
+        if on {
+            if detailLayer.isHidden { detailLayer.isHidden = false }
+            detailLayer.setNeedsDisplay()
+        } else if !detailLayer.isHidden {
+            detailLayer.isHidden = true
+            detailLayer.contents = nil
+        }
+    }
+
     override func draw(_ rect: CGRect) {
         guard let ctx = UIGraphicsGetCurrentContext() else { return }
         let s = snapshotValue()
         let bounds = CGRect(origin: .zero, size: s.size)
-        if let pdf = s.pdf {
+        if s.pdf != nil {
+            // Sayfanın kendisi bitmap ve döşeme katmanlarında; burada yalnız beyaz zemin
             ctx.setFillColor(UIColor.white.cgColor)
             ctx.fill(bounds)
-            PDFRender.draw(pdf, in: bounds, context: ctx)
             return
         }
         let tc = s.traits
@@ -770,6 +944,7 @@ final class OpenLeafCanvas: PKCanvasView {
             paper.transform = .identity
             paper.frame = CGRect(origin: .zero, size: r.size)
             paper.transform = CGAffineTransform(scaleX: z, y: z)
+            paper.zoom = z
             paper.center = CGPoint(x: r.midX * z, y: r.midY * z)
             contentSize = CGSize(width: max(bounds.width, r.maxX) * z, height: (r.maxY + bottomRoom) * z)
             layoutNotes()
