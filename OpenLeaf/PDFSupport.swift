@@ -13,7 +13,7 @@ extension Library {
 
     /// PDF'i yeni defterin klasörüne kopyalar, her sayfası için bir not sayfası açar
     /// ve metnini aranabilir olsun diye `text.txt` olarak saklar (metin arka planda çıkarılır).
-    func importPDF(from source: URL) throws -> UUID {
+    func importPDF(from source: URL, folder: UUID? = nil) throws -> UUID {
         let scoped = source.startAccessingSecurityScopedResource()
         defer { if scoped { source.stopAccessingSecurityScopedResource() } }
 
@@ -33,8 +33,9 @@ extension Library {
 
         // Aranabilir metni çıkarmak büyük kitaplarda saniyeler sürer: arayüzü bekletmeden arka planda yap.
         // (Bitmeden arama yapılırsa `searchText` metni kendisi çıkarır.)
+        // Sıralı kuyruk: toplu aktarımda yüzlerce PDF'in metni aynı anda çıkarılmasın
         let store = self.store
-        DispatchQueue.global(qos: .utility).async {
+        Self.textQueue.async {
             let text = PDFRender.text(of: dest)
             if !text.isEmpty, let data = text.data(using: .utf8) { store.writeFile(data, to: store.textURL(id)) }
         }
@@ -51,10 +52,13 @@ extension Library {
             pdfAspect: Double(size.height / size.width)
         )
         nb.id = id
+        nb.folder = folder
         create(nb)
         scheduleThumbnail(id, delay: 0.3)
         return id
     }
+
+    private static let textQueue = DispatchQueue(label: "openleaf.pdf-text", qos: .utility)
 
     func pdfURL(_ nb: Notebook) -> URL? { nb.pdfFile != nil ? store.pdfURL(nb.id) : nil }
 

@@ -651,6 +651,52 @@
         }
       }
     },
+    "%lld defter aktarıldı": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Notizbücher importiert"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld notebooks imported"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld cuadernos importados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld carnets importés"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld quaderni importati"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld cadernos importados"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld defter aktarıldı"
+          }
+        }
+      }
+    },
     "%lld defter geri yüklendi.": {
       "localizations": {
         "de": {
@@ -1911,6 +1957,52 @@
         }
       }
     },
+    "App Store'da puan ver": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Im App Store bewerten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rate on the App Store"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valorar en el App Store"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noter sur l'App Store"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuta su App Store"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avaliar na App Store"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Store'da puan ver"
+          }
+        }
+      }
+    },
     "Apple Pencil ile yazarsın, parmağınla sayfayı kaydırıp çevirirsin; elin değdi diye sayfa karalanmaz. Silmek için kalemin yanına iki kez dokunman yeter.": {
       "localizations": {
         "de": {
@@ -2091,6 +2183,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "Atla"
+          }
+        }
+      }
+    },
+    "Atlanan dosyalar: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Übersprungene Dateien: %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skipped files: %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Archivos omitidos: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fichiers ignorés : %@"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File saltati: %@"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arquivos ignorados: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Atlanan dosyalar: %@"
           }
         }
       }
@@ -2463,6 +2601,98 @@
         }
       }
     },
+    "Başka bir uygulama kullanıyorsanız defterleri PDF ya da ZIP olarak dışa aktarıp aşağıdan seçin.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Andere App? Exportiere deine Notizbücher als PDF oder ZIP und wähle sie unten aus."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Using another app? Export your notebooks as PDF or ZIP and choose them below."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Usas otra app? Exporta tus cuadernos como PDF o ZIP y elígelos abajo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une autre app ? Exportez vos carnets en PDF ou ZIP et choisissez-les ci-dessous."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usi un'altra app? Esporta i quaderni in PDF o ZIP e sceglili qui sotto."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usa outro app? Exporte seus cadernos como PDF ou ZIP e escolha-os abaixo."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başka bir uygulama kullanıyorsanız defterleri PDF ya da ZIP olarak dışa aktarıp aşağıdan seçin."
+          }
+        }
+      }
+    },
+    "Başka uygulamadan taşı": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus anderer App übernehmen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move from another app"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traer de otra app"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importer depuis une autre app"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trasferisci da un'altra app"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trazer de outro app"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başka uygulamadan taşı"
+          }
+        }
+      }
+    },
     "Başla": {
       "localizations": {
         "de": {
@@ -2555,6 +2785,98 @@
         }
       }
     },
+    "Belgeler'de Seç'e dokunun ve tüm defterleri ya da klasörleri seçin.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tippe in „Dokumente“ auf „Auswählen“ und wähle alle Notizbücher oder Ordner."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Documents, tap Select and choose all notebooks or folders."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En Documentos, toca Seleccionar y elige todos los cuadernos o carpetas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans Documents, touchez Sélectionner et choisissez tous les carnets ou dossiers."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Documenti, tocca Seleziona e scegli tutti i quaderni o le cartelle."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Em Documentos, toque em Selecionar e escolha todos os cadernos ou pastas."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Belgeler'de Seç'e dokunun ve tüm defterleri ya da klasörleri seçin."
+          }
+        }
+      }
+    },
+    "Bilmeniz gerekenler": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gut zu wissen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Good to know"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conviene saber"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À savoir"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Da sapere"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bom saber"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bilmeniz gerekenler"
+          }
+        }
+      }
+    },
     "Bir belgeye basılı tutup Favorilere ekleyin.": {
       "localizations": {
         "de": {
@@ -2643,6 +2965,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bir belgeye basılı tutup “Klasöre taşı”yı seçin ya da Yeni ile burada oluşturun."
+          }
+        }
+      }
+    },
+    "Bir deftere basılı tut ve Yeniden adlandır'ı seç.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Halte ein Notizbuch gedrückt und wähle „Umbenennen“."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touch and hold a notebook, then choose Rename."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantén pulsado un cuaderno y elige Renombrar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez longuement un carnet, puis choisissez Renommer."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tieni premuto un quaderno e scegli Rinomina."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque e segure um caderno e escolha Renomear."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir deftere basılı tut ve Yeniden adlandır'ı seç."
           }
         }
       }
@@ -3843,48 +4211,48 @@
         }
       }
     },
-    "Cornell, haftalık plan, ders programı, deneme analizi gibi şablonlar hazır. Hocanın attığı PDF'i de açıp doğrudan üstüne yazabilirsin.": {
+    "Cornell, haftalık plan, ders programı, deneme analizi gibi şablonlar hazır. Hocanın attığı PDF'i de açıp doğrudan üstüne yazabilirsin. GoodNotes ya da Notability'den geliyorsan tüm defterlerini tek seferde taşıyabilirsin.": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vorlagen wie Cornell, Wochenplan, Stundenplan und Probeklausur-Auswertung sind schon da. Auch das PDF von deiner Lehrkraft kannst du öffnen und direkt darauf schreiben."
+            "value": "Vorlagen wie Cornell, Wochenplan, Stundenplan und Probeklausur-Auswertung sind schon da. Auch das PDF von deiner Lehrkraft kannst du öffnen und direkt darauf schreiben. Du kommst von GoodNotes oder Notability? Du kannst alle deine Notizbücher auf einmal übernehmen."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Templates like Cornell, weekly plan, timetable and mock exam review are ready to go. You can also open the PDF your teacher sent and write right on it."
+            "value": "Templates like Cornell, weekly plan, timetable and mock exam review are ready to go. You can also open the PDF your teacher sent and write right on it. Coming from GoodNotes or Notability? You can bring all your notebooks over in one go."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tienes listas plantillas como Cornell, plan semanal, horario y análisis de simulacro. También puedes abrir el PDF que te mandó el profesor y escribir encima."
+            "value": "Tienes listas plantillas como Cornell, plan semanal, horario y análisis de simulacro. También puedes abrir el PDF que te mandó el profesor y escribir encima. ¿Vienes de GoodNotes o Notability? Puedes traer todos tus cuadernos de una vez."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Des modèles comme Cornell, planning hebdo, emploi du temps ou bilan d’examen blanc sont prêts. Vous pouvez aussi ouvrir le PDF envoyé par votre prof et écrire directement dessus."
+            "value": "Des modèles comme Cornell, planning hebdo, emploi du temps ou bilan d’examen blanc sont prêts. Vous pouvez aussi ouvrir le PDF envoyé par votre prof et écrire directement dessus. Vous venez de GoodNotes ou Notability ? Vous pouvez transférer tous vos carnets en une fois."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Modelli come Cornell, piano settimanale, orario delle lezioni e analisi della simulazione sono già pronti. Puoi anche aprire il PDF che ti ha mandato il prof e scriverci sopra."
+            "value": "Modelli come Cornell, piano settimanale, orario delle lezioni e analisi della simulazione sono già pronti. Puoi anche aprire il PDF che ti ha mandato il prof e scriverci sopra. Arrivi da GoodNotes o Notability? Puoi trasferire tutti i tuoi quaderni in un colpo solo."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Modelos como Cornell, agenda semanal, horário de aulas e análise de simulado já estão prontos. Você também pode abrir o PDF que o professor mandou e escrever direto nele."
+            "value": "Modelos como Cornell, agenda semanal, horário de aulas e análise de simulado já estão prontos. Você também pode abrir o PDF que o professor mandou e escrever direto nele. Vem do GoodNotes ou do Notability? Você pode trazer todos os seus cadernos de uma vez."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cornell, haftalık plan, ders programı, deneme analizi gibi şablonlar hazır. Hocanın attığı PDF'i de açıp doğrudan üstüne yazabilirsin."
+            "value": "Cornell, haftalık plan, ders programı, deneme analizi gibi şablonlar hazır. Hocanın attığı PDF'i de açıp doğrudan üstüne yazabilirsin. GoodNotes ya da Notability'den geliyorsan tüm defterlerini tek seferde taşıyabilirsin."
           }
         }
       }
@@ -4069,6 +4437,98 @@
           "stringUnit": {
             "state": "translated",
             "value": "Defteri yazdır"
+          }
+        }
+      }
+    },
+    "Defteri yeniden adlandır": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notizbuch umbenennen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rename Notebook"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renombrar cuaderno"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renommer le carnet"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rinomina quaderno"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renomear caderno"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Defteri yeniden adlandır"
+          }
+        }
+      }
+    },
+    "Defterlerimi taşı": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notizbücher übernehmen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move my notebooks"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traer mis cuadernos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transférer mes carnets"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trasferisci i miei quaderni"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trazer meus cadernos"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Defterlerimi taşı"
           }
         }
       }
@@ -4763,6 +5223,52 @@
         }
       }
     },
+    "Dosyaları seç": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dateien auswählen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose files"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elegir archivos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir des fichiers"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scegli file"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escolher arquivos"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dosyaları seç"
+          }
+        }
+      }
+    },
     "Doygunluk ve parlaklık": {
       "localizations": {
         "de": {
@@ -4943,6 +5449,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ekose"
+          }
+        }
+      }
+    },
+    "Eski el yazısı ve resimler düzenlenebilir nesneye dönüşmez.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vorhandene Handschrift und Bilder werden nicht zu bearbeitbaren Objekten."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Existing handwriting and images don't become editable objects."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La escritura y las imágenes existentes no se vuelven objetos editables."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'écriture et les images existantes ne deviennent pas des objets modifiables."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La scrittura e le immagini esistenti non diventano oggetti modificabili."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A escrita e as imagens existentes não viram objetos editáveis."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eski el yazısı ve resimler düzenlenebilir nesneye dönüşmez."
           }
         }
       }
@@ -6051,6 +6603,52 @@
         }
       }
     },
+    "GoodNotes, Notability ya da PDF veren her uygulamadan tüm defterlerini tek seferde getir; klasörlerin korunur.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hol alle deine Notizbücher auf einmal aus GoodNotes, Notability oder jeder App, die PDFs exportiert – deine Ordner bleiben erhalten."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bring all your notebooks from GoodNotes, Notability or any app that exports PDFs in one go; your folders are kept."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trae de una vez todos tus cuadernos de GoodNotes, Notability o cualquier app que exporte PDF; tus carpetas se conservan."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transférez en une fois tous vos carnets depuis GoodNotes, Notability ou toute app qui exporte des PDF ; vos dossiers sont conservés."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Porta in un colpo solo tutti i quaderni da GoodNotes, Notability o qualsiasi app che esporta PDF; le cartelle vengono mantenute."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traga de uma vez todos os seus cadernos do GoodNotes, do Notability ou de qualquer app que exporte PDF; suas pastas são mantidas."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GoodNotes, Notability ya da PDF veren her uygulamadan tüm defterlerini tek seferde getir; klasörlerin korunur."
+          }
+        }
+      }
+    },
     "Google Drive, Dropbox, OneDrive, USB bellek…": {
       "localizations": {
         "de": {
@@ -6327,6 +6925,52 @@
         }
       }
     },
+    "Hazırlanıyor…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird vorbereitet …"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparando…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préparation…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparazione…"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparando…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hazırlanıyor…"
+          }
+        }
+      }
+    },
     "Henüz yedeklenmedi": {
       "localizations": {
         "de": {
@@ -6461,6 +7105,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hepsini kapat"
+          }
+        }
+      }
+    },
+    "Hiçbir defter aktarılamadı": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine Notizbücher importiert"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No notebooks were imported"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se importó ningún cuaderno"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun carnet importé"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nessun quaderno importato"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nenhum caderno foi importado"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiçbir defter aktarılamadı"
           }
         }
       }
@@ -7059,6 +7749,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kapalı"
+          }
+        }
+      }
+    },
+    "Kapat": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schließen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerrar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fermer"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chiudi"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fechar"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapat"
           }
         }
       }
@@ -9317,6 +10053,52 @@
         }
       }
     },
+    "Notları seçin, Paylaş'a dokunun ve PDF'i seçin.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle deine Notizen, tippe auf „Teilen“ und wähle PDF."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select your notes, tap Share and choose PDF."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selecciona tus notas, toca Compartir y elige PDF."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionnez vos notes, touchez Partager et choisissez PDF."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleziona le note, tocca Condividi e scegli PDF."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selecione suas notas, toque em Compartilhar e escolha PDF."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notları seçin, Paylaş'a dokunun ve PDF'i seçin."
+          }
+        }
+      }
+    },
     "Notların başına bir şey gelmesin": {
       "localizations": {
         "de": {
@@ -10007,6 +10789,52 @@
         }
       }
     },
+    "OpenLeaf'te yenilikler": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neu in OpenLeaf"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What's new in OpenLeaf"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novedades de OpenLeaf"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouveautés d'OpenLeaf"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novità di OpenLeaf"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novidades do OpenLeaf"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenLeaf'te yenilikler"
+          }
+        }
+      }
+    },
     "Orta": {
       "localizations": {
         "de": {
@@ -10605,6 +11433,52 @@
         }
       }
     },
+    "Paylaş > Dışa aktar'a dokunun, biçim olarak PDF'i seçin.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tippe auf „Teilen“ > „Exportieren“ und wähle PDF als Format."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap Share > Export and choose PDF as the format."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca Compartir > Exportar y elige PDF como formato."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez Partager > Exporter et choisissez le format PDF."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tocca Condividi > Esporta e scegli PDF come formato."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque em Compartilhar > Exportar e escolha PDF como formato."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paylaş > Dışa aktar'a dokunun, biçim olarak PDF'i seçin."
+          }
+        }
+      }
+    },
     "Paylaş ve yazdır": {
       "localizations": {
         "de": {
@@ -10739,6 +11613,98 @@
           "stringUnit": {
             "state": "translated",
             "value": "Paylaşılanlar"
+          }
+        }
+      }
+    },
+    "Paylaşım menüsünden OpenLeaf'i seçin.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle OpenLeaf im Teilen-Menü."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose OpenLeaf in the share sheet."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige OpenLeaf en el menú Compartir."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez OpenLeaf dans la feuille de partage."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scegli OpenLeaf nel menu Condividi."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escolha o OpenLeaf no menu Compartilhar."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paylaşım menüsünden OpenLeaf'i seçin."
+          }
+        }
+      }
+    },
+    "Paylaşım menüsünden OpenLeaf'i seçin. Klasörleriniz korunur.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle OpenLeaf im Teilen-Menü. Deine Ordner bleiben erhalten."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose OpenLeaf in the share sheet. Your folders are kept."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige OpenLeaf en el menú Compartir. Tus carpetas se conservan."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez OpenLeaf dans la feuille de partage. Vos dossiers sont conservés."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scegli OpenLeaf nel menu Condividi. Le tue cartelle vengono mantenute."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escolha o OpenLeaf no menu Compartilhar. Suas pastas são mantidas."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paylaşım menüsünden OpenLeaf'i seçin. Klasörleriniz korunur."
           }
         }
       }
@@ -11433,6 +12399,52 @@
         }
       }
     },
+    "Resmi yerine kilitle": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bild fixieren"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock an image in place"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fijar una imagen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verrouiller une image"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blocca un'immagine"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Travar uma imagem"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resmi yerine kilitle"
+          }
+        }
+      }
+    },
     "Ribozom:": {
       "localizations": {
         "de": {
@@ -12123,6 +13135,52 @@
         }
       }
     },
+    "Sayfadaki resmi kilitle; üstüne yazarken yanlışlıkla kaymasın.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fixiere ein Bild auf der Seite, damit es beim Schreiben nicht verrutscht."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock an image on the page so it doesn't shift while you write on it."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fija una imagen en la página para que no se mueva mientras escribes encima."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verrouillez une image sur la page pour qu'elle ne bouge pas pendant que vous écrivez dessus."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blocca un'immagine sulla pagina così non si sposta mentre ci scrivi sopra."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trave uma imagem na página para ela não sair do lugar enquanto você escreve."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sayfadaki resmi kilitle; üstüne yazarken yanlışlıkla kaymasın."
+          }
+        }
+      }
+    },
     "Sayfalar": {
       "localizations": {
         "de": {
@@ -12165,6 +13223,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sayfalar"
+          }
+        }
+      }
+    },
+    "Sayfalar olduğu gibi gelir; üstüne yeni mürekkeple yazabilirsiniz.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seiten kommen unverändert an; du kannst mit neuer Tinte darauf schreiben."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pages arrive as they are; you can write on them with new ink."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las páginas llegan tal cual; puedes escribir encima con tinta nueva."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les pages arrivent telles quelles ; vous pouvez écrire dessus avec une nouvelle encre."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le pagine arrivano così come sono; puoi scriverci sopra con nuovo inchiostro."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "As páginas chegam como estão; você pode escrever nelas com tinta nova."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sayfalar olduğu gibi gelir; üstüne yeni mürekkeple yazabilirsiniz."
           }
         }
       }
@@ -12257,6 +13361,98 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sayfayı sil"
+          }
+        }
+      }
+    },
+    "Ses kayıtları gibi özellikler PDF'e aktarılmaz.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Funktionen wie Audioaufnahmen sind in PDFs nicht enthalten."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Features like audio recordings aren't included in PDFs."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Funciones como las grabaciones de audio no se incluyen en los PDF."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les fonctions comme les enregistrements audio ne sont pas incluses dans les PDF."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Funzioni come le registrazioni audio non sono incluse nei PDF."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recursos como gravações de áudio não vêm nos PDFs."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses kayıtları gibi özellikler PDF'e aktarılmaz."
+          }
+        }
+      }
+    },
+    "Seçili resim; kilitli": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgewähltes Bild; fixiert"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selected image; locked"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imagen seleccionada; bloqueada"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image sélectionnée ; verrouillée"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Immagine selezionata; bloccata"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imagem selecionada; travada"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seçili resim; kilitli"
           }
         }
       }
@@ -15619,6 +16815,52 @@
         }
       }
     },
+    "Yerine kilitle": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fixieren"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock in Place"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloquear en su sitio"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verrouiller en place"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blocca in posizione"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Travar no lugar"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yerine kilitle"
+          }
+        }
+      }
+    },
     "Yeşil": {
       "localizations": {
         "de": {
@@ -16305,6 +17547,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "protein üretir"
+          }
+        }
+      }
+    },
+    "ve %lld dosya daha": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "und %lld weitere"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "and %lld more"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "y %lld más"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "et %lld de plus"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e altri %lld"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e mais %lld"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ve %lld dosya daha"
           }
         }
       }
@@ -17133,6 +18421,98 @@
           "stringUnit": {
             "state": "translated",
             "value": "İnce"
+          }
+        }
+      }
+    },
+    "İçe aktar": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importieren"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importer"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importa"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İçe aktar"
+          }
+        }
+      }
+    },
+    "İçe aktarılıyor… %lld / %lld": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird importiert … %1$lld / %2$lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importing… %1$lld / %2$lld"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importando… %1$lld / %2$lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importation… %1$lld / %2$lld"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importazione… %1$lld / %2$lld"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importando… %1$lld / %2$lld"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İçe aktarılıyor… %1$lld / %2$lld"
           }
         }
       }

@@ -18,6 +18,9 @@ struct LibraryView: View {
     @State private var folderPrompt: FolderPrompt?
     @State private var folderName = ""
     @State private var deletingFolder: Folder?
+    /// Adı değiştirilen defter
+    @State private var renamingNotebook: Notebook?
+    @State private var notebookName = ""
 
     enum FolderPrompt: Identifiable {
         case create
@@ -43,7 +46,16 @@ struct LibraryView: View {
     @State private var sharing: SharedFile?
     @State private var showNew = false
     @State private var showImporter = false
+    /// Başka not uygulamasından taşıma rehberi
+    @State private var showGuide = false
     @State private var importError: String?
+    /// Toplu içe aktarma: ilerleme (toplam 0 = hazırlanıyor), iptal edilebilen iş ve bitince özet
+    @State private var importProgress: (done: Int, total: Int)?
+    @State private var importTask: Task<ImportSummary, Never>?
+    @State private var importSummary: ImportSummary?
+    /// Paylaş menüsünden art arda gelen dosyalar (Notability çoklu paylaşım) kısa bir süre toplanır
+    @State private var pendingIncoming: [URL] = []
+    @State private var incomingTask: Task<Void, Never>?
     /// Yedekleme: dışa aktarılacak dosya, geri yükleme seçici ve sonuç mesajı
     @State private var backupDoc: BackupDocument?
     @State private var showBackupExport = false
@@ -57,6 +69,9 @@ struct LibraryView: View {
     @State private var restoreOffered = false
     /// İlk açılış tanıtımı: yalnızca yeni kuranlara bir kez gösterilir, menüden yeniden açılabilir
     @AppStorage("tanitim.goruldu") private var onboardingSeen = false
+    /// Güncelleyenlere bir kez çıkan "Yenilikler" penceresinin en son gösterildiği sürüm
+    @AppStorage("yenilikler.gorulen") private var whatsNewSeen = ""
+    @State private var showWhatsNew = false
     @State private var showOnboarding = false
     @AppStorage(AppTheme.storageKey) private var theme: AppTheme = .system
     @State private var showAbout = false
@@ -90,15 +105,24 @@ struct LibraryView: View {
         }
         .animation(Y.springSoft, value: openDoc)
         .syncNotices(sync, confirmDelete: $confirmSyncDelete)
-        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.pdf]) { result in
+        .overlay(alignment: .bottom) {
+            if let p = importProgress { importCard(p) }
+        }
+        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.pdf, .zip, .folder], allowsMultipleSelection: true) { result in
             switch result {
-            case .success(let url):
-                do {
-                    let id = try library.importPDF(from: url)
-                    if let f = currentFolder { library.move(id, toFolder: f) }
-                    openDoc = OpenDoc(id: id)
+            case .success(let urls):
+                if urls.count == 1, let url = urls.first, url.pathExtension.lowercased() == "pdf" {
+                    // Tek PDF: eskisi gibi hemen aç
+                    do {
+                        let id = try library.importPDF(from: url)
+                        if let f = currentFolder { library.move(id, toFolder: f) }
+                        openDoc = OpenDoc(id: id)
+                    }
+                    catch { importError = error.localizedDescription }
+                } else if !urls.isEmpty {
+                    let folder = currentFolder
+                    Task { await runBatch(urls, into: folder) }
                 }
-                catch { importError = error.localizedDescription }
             case .failure(let error):
                 importError = error.localizedDescription
             }
@@ -113,6 +137,11 @@ struct LibraryView: View {
         } message: {
             Text(lockError ?? "")
         }
+        .alert(summaryTitle, isPresented: Binding(get: { importSummary != nil }, set: { if !$0 { importSummary = nil } })) {
+            Button("Tamam", role: .cancel) {}
+        } message: {
+            Text(summaryMessage)
+        }
         .alert("PDF içe aktarılamadı", isPresented: Binding(get: { importError != nil }, set: { if !$0 { importError = nil } })) {
             Button("Tamam", role: .cancel) {}
         } message: {
@@ -122,6 +151,14 @@ struct LibraryView: View {
             TextField("Klasör adı", text: $folderName)
             Button(folderPromptAction) { commitFolderName() }
             Button("Vazgeç", role: .cancel) { folderPrompt = nil }
+        }
+        .alert("Defteri yeniden adlandır", isPresented: Binding(get: { renamingNotebook != nil }, set: { if !$0 { renamingNotebook = nil } })) {
+            TextField("Defter adı", text: $notebookName)
+            Button("Kaydet") {
+                if let nb = renamingNotebook { library.renameNotebook(nb.id, notebookName) }
+                renamingNotebook = nil
+            }
+            Button("Vazgeç", role: .cancel) { renamingNotebook = nil }
         }
         .confirmationDialog("“\(deletingFolder?.name ?? "")” klasörü silinsin mi?",
                             isPresented: Binding(get: { deletingFolder != nil }, set: { if !$0 { deletingFolder = nil } }),
@@ -144,9 +181,32 @@ struct LibraryView: View {
             OnboardingView()
         }
         .onAppear {
-            guard !onboardingSeen else { return }
-            // Kütüphanesinde defter olan kişi uygulamayı tanıyor: güncellemede tanıtım çıkmasın
-            if library.notebooks.isEmpty { showOnboarding = true } else { onboardingSeen = true }
+            if !onboardingSeen {
+                if library.notebooks.isEmpty {
+                    // Yeni kurulum: tanıtım çıkar, yenilikler penceresi gerekmez
+                    showOnboarding = true
+                    whatsNewSeen = WhatsNew.version
+                    return
+                }
+                // Kütüphanesinde defter olan kişi uygulamayı tanıyor: güncellemede tanıtım çıkmasın
+                onboardingSeen = true
+            }
+            if whatsNewSeen != WhatsNew.version { showWhatsNew = true }
+        }
+        .sheet(isPresented: $showWhatsNew, onDismiss: {
+            whatsNewSeen = WhatsNew.version
+            considerBackupPrompts()
+        }) {
+            WhatsNew {
+                // Pencere kapanırken yenisi açılamıyor: bir an bekle
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { showGuide = true }
+            }
+        }
+        .sheet(isPresented: $showGuide) {
+            MigrationGuide {
+                // Pencere kapanırken dosya seçici açılamıyor: bir an bekle
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { showImporter = true }
+            }
         }
         .sheet(isPresented: $showAutoBackup, onDismiss: { restoreOnOpen = nil }) {
             AutoBackupSheet(restoreOnAppear: restoreOnOpen)
@@ -315,6 +375,9 @@ struct LibraryView: View {
                         Link(destination: URL(string: "https://github.com/biggypanda/openleaf/issues/new")!) {
                             Label("GitHub'da hata bildir", systemImage: "ladybug")
                         }
+                        Link(destination: URL(string: "https://apps.apple.com/app/id6832556915?action=write-review")!) {
+                            Label("App Store'da puan ver", systemImage: "star")
+                        }
                     } label: {
                         Label("Geri bildirim gönder", systemImage: "envelope")
                     }
@@ -374,7 +437,7 @@ struct LibraryView: View {
     /// Kütüphane boşsa ve iCloud'da yedek varsa geri yüklemeyi teklif eder (oturum başına bir kez);
     /// kütüphanede defter varsa otomatik yedeği açmayı bir kez sorar.
     private func considerBackupPrompts() {
-        guard openDoc == nil, !showOnboarding, !showAutoBackup, !showBackupAsk, restoreOffer == nil else { return }
+        guard openDoc == nil, !showOnboarding, !showWhatsNew, !showAutoBackup, !showBackupAsk, restoreOffer == nil else { return }
         // Tanıtım birazdan açılacaksa (ilk açılış) sırayı ona bırak
         if !onboardingSeen, library.notebooks.isEmpty { return }
         if library.notebooks.isEmpty {
@@ -461,7 +524,10 @@ struct LibraryView: View {
                     Button("Whiteboard", systemImage: "rectangle.on.rectangle.angled") { quick(kind: .whiteboard) }
                     Divider()
                     Button("Klasör", systemImage: "folder.badge.plus") { askFolderName(.create) }
-                    Button("PDF içe aktar", systemImage: "square.and.arrow.down") { showImporter = true }
+                    Button("İçe aktar", systemImage: "square.and.arrow.down") { showImporter = true }
+                        .disabled(importProgress != nil)
+                    Button("Başka uygulamadan taşı", systemImage: "arrow.right.doc.on.clipboard") { showGuide = true }
+                        .disabled(importProgress != nil)
                 } label: {
                     Label("Yeni", systemImage: "plus")
                         .labelStyle(.titleAndIcon)
@@ -491,10 +557,14 @@ struct LibraryView: View {
                     .buttonStyle(.borderedProminent)
                     .buttonBorderShape(.capsule)
                     .controlSize(.large)
-                Button("PDF içe aktar", systemImage: "square.and.arrow.down") { showImporter = true }
+                Button("İçe aktar", systemImage: "square.and.arrow.down") { showImporter = true }
+                    .disabled(importProgress != nil)
                     .buttonStyle(.bordered)
                     .buttonBorderShape(.capsule)
                     .controlSize(.large)
+                Button("Başka uygulamadan taşı", systemImage: "arrow.right.doc.on.clipboard") { showGuide = true }
+                    .disabled(importProgress != nil)
+                    .buttonStyle(.borderless)
             }
             .frame(maxWidth: .infinity, minHeight: 420)
         } else {
@@ -517,6 +587,12 @@ struct LibraryView: View {
         } else {
             Button(nb.favorite ? String(localized: "Favorilerden çıkar") : String(localized: "Favorilere ekle"), systemImage: nb.favorite ? "star.slash" : "star") {
                 afterMenu { library.update(nb.id) { $0.favorite.toggle() } }
+            }
+            Button("Yeniden adlandır", systemImage: "pencil") {
+                afterMenu {
+                    notebookName = nb.title
+                    renamingNotebook = nb
+                }
             }
             Button("Çoğalt", systemImage: "plus.square.on.square") { afterMenu { library.duplicate(nb) } }
             Menu("Klasöre taşı", systemImage: "folder") {
@@ -543,7 +619,7 @@ struct LibraryView: View {
         }
     }
 
-    /// App Store puanı ister: en az üç defteri olan ve birkaç kez not almış kullanıcıya,
+    /// App Store puanı ister: en az bir defteri olan ve üç kez not almış kullanıcıya,
     /// belgeyi kapatıp kütüphaneye döndüğü anda, sürüm başına en fazla bir kez.
     /// (Pencereyi gösterip göstermemeye sistem karar verir; yılda en çok üç kez çıkar.)
     private func askForReviewIfDue() {
@@ -551,19 +627,91 @@ struct LibraryView: View {
         let closes = defaults.integer(forKey: "puan.kapanis") + 1
         defaults.set(closes, forKey: "puan.kapanis")
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
-        guard closes >= 5,
-              library.notebooks.filter({ !$0.trashed }).count >= 3,
+        guard closes >= 3,
+              library.notebooks.contains(where: { !$0.trashed }),
               defaults.string(forKey: "puan.sorulanSurum") != version else { return }
         defaults.set(version, forKey: "puan.sorulanSurum")
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { requestReview() }
     }
 
+    /// Paylaş menüsü / "OpenLeaf'te aç": PDF ya da ZIP. Art arda gelenler 1 sn toplanıp birlikte aktarılır.
     private func openIncoming(_ url: URL) {
         guard url.isFileURL else { return }
-        defer {
+        pendingIncoming.append(url)
+        incomingTask?.cancel()
+        incomingTask = Task {
+            try? await Task.sleep(for: .seconds(1))
+            guard !Task.isCancelled else { return }
+            // Önceki toplu aktarım sürüyorsa bitmesini bekle. Bu arada yeni dosya gelirse bu görev iptal
+            // edilir ve yerine kurulan görev bekleyen dosyaları da alır: o zaman burada dur.
+            while importProgress != nil {
+                try? await Task.sleep(for: .milliseconds(300))
+                if Task.isCancelled { return }
+            }
+            let urls = pendingIncoming
+            pendingIncoming = []
+            incomingTask = nil
+            if urls.count == 1, let one = urls.first, one.pathExtension.lowercased() == "pdf" {
+                openSingleIncoming(one)
+            } else if !urls.isEmpty {
+                await runBatch(urls, into: nil)
+            }
             // Sistem dosyayı Inbox klasörüne kopyalar; içe aktardıktan sonra o kopyayı sil
-            if url.path.contains("/Inbox/") { try? FileManager.default.removeItem(at: url) }
+            for u in urls where u.path.contains("/Inbox/") { try? FileManager.default.removeItem(at: u) }
         }
+    }
+
+    /// Toplu içe aktarma: ilerleme kartını gösterir, bitince özet verir.
+    private func runBatch(_ urls: [URL], into folder: UUID?) async {
+        // Aynı anda tek aktarım: düğmeler kapalı, paylaş menüsü bekliyor; yine de koru
+        guard importProgress == nil else { return }
+        importProgress = (0, 0)
+        let task = Task { [library] in
+            await library.importBatch(urls, into: folder) { done, total in importProgress = (done, total) }
+        }
+        importTask = task
+        let summary = await task.value
+        importTask = nil
+        importProgress = nil
+        if folder == nil, !summary.imported.isEmpty, currentFolder == nil { selection = .section(.belgeler) }
+        importSummary = summary
+    }
+
+    private func importCard(_ p: (done: Int, total: Int)) -> some View {
+        VStack(spacing: 12) {
+            if p.total == 0 {
+                Text("Hazırlanıyor…").font(.headline)
+                ProgressView()
+            } else {
+                Text("İçe aktarılıyor… \(p.done) / \(p.total)").font(.headline).monospacedDigit()
+                ProgressView(value: Double(p.done), total: Double(p.total))
+            }
+            Button("Vazgeç", role: .cancel) { importTask?.cancel() }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+        }
+        .padding(20)
+        .frame(width: 320)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .shadow(color: .black.opacity(0.12), radius: 16, y: 6)
+        .padding(.bottom, 32)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+    }
+
+    private var summaryTitle: String {
+        let n = importSummary?.imported.count ?? 0
+        return n == 0 ? String(localized: "Hiçbir defter aktarılamadı") : String(localized: "\(n) defter aktarıldı")
+    }
+
+    private var summaryMessage: String {
+        guard let skipped = importSummary?.skipped, !skipped.isEmpty else { return "" }
+        let shown = skipped.prefix(10).joined(separator: ", ")
+        var text = String(localized: "Atlanan dosyalar: \(shown)")
+        if skipped.count > 10 { text += " " + String(localized: "ve \(skipped.count - 10) dosya daha") }
+        return text
+    }
+
+    private func openSingleIncoming(_ url: URL) {
         do {
             let id = try library.importPDF(from: url)
             selection = .section(.belgeler)
